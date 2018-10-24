@@ -76,7 +76,7 @@ case $action in
     fi
     echo -n 'authorizing for realm' $subnet ':'
 
-    # iterate over the keys of the dict :
+    # iterate over the keys of the hash table :
     for service in "${!local_services[@]}"; do
       echo -n " $service"
       dests=${local_services[$service]}
@@ -125,12 +125,12 @@ case $action in
     ufw reload > /dev/null
     echo # a newline
     ;;
-  *)
-    echo $(date) called with $@ >> $logfile
-    bailout "\nusage : $0 iface up|down"
-    ;;
   connectivity-change)
     $0 $iface down
     $0 $iface up
+    ;;
+  *)
+    echo $(date) called with $@ >> $logfile
+    bailout "\nusage : $0 iface up|down"
     ;;
 esac
