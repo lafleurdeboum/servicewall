@@ -62,11 +62,14 @@ case $action in
     echo "arguments : $@" >> $logfile
 
     # Determine subnet
-    # at home, is 192.168.1.0 | the trailing 0s indicate the netmask
-    buffer=$(ip address show $iface | head -n 3 | tail -n 1)
-    network_realm=$(echo $buffer | awk '{ print $4 }' | sed 's/255/0/g')
-    netmask=$(echo $buffer | awk '{ print $2 }' | cut -d'/' -f 2)
-    subnet="$network_realm/$netmask"
+    #buffer=$(ip address show $iface | head -n 3 | tail -n 1)
+    # The 4th value is the broadcast address ; substitute 255 for 0 to get the realm
+    #network_realm=$(echo $buffer | awk '{ print $4 }' | sed 's/255/0/g')
+    #netmask=$(echo $buffer | awk '{ print $2 }' | cut -d'/' -f 2)
+    #subnet="$network_realm/$netmask"
+
+    # working with NetworkManager, a more convenient way is :
+    subnet=$(echo $IP4_ADDRESS_0 | awk -F' ' '{print $1}')
 
     if test -z "$subnet"; then
       rm "$subnetfile"
@@ -125,12 +128,23 @@ case $action in
     ufw reload > /dev/null
     echo # a newline
     ;;
+
   connectivity-change)
     $0 $iface down
     $0 $iface up
     ;;
+
+  hostname)
+    # pass
+    ;;
+
   *)
     echo $(date) called with $@ >> $logfile
     bailout "\nusage : $0 iface up|down"
     ;;
+
 esac
+
+declare -px | sed 's/declare -x/ /' >> $logfile
+
+
