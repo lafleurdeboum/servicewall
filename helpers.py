@@ -8,7 +8,7 @@ def split_port_def(port_def):
     try:
         port_subdefs = port_def.split("|")
     except ValueError:
-        port_subdefs = [ port_def ]
+        port_subdefs = (port_def, )
 
     # first port_subdef is "13:15,124,128/udp"
     for port_subdef in port_subdefs:
@@ -23,20 +23,20 @@ def split_port_def(port_def):
         try:
             ports = port_subdef.split(",")
         except ValueError:
-            ports = [ port_subdef ]
+            ports = (port_subdef, )
 
-        # ports is [ "13:15", "124", "128" ]
+        # ports is ("13:15", "124", "128")
         for port in ports:
             # port is a string ; let's check if this str is a number
             if port.isalnum():
-                ports_list.append([int(port), proto])
+                ports_list += ((int(port), proto), )
             else:
                 # It's a port range, spelled ie "100:104".
                 ports_start, ports_end = port.split(":")
                 for port_range_item in range(int(ports_start), int(ports_end)+1):
-                    ports_list.append([int(port_range_item), proto])
+                    ports_list += ((port_range_item, proto), )
 
-    return ports_list
+    return tuple(ports_list)
 
 
 def scan_service_definitions(definitions_dir):
@@ -75,7 +75,7 @@ def scan_service_definitions(definitions_dir):
                 # services['NAME_ONE'] will return a dict with its parameters :
                 services[service_name] = {
                     key: value for (key, value) in
-                        [ item.split("=", 1) for item in iter(service_desc[1:]) ]
+                        ( item.split("=", 1) for item in iter(service_desc[1:]) )
                 }
                 port_def = split_port_def(services[service_name]["ports"])
                 services[service_name]["ports"] = port_def

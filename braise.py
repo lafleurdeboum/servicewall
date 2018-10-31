@@ -15,20 +15,27 @@ from iptc import Rule, Match, Chain, Table
 
 from helpers import scan_service_definitions
 
+conf_dir = "var/lib/braise/"
+state_pickle = conf_dir + "state.p"
+realm_pickle = conf_dir + "realm.p"
+realm_definitions_pickle = conf_dir + "realms.p"
+services_pickle = conf_dir + "services.p"
+definitions_dir = "/etc/gufw/app_profiles"
 
 def update_services(pickle_file):
     """Dumps a dict of network service definitions to pickle_file."""
-    definitions_dir = "/etc/gufw/app_profiles"
     services = scan_service_definitions(definitions_dir)
-    with open(pickle_file, "wb") as picker:
-        pickle.dump(picker, services)
+    with open(services_pickle, "wb") as pickle_fd:
+        pickle.dump(pickle_fd, services)
 
 
 def get_local_subnet():
     """Returns the local subnet iface is connected to."""
-    try: local_realm = environ["IP4_ROUTE_0"].split("/")[0]
-    except KeyError: raise SystemExit(
-            "No env. Was the script really started by NetworkManager ?")
+    try:
+        local_realm = environ["IP4_ROUTE_0"].split("/")[0]
+    except KeyError:
+        raise SystemExit(
+                "No env. Was the script really started by NetworkManager ?")
     # If the first functions, then these should as well.
     local_realm += "/" + environ["DHCP4_SUBNET_MASK"]
     essid = environ["CONNECTION_ID"]
@@ -73,17 +80,23 @@ def add_iptables_rule(title, chain, target, realm="", port="", proto=""):
     if index == len(chain.rules):
         raise SystemExit("rule was not inserted. Go get the problem.")
 
+def del_iptables_rule(title, chain, target, realm="", port="", proto=""):
+    pass
+
 
 def start_firewall(realm, essid):
     """launches a firewall for realm represented by essid"""
-    services_pickle = "services.p"
-    # TODO We should start base from anywhere anyhow, and then look for realm
+    # TODO We should start base from anywhere anyhow, and then look for
+    # the realm
     special_definitions = {
-            "base" : ["DHCP", "ssh"]
+            "base" : [
+                ("DHCP", "local"),
+                ("ssh", "global"),
+            ]
     }
-    realm_definitions = {
-            "Jia" : ["DHCP", "ssh", "http", "upnp", "Samba", "mDNS", "transmission"]
-    }
+    with open(realm_definitions_pickle, "rb") as fd:
+        realm_definitions = pickle.load(fd)
+
 
     # Is netbios the same thing as Samba ? UFW says 445 is samba,
     # and netbios is 137, 138 and 139. iptables says 445 is microsoft-ds,
@@ -102,12 +115,14 @@ def start_firewall(realm, essid):
     # -A ufw-before-input -p icmp --icmp-type time-exceeded -j ACCEPT
     # -A ufw-before-input -p icmp --icmp-type parameter-problem -j ACCEPT
     # -A ufw-before-input -p icmp --icmp-type echo-request -j ACCEPT
+
     # And then logging, and then rate limiting
     # And allow all on loopback - apparently OK when we DROP INPUT or OUTPUT :
     # -A ufw-before-input -i lo -j ACCEPT
     # -A ufw-before-output -o lo -j ACCEPT
     # there's also the skype problem (see /etc/gufw/app_profiles)
 
+    print("IP4 address : $s" % environ)
     print("realm : %s essid : %s" % (realm, essid))
 
     filter_table = Table(Table.FILTER)
@@ -126,56 +141,118 @@ def start_firewall(realm, essid):
             print("found no realm definition for %s, using base protocols"
                     % essid)
 
-        for service_name in local_subnet_definition:
+        for service_name, service_realm in local_subnet_definition:
             try:
                 service = service_definitions[service_name]
             except KeyError:
-                raise SystemExit(
-                        "Could not find service %s" % service_name)
+                print(
+                        "WARNING - Could not find service %s" % service_name)
+                continue
+            if service_realm == "local":
+                service_realm = realm
+            else:
+                service_realm = ""
             for port_description in service["ports"]:
                 for port, proto in [port_description]:
-                    print("inserting rule for %s in chain %s, table %s : %i/%s"
-                            % (service_name, input_chain.name,
-                            input_chain.table.name, port, proto))
+                    print("%s %s : inserting rule for %s : %i/%s"
+                            % (input_chain.table.name, input_chain.name,
+                               service_name, port, proto))
                     if proto:
                         add_iptables_rule(service["title"], input_chain,
-                                "ACCEPT", realm, port, proto)
+                                "ACCEPT", service_realm, port, proto)
                     else:
                         # We'll presume we want both tcp and udp, and
                         # nothing else.
                         add_iptables_rule(service["title"], input_chain,
-                                "ACCEPT", realm, port, "tcp")
+                                "ACCEPT", service_realm, port, "tcp")
                         add_iptables_rule(service["title"], input_chain,
-                                "ACCEPT", realm, port, "udp")
+                                "ACCEPT", service_realm, port, "udp")
 
         # First rule should be to allow related, established connections
         related_rule = Rule()
         related_match = related_rule.create_match("conntrack")
         related_match.set_parameter("ctstate", "RELATED,ESTABLISHED")
+        comment_match = related_rule.create_match("comment")
+        comment_match.comment = "related"
         related_rule.create_target("ACCEPT")
         input_chain.insert_rule(related_rule)
 
         filter_table.commit()
+        with open(state_pickle, "wb") as state_fd:
+            pickle.dump(local_subnet_definition, state_fd)
+        with open(realm_pickle, "wb") as realm_fd:
+            pickle.dump(realm, realm_fd)
         # If commitment fails, it would throw an error, so we wouldn't
         # get here.
         print("table commited")
 
 
-def stop_firewall(realm, essid):
-    pass
+def stop_firewall(realm, started_services, services):
+    print("removing firwall iptables rules")
+    table = Table(Table.FILTER)
+    table.autocommit = False
+    chain = Chain(table, "INPUT")
+
+    # Need to take the "RELATED,ESTABLISHED" rule away
+    #started_services.append(("related", "None"))
+    for rule in chain.rules:
+        try:
+            if rule.matches[1].comment == "related":
+                chain.delete_rule(rule)
+                break
+        except IndexError:
+            continue
+
+    for service, realm in started_services:
+        for rule in chain.rules:
+            # match[0] is the port, match[1] is the comment. Else it's not us.
+            try:
+                match = rule.matches[1]
+            except IndexError:
+                continue
+            try:
+                service_name = match.parameters["comment"]
+            except KeyError:
+                continue
+            if services[service]["title"] == service_name:
+                print("%s %s : removing rule for %s : %s/%s" %
+                        (
+                            table.name,
+                            chain.name,
+                            service,
+                            rule.matches[0].parameters["dport"],
+                            rule.get_protocol()
+                        )
+                )
+                chain.delete_rule(rule)
+    chain.set_policy("ACCEPT")
+    table.commit()
 
 
 if __name__ == "__main__":
     from sys import argv
+    from datetime import date
     if len(argv) != 3:
-        raise SystemExit("Syntax: %s iface up|down|connectivity-change" % argv[0])
+        raise SystemExit("Syntax: %s iface up|down|connectivity-change"
+                % argv[0])
+
+    # In "pre-up" we don't get any connectivity at all, so no subnetwork.
+    #if argv[2] == "up" or argv[2] == "pre-up":
     if argv[2] == "up":
         realm, essid = get_local_subnet()
         start_firewall(realm, essid)
+
     elif argv[2] == "down":
-        # Do we turn everything down ?
-        pass
+        with open(realm_pickle, "rb") as realm_fd:
+            realm = pickle.load(realm_fd)
+        with open(state_pickle, "rb") as state_fd:
+            started_services = pickle.load(state_fd)
+        with open(services_pickle, "rb") as services_fd:
+            services = pickle.load(services_fd)
+        stop_firewall(realm, started_services, services)
+
     elif argv[2] == "connectivity-change":
-        stop_firewall(realm, essid)
-        start_firewall(realm, essid)
+        # Not shure when NetworkManager does that ; we don't get any
+        # new ip in environ anyway
+        pass
 
