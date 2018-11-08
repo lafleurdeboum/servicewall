@@ -57,7 +57,7 @@ class ServiceWall(StateFulFireWall):
         subnetwork, they will be matched against the provided subnetwork."""
         self.essid = essid
         self.subnetwork = subnetwork
-        if self.essid not in self.realm_defs.keys():
+        if self.essid not in self.realm_defs:
             self.realm_defs[self.essid] = self.realm_defs[identifier + ":new"]
         for service_name, local_toggle in self.realm_defs[self.essid].items():
             if local_toggle:
@@ -85,7 +85,7 @@ class ServiceWall(StateFulFireWall):
             raise error
 
         # Add the service to realm_defs if it's not in there.
-        if service_name not in self.realm_defs[self.essid].keys():
+        if service_name not in self.realm_defs[self.essid]:
             if local == True:
                 self.realm_defs[self.essid][service_name] = "local"
             else:
