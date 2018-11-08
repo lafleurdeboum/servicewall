@@ -11,6 +11,7 @@ from systemd import journal
 import select
 #import putch
 #from datetime import datetime
+import datetime
 
 conf_dir = "var/lib/braise/"
 #state_pickle = conf_dir + "state.p"
@@ -28,6 +29,15 @@ with open(service_defs_pickle, "rb") as fd:
     service_defs = pickle.load(fd)
 
 
+def print_dict(dictionary):
+    for key, value in dictionary.items():
+        if isinstance(value, dict):
+            print("=> %s :" % key)
+            print_dict(value)
+        else:
+            print("%s : %s" % (key, value))
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -36,7 +46,7 @@ if __name__ == "__main__":
         raise SystemExit("\n  argument needed !")
 
     def show_realms(args):
-        print(realm_defs)
+        print_dict(realm_defs)
     def show_services(args):
         for service in service_defs:
             print("%s - %s" % (service, service_defs[service]["description"]))
@@ -45,7 +55,7 @@ if __name__ == "__main__":
         service = " ".join(args.service_name)
         # Do our own validity testing
         try:
-            print(service_defs[service])
+            print_dict(service_defs[service])
         except KeyError:
             print('service "%s" not found. '
                     'For a list of valid entries, try\n\n\t%s services\n'
@@ -57,7 +67,11 @@ if __name__ == "__main__":
         print(args.service_name)
 
     def show_logs(args):
-        yielder = log_yielder()
+        if "period" in args:
+            yielder = log_yielder(int(args.period))
+        else:
+            yielder = log_yielder()
+        now = datetime.datetime.today()
 
         # log_folder is a dict that contains host adresses as keys,
         # and whose items are dicts that contain port numbers as keys,
@@ -84,26 +98,33 @@ if __name__ == "__main__":
                 log_folder[log["SRC"]][log["DPT"]].append(log)
 
 
-        print("Hosts : %s" % log_folder.keys())
+        print("Hosts : %s" % ", ".join(ip for ip in log_folder.keys()))
         for src, ports in log_folder.items():
             print("Host %s" % src)
             for dpt, logs in ports.items():
-                print("  asked for port %s %i times until %s" %
-                        (dpt, len(logs), logs[0]["DATE"]))
+                age = str(now - logs[0]["DATE"]).split(".")[0]
+                print("  asked %i times for port %s until %s ago" %
+                        (len(logs), dpt, age))
 
-    def log_yielder():
+    def log_yielder(period=""):
         """get logs we implemented in iptables from journald"""
         reader = journal.Reader()
         reader.log_level(journal.LOG_WARNING)
         reader.add_match(SYSLOG_IDENTIFIER="kernel")
+        now = datetime.datetime.today()
         #p = select.poll()
         #p.register(reader, reader.get_events())
         #p.poll()
         reader.seek_tail()
         while True:
             log = reader.get_previous()
+            # quit if there's no message or log older than period
             if not "MESSAGE" in log:
                 break
+            if period:
+                age = datetime.datetime.timestamp(now) - datetime.datetime.timestamp(log["__REALTIME_TIMESTAMP"])
+                if age > period:
+                    break
             if log["MESSAGE"].startswith(program_name):
                 message_dict = {}
                 message = log["MESSAGE"].strip(program_name + ":").strip()
@@ -139,16 +160,25 @@ if __name__ == "__main__":
     # create the subparser for the "show services" command
     parser_show_services = show_subparser.add_parser(
         "services",
-        help="show service names"
+        help="show services list"
     )
     parser_show_services.set_defaults(func=show_services)
 
     # create the subparser for the "show logs" command
     parser_show_logs = show_subparser.add_parser(
         "logs",
-        help="show service names"
+        help="show logs of firewall"
     )
     parser_show_logs.set_defaults(func=show_logs)
+    show_logs_subparser = parser_show_logs.add_subparsers()
+    parser_show_logs_time = show_logs_subparser.add_parser(
+        "since",
+        help="restrict logs to those since [period] seconds"
+    )
+    parser_show_logs_time.add_argument(
+        "period",
+    )
+    parser_show_logs_time.set_defaults(func=show_logs)
 
     # create the subparser for the "show service SERVICE_NAME" command
     parser_show_service = show_subparser.add_parser(
