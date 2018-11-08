@@ -31,21 +31,33 @@ if __name__ == "__main__":
     device = argv[1]
     action = argv[2]
     firewall = ServiceWall()
+
     if action == "up":
         #if firewall.list_rules(firewall.input_chain):
         if firewall.up:
             raise SystemExit("Already up")
         essid, local_subnet = get_local_subnet(device)
         firewall.start(essid, local_subnet)
+
     elif action == "down":
         firewall.stop()
+
+    elif action == "connectivity-change":
+        if firewall.up:
+            essid, local_subnet = get_local_subnet(device)
+            if local_subnet != firewall.subnetwork:
+                firewall.down()
+                firewall.up()
+
     elif action == "status":
         if firewall.up:
             print("up")
         else:
             print("down")
+
     elif action == "list":
         firewall.list_services_in()
+
     else:
         print("wrong argument : %s" % action)
         raise SystemError(__doc__)

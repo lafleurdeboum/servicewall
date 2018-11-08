@@ -58,16 +58,18 @@ class ServiceWall(StateFulFireWall):
         self.essid = essid
         self.subnetwork = subnetwork
         if self.essid not in self.realm_defs.keys():
-            self.realm_defs[self.essid] = self.realm_defs[identifier + ":base"]
-        for service_name, local_or_not in self.realm_defs[self.essid].items():
-            self.add_service_in(service_name, local_or_not)
+            self.realm_defs[self.essid] = self.realm_defs[identifier + ":new"]
+        for service_name, local_toggle in self.realm_defs[self.essid].items():
+            if local_toggle:
+                self.add_service_in(service_name, local=True)
+            else:
+                self.add_service_in(service_name, local=False)
         super().start(**args)   # commits the table if relevant
 
-    def stop(self):
+    def save(self):
         print("writing modified realms")
         with open(realm_defs_pickle, "wb") as fd:
             pickle.dump(self.realm_defs, fd)
-        super().stop()
 
     def add_service_in(self, service_name, local=False):
         """Open ports for a service hosted on this machine.

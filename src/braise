@@ -58,27 +58,38 @@ if __name__ == "__main__":
 
     def show_logs(args):
         yielder = log_yielder()
-        logs = {}
+
+        # log_folder is a dict that contains host adresses as keys,
+        # and whose items are dicts that contain port numbers as keys,
+        # and whose items are lists of logs, which are dicts.
+        #
+        # log_folder {
+        #             "192.168.1.1": {
+        #                             "22": {
+        #                                    [log1, log2, ... ] }}}
+        #
+        # log1: {
+        #         "DATE": datetime.timestamp, "SRC": "191.168.1.1", ... }
+
+        log_folder = {}
+
         for log in yielder:
-            #print(log)
-            #pass
-            #if "IN" in log and "DPT" in log:
-
-            if log["SRC"] not in logs:
-                logs[log["SRC"]] = [log]
+            if log["SRC"] not in log_folder:
+                log_folder[log["SRC"]] = {}
+            if "DPT" not in log:
+                log["DPT"] = "unrecognized packet"
+            if log["DPT"] not in log_folder[log["SRC"]]:
+                log_folder[log["SRC"]][log["DPT"]] = [ log, ]
             else:
-                logs[log["SRC"]].append(log)
+                log_folder[log["SRC"]][log["DPT"]].append(log)
 
-        print("Hosts : %s" % logs.keys())
-        for src, loglist in logs.items():
-            print("Host %s :" % src)
-            for log in loglist:
-                if "DPT" in log.keys():
-                    print("On %s, asked for port %s" %
-                            (log["DATE"], log["DPT"])
-                            )
-                else:
-                    print("Unrecognized log: %s" % log)
+
+        print("Hosts : %s" % log_folder.keys())
+        for src, ports in log_folder.items():
+            print("Host %s" % src)
+            for dpt, logs in ports.items():
+                print("  asked for port %s %i times until %s" %
+                        (dpt, len(logs), logs[0]["DATE"]))
 
     def log_yielder():
         """get logs we implemented in iptables from journald"""
