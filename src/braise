@@ -1,0 +1,182 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""braise - a dynamic firewall
+
+"""
+
+
+import pickle
+# needed to access logging
+from systemd import journal
+import select
+#import putch
+#from datetime import datetime
+
+conf_dir = "var/lib/braise/"
+#state_pickle = conf_dir + "state.p"
+#realm_pickle = conf_dir + "realm.p"
+realm_defs_pickle = conf_dir + "realms.p"
+service_defs_pickle = conf_dir + "services.p"
+definitions_dir = "/etc/gufw/app_profiles"
+#program_name = "braise-toggler"
+program_name = "FireWall"
+
+
+with open(realm_defs_pickle, "rb") as fd:
+    realm_defs = pickle.load(fd)
+with open(service_defs_pickle, "rb") as fd:
+    service_defs = pickle.load(fd)
+
+
+if __name__ == "__main__":
+    import argparse
+
+    def no_arg_provided(args):
+        parser.print_help()
+        raise SystemExit("\n  argument needed !")
+
+    def show_realms(args):
+        print(realm_defs)
+    def show_services(args):
+        for service in service_defs:
+            print("%s - %s" % (service, service_defs[service]["description"]))
+    def show_service(args):
+        # The calling parser has nargs="*", so service_name is a list
+        service = " ".join(args.service_name)
+        # Do our own validity testing
+        try:
+            print(service_defs[service])
+        except KeyError:
+            print('service "%s" not found. '
+                    'For a list of valid entries, try\n\n\t%s services\n'
+                    % (service, parser_show.prog)
+            )
+            parser_show_service.print_usage()
+
+    def add_service(args):
+        print(args.service_name)
+
+    def show_logs(args):
+        yielder = log_yielder()
+        logs = {}
+        for log in yielder:
+            #print(log)
+            #pass
+            #if "IN" in log and "DPT" in log:
+
+            if log["SRC"] not in logs:
+                logs[log["SRC"]] = [log]
+            else:
+                logs[log["SRC"]].append(log)
+
+        print("Hosts : %s" % logs.keys())
+        for src, loglist in logs.items():
+            print("Host %s :" % src)
+            for log in loglist:
+                if "DPT" in log.keys():
+                    print("On %s, asked for port %s" %
+                            (log["DATE"], log["DPT"])
+                            )
+                else:
+                    print("Unrecognized log: %s" % log)
+
+    def log_yielder():
+        """get logs we implemented in iptables from journald"""
+        reader = journal.Reader()
+        reader.log_level(journal.LOG_WARNING)
+        reader.add_match(SYSLOG_IDENTIFIER="kernel")
+        #p = select.poll()
+        #p.register(reader, reader.get_events())
+        #p.poll()
+        reader.seek_tail()
+        while True:
+            log = reader.get_previous()
+            if not "MESSAGE" in log:
+                break
+            if log["MESSAGE"].startswith(program_name):
+                message_dict = {}
+                message = log["MESSAGE"].strip(program_name + ":").strip()
+                message_dict["DATE"] = log["__REALTIME_TIMESTAMP"]
+                for item in message.split():
+                    if item.count("="):
+                        key, value = item.split("=")
+                        message_dict[key] = value
+                    else:
+                        message_dict[item] = ""
+                yield message_dict
+
+
+    parser = argparse.ArgumentParser()
+    #parser.required = True
+    # parser fails badly when invoked without argument ;
+    # let's invoke basic help instead.
+    parser.set_defaults(func=no_arg_provided)
+    subparser = parser.add_subparsers()
+    #subparser.required = True
+
+    # create the parser for the "show" command
+    parser_show = subparser.add_parser("show")
+    show_subparser = parser_show.add_subparsers()
+
+    # create the subparser for the "show realms" command
+    parser_show_realms = show_subparser.add_parser(
+        "realms",
+        help="show realm definitions"
+    )
+    parser_show_realms.set_defaults(func=show_realms)
+
+    # create the subparser for the "show services" command
+    parser_show_services = show_subparser.add_parser(
+        "services",
+        help="show service names"
+    )
+    parser_show_services.set_defaults(func=show_services)
+
+    # create the subparser for the "show logs" command
+    parser_show_logs = show_subparser.add_parser(
+        "logs",
+        help="show service names"
+    )
+    parser_show_logs.set_defaults(func=show_logs)
+
+    # create the subparser for the "show service SERVICE_NAME" command
+    parser_show_service = show_subparser.add_parser(
+        "service",
+        # don't define help ; instead overwrite the usage because
+        # it prints the possible arguments twice, which is way too long
+        help="prints the service definition",
+        # TODO could tell to search for services with braise show services
+        # and then don't display "positional arguments" - see
+        # https://docs.python.org/3.2/library/argparse.html#formatter-class
+        usage="%s %s service_name - prints the service definition" %
+        (parser_show.prog, "service")
+    )
+    parser_show_service.add_argument(
+        "service_name",
+        nargs="*",
+        #choices=[ name.split() for name in service_defs ],
+        #help=""
+    )
+    parser_show_service.set_defaults(func=show_service)
+
+
+    # create the parser for the "add" command
+    parser_add = subparser.add_parser("add")
+    # create the subparser for the "add service" command
+    add_subparser = parser_add.add_subparsers()
+    parser_add_service = add_subparser.add_parser(
+        "service",
+        #usage="%s %s %s service_name - prints the service definition" % ("braise", "show", "service")
+        usage="braise show service service_name - prints the service definition"
+    )
+    parser_add_service.add_argument(
+        "service_name",
+        choices=service_defs,
+    )
+    parser_add_service.set_defaults(func=add_service)
+
+    args = parser.parse_args()
+    args.func(args)
+
+
+

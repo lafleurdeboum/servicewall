@@ -1,0 +1,52 @@
+#!/usr/bin/env python
+"""toggle a dynamic service firewall on/off
+
+Usage: %s DEVICE "up|down|status|list"
+This script starts or stops a firewall as defined in servicewall.py
+"""
+
+from servicewall import ServiceWall
+from network_helpers import get_subnetwork
+from sys import argv
+from os import environ
+
+
+
+def get_local_subnet(device):
+    """Returns the local subnet iface is connected to."""
+    try:
+        essid = environ["CONNECTION_ID"]
+        #uuid = environ["CONNECTION_UUID"]
+    except KeyError:
+        essid = ""
+        raise SystemExit(
+                "No CONNECTION_ID in env. Was the script really started by NetworkManager ?")
+    return(essid, get_subnetwork(device))
+
+
+if __name__ == "__main__":
+    if len(argv) != 3:
+        print("wrong number of arguments")
+        raise SystemError(__doc__)
+    device = argv[1]
+    action = argv[2]
+    firewall = ServiceWall()
+    if action == "up":
+        #if firewall.list_rules(firewall.input_chain):
+        if firewall.up:
+            raise SystemExit("Already up")
+        essid, local_subnet = get_local_subnet(device)
+        firewall.start(essid, local_subnet)
+    elif action == "down":
+        firewall.stop()
+    elif action == "status":
+        if firewall.up:
+            print("up")
+        else:
+            print("down")
+    elif action == "list":
+        firewall.list_services_in()
+    else:
+        print("wrong argument : %s" % action)
+        raise SystemError(__doc__)
+

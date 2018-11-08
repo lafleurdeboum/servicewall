@@ -83,38 +83,3 @@ def scan_service_definitions(definitions_dir):
     return services
 
 
-from socket import socket, inet_ntoa, AF_INET, SOCK_DGRAM
-from struct import pack
-from fcntl import ioctl
-
-
-def get_ip_address(ifname):
-    s = socket(AF_INET, SOCK_DGRAM)
-    return inet_ntoa(ioctl(
-            s.fileno(),
-            0x8915,  # SIOCGIFADDR
-            pack("256s", bytes(ifname[:15], "utf-8"))
-    )[20:24])
-
-
-def get_netmask(ifname):
-    s = socket(AF_INET, SOCK_DGRAM)
-    return inet_ntoa(ioctl(
-            s.fileno(),
-            0x891b, # SIOCGIFNETMASK
-            pack("256s", bytes(ifname[:15], "utf-8"))
-    )[20:24])
-
-
-
-# NOT WORKING - DEBUG NEEDED
-
-def getHwAddr(ifname): # actually doesn't work, don't know why
-    s = socket(AF_INET, SOCK_DGRAM)
-    info = ioctl(
-            s.fileno(),
-            0x8927,
-            pack("256s", bytes(ifname[:15], "utf-8"))
-    )
-    return ''.join(["%02x:" % ord(str(char)) for char in info[18:24]])[:-1]
-
