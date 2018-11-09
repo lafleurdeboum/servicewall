@@ -1,63 +1,43 @@
+"""  ServiceWall
+
+Uses service definitions provided by jhansonxi
+
+and implements them in a FireWall class, either to allow them for the local
+subnetwork, or worldwide.
+"""
+
 import pickle
-from firewall import FireWall
-from iptc import Rule
-
-
-identifier = "FireWall"
-conf_dir = "var/lib/braise/"
-service_defs_pickle = conf_dir + "services.p"
-realm_defs_pickle = conf_dir + "realms.p"
-
-
-class StateFulFireWall(FireWall):
-    """Implement some useful stateful rules :
-    
-    - accept related/established packets
-    - drop invalid packets
-    """
-    def __init__(self):
-        super().__init__()
-
-    def start(self, **args):
-        # Top rule should be to allow related, established connections.
-        self.add_conntrack_rule_in("ACCEPT", "ctstate", "RELATED,ESTABLISHED")
-
-        # Drop invalid packets - as diagnosed by the conntrack processor.
-        self.add_conntrack_rule_in("DROP", "ctstate", "INVALID")
-        super().start(**args)   # commits the table if relevant
-
-    def add_conntrack_rule_in(self, target, param_key, param_value):
-        """Adds a rule to input chain, for example :
-
-        StateFulFireWall.add_conntrack_rule_in("ACCEPT", "ctstate", "RELATED")
-        """
-        print("adding rule %s" % param_value)
-        conntrack_rule = Rule()
-        conntrack_rule.create_target(target)
-        conntrack_match = conntrack_rule.create_match("conntrack")
-        conntrack_match.set_parameter(param_key, param_value)
-        comment_match = conntrack_rule.create_match("comment")
-        comment_match.comment = identifier + ":" + param_value
-        self.input_chain.insert_rule(conntrack_rule)
+import network_helpers
+from statefulfirewall import StateFulFireWall
 
 
 class ServiceWall(StateFulFireWall):
     """ServiceWall - a FireWall in which you can add services on the fly.
     """
+
+    identifier = "FireWall"
+    conf_dir = "var/lib/braise/"
+    service_defs_pickle = conf_dir + "services.p"
+    realm_defs_pickle = conf_dir + "realms.p"
+
     def __init__(self):
         super().__init__()
-        with open(service_defs_pickle, "rb") as fd:
+        # TODO if the FW is already up, we need to check what was the
+        # essid it connected to, to see if we need to reload.
+        self.essid = network_helpers.get_essid()
+        self.subnetwork = network_helpers.get_subnetwork()
+        with open(self.service_defs_pickle, "rb") as fd:
             self.service_defs = pickle.load(fd)
-        with open(realm_defs_pickle, "rb") as fd:
+        with open(self.realm_defs_pickle, "rb") as fd:
             self.realm_defs = pickle.load(fd)
 
-    def start(self, essid, subnetwork, **args):
-        """when you use start(), this object will load a set of rules
-        defined per essid. If these rules are defined as a "local"
-        subnetwork, they will be matched against the provided subnetwork."""
-        self.essid = essid
-        self.subnetwork = subnetwork
+    def start(self, **args):
+        """Will load a set of rules from self.realm_defs . If these rules
+        are set as True, they are matched with the provided subnetwork,
+        else to any source.
+        """
         if self.essid not in self.realm_defs:
+            # If we don't have a definition in there, load "FireWall:new"
             self.realm_defs[self.essid] = self.realm_defs[identifier + ":new"]
         for service_name, local_toggle in self.realm_defs[self.essid].items():
             if local_toggle:
@@ -67,9 +47,11 @@ class ServiceWall(StateFulFireWall):
         super().start(**args)   # commits the table if relevant
 
     def save(self):
-        print("writing modified realms")
+        """Dumps the actual config to config file.
+        """
         with open(realm_defs_pickle, "wb") as fd:
             pickle.dump(self.realm_defs, fd)
+        print("Modified realm rules for %s written to file." % self.essid)
 
     def add_service_in(self, service_name, local=False):
         """Open ports for a service hosted on this machine.
@@ -77,26 +59,16 @@ class ServiceWall(StateFulFireWall):
         service_name should be one of self.service_defs' keys.
         if src is "local", use self.subnetwork instead.
         """
-        try:
-            service = self.service_defs[service_name]
-        except KeyError as error:
-            print("service_defs knows no service service_named %s."
+        if service_name not in self.service_defs:
+            raise KeyError("service_defs knows no service service_named %s."
                     % service_name)
-            raise error
 
-        # Add the service to realm_defs if it's not in there.
-        if service_name not in self.realm_defs[self.essid]:
-            if local == True:
-                self.realm_defs[self.essid][service_name] = "local"
-            else:
-                self.realm_defs[self.essid][service_name] = ""
-
-        if local == True:
+        if local:
             src = self.subnetwork
         else:
             src = ""
 
-        for port, proto in service["ports"]:
+        for port, proto in self.service_defs[service_name]["ports"]:
             self.add_rule(
                     service_name,
                     self.input_chain,
@@ -107,14 +79,15 @@ class ServiceWall(StateFulFireWall):
             )
 
     def del_service_in(self, service_name):
+        """Closes ports for service service_name if they were opened.
+        """
         for rule in self.input_chain.rules:
             # Call the FireWall's  private _get_rule_name function
             if super()._get_rule_name(rule) == service_name:
                 self.del_rule(service_name, self.input_chain)
-        for service in self.realm_defs[self.essid]:
-            if service_name == service[0]:
-                del self.realm_defs[self.essid][service_name]
 
 
     def list_services_in(self):
+        """Lists services for which we have allowed ports.
+        """
         self.list_rules(self.input_chain)

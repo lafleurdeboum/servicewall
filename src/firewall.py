@@ -71,7 +71,6 @@ class FireWall():
             name = self._get_rule_name(rule)
             ident = self._get_rule_id(rule)
             if ident == identifier:
-                print("deleting %s" %  name)
                 self.del_rule(self._get_rule_name(rule), self.input_chain)
                 found_rules += 1
         if not found_rules:
@@ -84,6 +83,7 @@ class FireWall():
 
     def status(self):
         """print the status of the FireWall. Returns either True or False."""
+        # Returns True if a single rule has our identifier tag
         for rule in self.input_chain.rules:
             if identifier == self._get_rule_id(rule):
                 return True
@@ -111,7 +111,6 @@ class FireWall():
             rule = Rule()
             rule.create_target(target)
             if target == "LOG":
-                # TODO set limit match
                 limit_match = rule.create_match("limit")
                 limit_match.limit = "1/s"
                 limit_match.limit_burst = "1"
@@ -138,7 +137,10 @@ class FireWall():
             comment_match.comment = identifier + ":" + name
             # Try to set it into chain.
             rule.final_check()
-            chain.append_rule(rule)
+            if target == "LOG":
+                chain.append_rule(rule)
+            else:
+                chain.insert_rule(rule)
             if not rule in chain.rules:
                 print("Need to check %s rule." % name)
 
@@ -159,8 +161,8 @@ class FireWall():
                 break
 
     def list_rules(self, chain):
-        # dport gets set by self.add_service_in as a match
         for rule in chain.rules:
+            # First find out dport - it gets set by self.add_service_in as a match.
             dport = "any"
             proto = "any"
             for match in rule.matches:
@@ -169,6 +171,7 @@ class FireWall():
                     proto = match.name
                 except (KeyError, IndexError):
                     pass
+            # Then find out source.
             if rule.src == "0.0.0.0/0.0.0.0":
                 src = "any"
             else:

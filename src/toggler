@@ -2,11 +2,13 @@
 """toggle a dynamic service firewall on/off
 
 Usage: %s DEVICE "up|down|status|list"
+where DEVICE is a network interface, such as wlan0
 This script starts or stops a firewall as defined in servicewall.py
 """
 
+#from statefulfirewall import StateFulFireWall
 from servicewall import ServiceWall
-from network_helpers import get_subnetwork
+import network_helpers
 from sys import argv
 from os import environ
 
@@ -19,27 +21,24 @@ def get_local_subnet(device):
         #uuid = environ["CONNECTION_UUID"]
     except KeyError:
         essid = ""
-        raise SystemExit(
-                "No CONNECTION_ID in env. Was the script really started by NetworkManager ?")
-    return(essid, get_subnetwork(device))
+    return(essid, network_helpers.get_subnetwork(device))
 
 
 if __name__ == "__main__":
 
     if len(argv) != 3:
-        print("wrong number of arguments")
-        raise SystemError(__doc__)
-
+        print(__doc__)
+        raise SystemError("wrong number of arguments : %s" % " ".join(argv))
     device = argv[1]
     action = argv[2]
+    #firewall = StateFulFireWall()
     firewall = ServiceWall()
 
     if action == "up":
-        #if firewall.list_rules(firewall.input_chain):
         if firewall.up:
             raise SystemExit("Already up")
-        essid, local_subnet = get_local_subnet(device)
-        firewall.start(essid, local_subnet)
+        #essid, local_subnet = get_local_subnet(device)
+        firewall.start()
 
     elif action == "down":
         if not firewall.up:
@@ -48,7 +47,8 @@ if __name__ == "__main__":
 
     elif action == "connectivity-change":
         if firewall.up:
-            essid, local_subnet = get_local_subnet(device)
+            #essid, local_subnet = get_local_subnet(device)
+            local_subnet = network_helpers.get_subnetwork()
             if local_subnet != firewall.subnetwork:
                 firewall.down()
                 firewall.up()
@@ -63,6 +63,6 @@ if __name__ == "__main__":
         firewall.list_services_in()
 
     else:
-        print("wrong usage : %s" % " ".join(argv))
-        raise SystemError(__doc__)
+        print(__doc__)
+        raise SystemError("wrong usage : %s" % " ".join(argv))
 

@@ -6,22 +6,22 @@
 
 
 import pickle
-# needed to access logging
+# Needed to access logging :
 from systemd import journal
 import select
 #import putch
-#from datetime import datetime
 import datetime
 
+# Needed to add/del services :
+#from servicewall import ServiceWall
+from network_helpers import get_essid
+
+
 conf_dir = "var/lib/braise/"
-#state_pickle = conf_dir + "state.p"
-#realm_pickle = conf_dir + "realm.p"
 realm_defs_pickle = conf_dir + "realms.p"
 service_defs_pickle = conf_dir + "services.p"
 definitions_dir = "/etc/gufw/app_profiles"
-#program_name = "braise-toggler"
 program_name = "FireWall"
-
 
 with open(realm_defs_pickle, "rb") as fd:
     realm_defs = pickle.load(fd)
@@ -51,20 +51,56 @@ if __name__ == "__main__":
         for service in service_defs:
             print("%s - %s" % (service, service_defs[service]["description"]))
     def show_service(args):
-        # The calling parser has nargs="*", so service_name is a list
-        service = " ".join(args.service_name)
+        # The calling parser has nargs="*", so args.service_name is a list
+        service_name = " ".join(args.service_name)
         # Do our own validity testing
-        try:
-            print_dict(service_defs[service])
-        except KeyError:
-            print('service "%s" not found. '
-                    'For a list of valid entries, try\n\n\t%s services\n'
-                    % (service, parser_show.prog)
-            )
+        if service_name not in service_defs:
             parser_show_service.print_usage()
+            raise KeyError('service "%s" not found. ')
+        print_dict(service_defs[service_name])
 
     def add_service(args):
-        print(args.service_name)
+        # The calling parser has nargs="*", so args.service_name is a list
+        service_name = " ".join(args.service_name)
+        # Do our own validity testing
+        if service_name not in service_defs:
+            parser_show_service.print_usage()
+            raise KeyError('service "%s" not found. ')
+        # TODO deal with the device id
+        device = "wlan0"
+        essid = get_essid(device)
+        #firewall = ServiceWall(device)
+        #firewall.add_service_in(args.service_name, local=False)
+        if service_name in realm_defs[essid]:
+            raise SystemExit("Service %s already in realm %s's definition" %
+                    (service_name, essid))
+        realm_defs[essid][service_name] = False
+        with open(realm_defs_pickle, "wb") as fd:
+            pickle.dump(realm_defs, fd)
+        print("Allowed %s to be served when in realm %s." % (service_name, essid))
+        print("Restart ServiceWall !")
+
+    def del_service(args):
+        # The calling parser has nargs="*", so args.service_name is a list
+        service_name = " ".join(args.service_name)
+        # Do our own validity testing
+        if service_name not in service_defs:
+            parser_show_service.print_usage()
+            raise KeyError('service "%s" not found. ')
+        # TODO deal with the device id
+        device = "wlan0"
+        essid = get_essid(device)
+        #firewall = ServiceWall(device)
+        #firewall.del_service_in(args.service_name)
+        if service_name in realm_defs[essid]:
+            del realm_defs[essid][service_name]
+        else:
+            raise KeyError('service "%s" not allowed in realm %s anyway.'
+                    % (service_name, essid))
+        with open(realm_defs_pickle, "wb") as fd:
+            pickle.dump(realm_defs, fd)
+        print("Removed %s from allowed services on realm %s." % (service_name, essid))
+        print("Restart ServiceWall !")
 
     def show_logs(args):
         if "period" in args:
@@ -91,7 +127,7 @@ if __name__ == "__main__":
             if log["SRC"] not in log_folder:
                 log_folder[log["SRC"]] = {}
             if "DPT" not in log:
-                log["DPT"] = "unrecognized packet"
+                log["DPT"] = "-1"
             if log["DPT"] not in log_folder[log["SRC"]]:
                 log_folder[log["SRC"]][log["DPT"]] = [ log, ]
             else:
@@ -103,7 +139,30 @@ if __name__ == "__main__":
             print("Host %s" % src)
             for dpt, logs in ports.items():
                 age = str(now - logs[0]["DATE"]).split(".")[0]
-                print("  asked %i times for port %s until %s ago" %
+                if dpt == "-1":
+                    # These packets don't have any destination port.
+                    # We'll print the first, and any variations on it.
+                    variations = []
+                    for log in logs[1:]:
+                        for key in log:
+                            if key in ("DATE", "ID"):
+                                continue
+                            if log[key] != logs[0][key]:
+                                variations += (key, log[key])
+                    # Delete "DPT" key as it's not a relevant value :
+                    del logs[0]["DPT"]
+                    print("  sent %i unknow packet(s) until %s ago :" %
+                            (len(logs), age))
+                    del logs[0]["DATE"]
+                    del logs[0]["SRC"]
+                    for key, value in logs[0].items():
+                        print("    %s: %s" % (key, value))
+                    if variations:
+                        print("  variations :")
+                        for var in variations:
+                            print("    " + var)
+                else:
+                    print("  asked %i times for port %s until %s ago" %
                         (len(logs), dpt, age))
 
     def log_yielder(period=""):
@@ -118,13 +177,15 @@ if __name__ == "__main__":
         reader.seek_tail()
         while True:
             log = reader.get_previous()
-            # quit if there's no message or log older than period
+            # Quit if there's no message :
             if not "MESSAGE" in log:
                 break
+            # Quit if log older than period :
             if period:
                 age = datetime.datetime.timestamp(now) - datetime.datetime.timestamp(log["__REALTIME_TIMESTAMP"])
                 if age > period:
                     break
+            # Only catch messages concerning our program :
             if log["MESSAGE"].startswith(program_name):
                 message_dict = {}
                 message = log["MESSAGE"].strip(program_name + ":").strip()
@@ -207,14 +268,30 @@ if __name__ == "__main__":
     add_subparser = parser_add.add_subparsers()
     parser_add_service = add_subparser.add_parser(
         "service",
-        #usage="%s %s %s service_name - prints the service definition" % ("braise", "show", "service")
-        usage="braise show service service_name - prints the service definition"
+        usage="%s service service_name - add a service to authorized list" %
+        parser_add.prog
     )
     parser_add_service.add_argument(
         "service_name",
-        choices=service_defs,
+        nargs="*",
     )
     parser_add_service.set_defaults(func=add_service)
+
+    # create the parser for the "del" command
+    parser_del = subparser.add_parser("del")
+    # create the subparser for the "del service" command
+    del_subparser = parser_del.add_subparsers()
+    parser_del_service = del_subparser.add_parser(
+        "service",
+        usage="%s service service_name - remove a service from authorized list" %
+        parser_del.prog
+    )
+    parser_del_service.add_argument(
+        "service_name",
+        nargs="*",
+    )
+    parser_del_service.set_defaults(func=del_service)
+
 
     args = parser.parse_args()
     args.func(args)
