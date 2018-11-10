@@ -1,7 +1,6 @@
 """  ServiceWall
 
 Uses service definitions provided by jhansonxi
-
 and implements them in a FireWall class, either to allow them for the local
 subnetwork, or worldwide.
 """
@@ -15,8 +14,8 @@ class ServiceWall(StateFulFireWall):
     """ServiceWall - a FireWall in which you can add services on the fly.
     """
 
-    identifier = "FireWall"
-    conf_dir = "var/lib/braise/"
+    identifier = "ServiceWall"
+    conf_dir = "/var/lib/servicewall/"
     service_defs_pickle = conf_dir + "services.p"
     realm_defs_pickle = conf_dir + "realms.p"
 

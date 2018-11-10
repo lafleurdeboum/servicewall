@@ -1,0 +1,22 @@
+# Maintainer: la Fleur <lafleur@boum.org>
+# Contributor: la Fleur <lafleur@boum.org>
+
+_pkgname=servicewall
+pkgname=servicewall
+pkgver=0.3
+pkgrel=1
+pkgdesc="A desktop firewall that adapts to different network connections"
+arch=('any')
+#url="https://pypi.python.org/pypi/servicewall"
+url="https://flip.local/~lafleur/"
+license=('LGPL' 'GPL')
+depends=('python')
+makedepends=('python-distribute')
+options=(!emptydirs)
+#source=("https://pypi.python.org/packages/source/p/${_pkgname}/${_pkgname}-${pkgver}.tar.bz2")
+#md5sums=('033227169230286a63b9c059e7465c77')
+source=("http://flip.local/~lafleur/${_pkgname}/${_pkgname}-${pkgver}.tar.gz")
+package() {
+  cd "${srcdir}/${_pkgname}-${pkgver}"
+  python setup.py install --root="${pkgdir}/" --optimize=1
+}
