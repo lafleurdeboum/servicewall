@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+
 import setuptools
 from setuptools.command.install import install
 import os
