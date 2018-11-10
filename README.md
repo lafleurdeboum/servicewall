@@ -5,6 +5,8 @@ a set of rules for each of these realms.
 
 Install it with
  `# pip install servicewall`
+It will need your computer to run systemd and NetworkManager. It will also pull
+python-iptables in, as it uses it intensively.
 
 The firewall is disabled by default. To enable it now and at boot-time:
  # braise enable

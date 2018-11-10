@@ -38,7 +38,7 @@ setuptools.setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GPL License",
+        "License :: OSI Approved :: GNU License",
         "Operating System :: OS Independent",
     ],
     install_requires=["python-iptables"],
