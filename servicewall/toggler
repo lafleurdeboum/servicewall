@@ -7,8 +7,8 @@ This script starts or stops a firewall as defined in servicewall.py
 """
 
 #from statefulfirewall import StateFulFireWall
-from servicewall import ServiceWall
-import network_helpers
+from servicewall import servicewall
+from servicewall import network_helpers
 from sys import argv
 from os import environ
 
@@ -58,9 +58,6 @@ if __name__ == "__main__":
             print("up")
         else:
             print("down")
-
-    elif action == "list":
-        firewall.list_services_in()
 
     else:
         print(__doc__)

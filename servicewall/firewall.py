@@ -7,7 +7,7 @@ from os import environ
 from iptc import Rule, Match, Chain, Table
 
 
-identifier = "FireWall"
+identifier = "ServiceWall"
 
 
 class FireWall():

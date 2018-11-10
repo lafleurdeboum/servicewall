@@ -13,7 +13,7 @@ import select
 import datetime
 
 # Needed to add/del services :
-from servicewall import ServiceWall
+from servicewall import servicewall
 from servicewall import network_helpers
 
 # Needed to parse arguments :
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         raise SystemExit("\n  argument needed !")
 
     def show_status(args):
-        firewall = ServiceWall()
+        firewall = servicewall.ServiceWall()
         firewall.list_services_in()
 
     def show_realms(args):
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         realm_defs[essid][service_name] = False
         with open(realm_defs_pickle, "wb") as fd:
             pickle.dump(realm_defs, fd)
-        firewall = ServiceWall()
+        firewall = servicewall.ServiceWall()
         firewall.add_service_in(args.service_name, local=False)
         print("Allowed %s to be served when in realm %s." % (service_name, essid))
 
@@ -98,7 +98,7 @@ if __name__ == "__main__":
                     % (service_name, essid))
         with open(realm_defs_pickle, "wb") as fd:
             pickle.dump(realm_defs, fd)
-        firewall = ServiceWall()
+        firewall = servicewall.ServiceWall()
         firewall.del_service_in(args.service_name)
         print("Removed %s from allowed services on realm %s." % (service_name, essid))
 
@@ -182,10 +182,7 @@ if __name__ == "__main__":
                 break
             # Quit if log older than period :
             if period:
-                age = datetime.datetime.timestamp(now)
-                        - datetime.datetime.timestamp(
-                                log["__REALTIME_TIMESTAMP"]
-                                )
+                age = datetime.datetime.timestamp(now) - datetime.datetime.timestamp(log["__REALTIME_TIMESTAMP"])
                 if age > period:
                     break
             # Only catch messages sent by iptables log :

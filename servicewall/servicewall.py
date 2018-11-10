@@ -6,11 +6,11 @@ subnetwork, or worldwide.
 """
 
 import pickle
-import network_helpers
-from statefulfirewall import StateFulFireWall
+from servicewall import network_helpers
+from servicewall import statefulfirewall
 
 
-class ServiceWall(StateFulFireWall):
+class ServiceWall(statefulfirewall.StateFulFireWall):
     """ServiceWall - a FireWall in which you can add services on the fly.
     """
 

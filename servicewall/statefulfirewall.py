@@ -6,17 +6,17 @@ and implements them in a FireWall class, using reasonable defaults.
 """
 
 from iptc import Rule
-from firewall import FireWall
+from servicewall import firewall
 
 
-class StateFulFireWall(FireWall):
+class StateFulFireWall(firewall.FireWall):
     """Implement some useful stateful rules :
     
     - accept related/established packets
     - drop invalid packets
     """
 
-    identifier = "FireWall"
+    identifier = "ServiceWall"
 
     def __init__(self):
         super().__init__()
