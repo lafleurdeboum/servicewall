@@ -5,18 +5,24 @@ _pkgname=servicewall
 pkgname=servicewall
 pkgver=0.3
 pkgrel=1
-pkgdesc="A desktop firewall that adapts to different network connections"
-arch=('any')
+pkgdesc="the desktop firewall that adapts to different network connections"
+arch=("any")
 #url="https://pypi.python.org/pypi/servicewall"
 url="https://flip.local/~lafleur/"
-license=('LGPL' 'GPL')
-depends=('python')
-makedepends=('python-distribute')
-options=(!emptydirs)
+license=("GPL3")
+depends=("python" "networkmanager" "python-iptables" "python-argcomplete")
+makedepends=("python-distribute" "python-setuptools")
+#options=(!emptydirs)
 #source=("https://pypi.python.org/packages/source/p/${_pkgname}/${_pkgname}-${pkgver}.tar.bz2")
 source=("http://flip.local/~lafleur/${_pkgname}/${_pkgname}-${pkgver}.tar.gz")
-md5sums=("95a9543f42a368799f5bc4837134c913")
+md5sums=("eb766a267c36d35d6b1716578a6cb5c2")
+
+build() {
+  cd "${srcdir}/${_pkgname}-${pkgver}"
+  python setup.py build
+}
+
 package() {
   cd "${srcdir}/${_pkgname}-${pkgver}"
-  python setup.py install --root="${pkgdir}/"
+  python setup.py install --root="${pkgdir}/" --optimize=1 --skip-build
 }

@@ -32,17 +32,17 @@ if __name__ == "__main__":
     device = argv[1]
     action = argv[2]
     #firewall = StateFulFireWall()
-    firewall = ServiceWall()
+    firewall = servicewall.ServiceWall()
 
     if action == "up":
         if firewall.up:
-            raise SystemExit("Already up")
+            raise SystemExit()
         #essid, local_subnet = get_local_subnet(device)
         firewall.start()
 
     elif action == "down":
         if not firewall.up:
-            raise SystemExit("Already down")
+            raise SystemExit()
         firewall.stop()
 
     elif action == "connectivity-change":

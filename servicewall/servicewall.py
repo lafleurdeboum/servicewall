@@ -83,7 +83,8 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         for rule in self.input_chain.rules:
             # Call the FireWall's  private _get_rule_name function
             if super()._get_rule_name(rule) == service_name:
-                self.del_rule(service_name, self.input_chain)
+                #self.del_rule(service_name, self.input_chain)
+                self.input_chain.delete_rule(rule)
 
 
     def list_services_in(self):

@@ -18,6 +18,9 @@ from servicewall import network_helpers
 
 # Needed to parse arguments :
 import argparse
+#import argcomplete
+
+import os
 
 
 conf_dir = "/var/lib/servicewall/"
@@ -47,6 +50,32 @@ if __name__ == "__main__":
         parser.print_help()
         raise SystemExit("\n  argument needed !")
 
+    def enable(args):
+        src = "/etc/NetworkManager/dispatcher.d/toggler"
+        dst = "/usr/lib/servicewall/toggler"
+        if os.path.exists(src):
+            print("Already enabled")
+        else:
+            os.symlink(dst, src)
+        firewall = servicewall.ServiceWall()
+        if not firewall.up:
+            firewall = servicewall.ServiceWall()
+            firewall.start()
+            print("Firewall started")
+
+    def disable(args):
+        target = "/etc/NetworkManager/dispatcher.d/toggler"
+        # DEBUG This test would fail on a broken link :
+        if os.path.exists(target):
+            os.remove(target)
+        else:
+            print("Already disabled")
+        firewall = servicewall.ServiceWall()
+        if firewall.up:
+            firewall.stop()
+            print("Firewall stopped")
+
+
     def show_status(args):
         firewall = servicewall.ServiceWall()
         firewall.list_services_in()
@@ -68,6 +97,7 @@ if __name__ == "__main__":
     def add_service(args):
         # The calling parser has nargs="*", so args.service_name is a list
         service_name = " ".join(args.service_name)
+        print(service_name, str(len(service_name)))
         # Do our own validity testing
         if service_name not in service_defs:
             parser_show_service.print_usage()
@@ -80,7 +110,7 @@ if __name__ == "__main__":
         with open(realm_defs_pickle, "wb") as fd:
             pickle.dump(realm_defs, fd)
         firewall = servicewall.ServiceWall()
-        firewall.add_service_in(args.service_name, local=False)
+        firewall.add_service_in(service_name, local=False)
         print("Allowed %s to be served when in realm %s." % (service_name, essid))
 
     def del_service(args):
@@ -99,7 +129,7 @@ if __name__ == "__main__":
         with open(realm_defs_pickle, "wb") as fd:
             pickle.dump(realm_defs, fd)
         firewall = servicewall.ServiceWall()
-        firewall.del_service_in(args.service_name)
+        firewall.del_service_in(service_name)
         print("Removed %s from allowed services on realm %s." % (service_name, essid))
 
     def show_logs(args):
@@ -199,13 +229,31 @@ if __name__ == "__main__":
                 yield message_dict
 
 
+
     parser = argparse.ArgumentParser()
     #parser.required = True
     # parser fails badly when invoked without argument ;
     # let's invoke basic help instead.
+    #parser.set_defaults(func=no_arg_provided)
+    #subparser.required = True
+
+
     parser.set_defaults(func=no_arg_provided)
     subparser = parser.add_subparsers()
-    #subparser.required = True
+
+    # Create the parser for the enable command :
+    parser_enable= subparser.add_parser(
+        "enable",
+        help="enable the firewall"
+    )
+    parser_enable.set_defaults(func=enable)
+
+    # Create the parser for the disable command :
+    parser_disable= subparser.add_parser(
+        "disable",
+        help="disable the firewall"
+    )
+    parser_disable.set_defaults(func=disable)
 
     # create the parser for the "show" command
     parser_show = subparser.add_parser("show")
@@ -300,6 +348,7 @@ if __name__ == "__main__":
     parser_del_service.set_defaults(func=del_service)
 
 
+    #argcomplete.autocomplete(parser)
     args = parser.parse_args()
     args.func(args)
 
