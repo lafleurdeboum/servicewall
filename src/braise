@@ -13,15 +13,18 @@ import select
 import datetime
 
 # Needed to add/del services :
-#from servicewall import ServiceWall
-from network_helpers import get_essid
+from servicewall import ServiceWall
+from servicewall import network_helpers
+
+# Needed to parse arguments :
+import argparse
 
 
-conf_dir = "var/lib/braise/"
+conf_dir = "/var/lib/servicewall/"
 realm_defs_pickle = conf_dir + "realms.p"
 service_defs_pickle = conf_dir + "services.p"
 definitions_dir = "/etc/gufw/app_profiles"
-program_name = "FireWall"
+program_name = "ServiceWall"
 
 with open(realm_defs_pickle, "rb") as fd:
     realm_defs = pickle.load(fd)
@@ -39,11 +42,14 @@ def print_dict(dictionary):
 
 
 if __name__ == "__main__":
-    import argparse
 
     def no_arg_provided(args):
         parser.print_help()
         raise SystemExit("\n  argument needed !")
+
+    def show_status(args):
+        firewall = ServiceWall()
+        firewall.list_services_in()
 
     def show_realms(args):
         print_dict(realm_defs)
@@ -66,19 +72,16 @@ if __name__ == "__main__":
         if service_name not in service_defs:
             parser_show_service.print_usage()
             raise KeyError('service "%s" not found. ')
-        # TODO deal with the device id
-        device = "wlan0"
-        essid = get_essid(device)
-        #firewall = ServiceWall(device)
-        #firewall.add_service_in(args.service_name, local=False)
+        essid = network_helpers.get_essid()
         if service_name in realm_defs[essid]:
             raise SystemExit("Service %s already in realm %s's definition" %
                     (service_name, essid))
         realm_defs[essid][service_name] = False
         with open(realm_defs_pickle, "wb") as fd:
             pickle.dump(realm_defs, fd)
+        firewall = ServiceWall()
+        firewall.add_service_in(args.service_name, local=False)
         print("Allowed %s to be served when in realm %s." % (service_name, essid))
-        print("Restart ServiceWall !")
 
     def del_service(args):
         # The calling parser has nargs="*", so args.service_name is a list
@@ -87,11 +90,7 @@ if __name__ == "__main__":
         if service_name not in service_defs:
             parser_show_service.print_usage()
             raise KeyError('service "%s" not found. ')
-        # TODO deal with the device id
-        device = "wlan0"
-        essid = get_essid(device)
-        #firewall = ServiceWall(device)
-        #firewall.del_service_in(args.service_name)
+        essid = network_helpers.get_essid()
         if service_name in realm_defs[essid]:
             del realm_defs[essid][service_name]
         else:
@@ -99,8 +98,9 @@ if __name__ == "__main__":
                     % (service_name, essid))
         with open(realm_defs_pickle, "wb") as fd:
             pickle.dump(realm_defs, fd)
+        firewall = ServiceWall()
+        firewall.del_service_in(args.service_name)
         print("Removed %s from allowed services on realm %s." % (service_name, essid))
-        print("Restart ServiceWall !")
 
     def show_logs(args):
         if "period" in args:
@@ -182,10 +182,13 @@ if __name__ == "__main__":
                 break
             # Quit if log older than period :
             if period:
-                age = datetime.datetime.timestamp(now) - datetime.datetime.timestamp(log["__REALTIME_TIMESTAMP"])
+                age = datetime.datetime.timestamp(now)
+                        - datetime.datetime.timestamp(
+                                log["__REALTIME_TIMESTAMP"]
+                                )
                 if age > period:
                     break
-            # Only catch messages concerning our program :
+            # Only catch messages sent by iptables log :
             if log["MESSAGE"].startswith(program_name):
                 message_dict = {}
                 message = log["MESSAGE"].strip(program_name + ":").strip()
@@ -211,19 +214,12 @@ if __name__ == "__main__":
     parser_show = subparser.add_parser("show")
     show_subparser = parser_show.add_subparsers()
 
-    # create the subparser for the "show realms" command
-    parser_show_realms = show_subparser.add_parser(
-        "realms",
-        help="show realm definitions"
+    # create the subparser for the "show status" command
+    parser_show_status = show_subparser.add_parser(
+        "status",
+        help="show iptables rules controlled by this firewall"
     )
-    parser_show_realms.set_defaults(func=show_realms)
-
-    # create the subparser for the "show services" command
-    parser_show_services = show_subparser.add_parser(
-        "services",
-        help="show services list"
-    )
-    parser_show_services.set_defaults(func=show_services)
+    parser_show_status.set_defaults(func=show_status)
 
     # create the subparser for the "show logs" command
     parser_show_logs = show_subparser.add_parser(
@@ -240,6 +236,20 @@ if __name__ == "__main__":
         "period",
     )
     parser_show_logs_time.set_defaults(func=show_logs)
+
+    # create the subparser for the "show realms" command
+    parser_show_realms = show_subparser.add_parser(
+        "realms",
+        help="show realm definitions"
+    )
+    parser_show_realms.set_defaults(func=show_realms)
+
+    # create the subparser for the "show services" command
+    parser_show_services = show_subparser.add_parser(
+        "services",
+        help="show services list"
+    )
+    parser_show_services.set_defaults(func=show_services)
 
     # create the subparser for the "show service SERVICE_NAME" command
     parser_show_service = show_subparser.add_parser(

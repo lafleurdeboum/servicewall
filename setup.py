@@ -29,6 +29,6 @@ setuptools.setup(
     install_requires=["python-iptables"],
     scripts=["servicewall/braise"],
     data_files=[
-        ("/var/lib/servicewall", ["servicewall/var/realms.p", "servicewall/var/services.p"]),
+        ("/var/lib/servicewall", ["var/realms.p", "var/services.p"]),
     ],
 )
