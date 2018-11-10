@@ -5,10 +5,10 @@
 """
 
 # Needed to parse arguments :
+import argcomplete
 import argparse
-#import argcomplete
 import pickle
-import os
+from servicewall.network_helpers import get_essid
 
 
 conf_dir = "/var/lib/servicewall/"
@@ -17,8 +17,14 @@ service_defs_pickle = conf_dir + "services.p"
 definitions_dir = "/etc/gufw/app_profiles"
 program_name = "ServiceWall"
 
+with open(realm_defs_pickle, "rb") as fd:
+    realm_defs = pickle.load(fd)
 with open(service_defs_pickle, "rb") as fd:
     service_defs = pickle.load(fd)
+
+# Find allowed services to help autocompletion know what to delete.
+essid = get_essid()
+allowed_services = [ service_def for service_def in realm_defs[essid].keys() ]
 
 def helper(function_name):
     """This function will return a pointer to a function named "function_name"
@@ -133,7 +139,8 @@ parser_add_service = add_subparser.add_parser(
 )
 parser_add_service.add_argument(
     "service_name",
-    nargs="*",
+    #nargs="*",
+    choices=service_defs,
 )
 parser_add_service.set_defaults(func=helper("add_service"))
 
@@ -148,13 +155,16 @@ parser_del_service = del_subparser.add_parser(
 )
 parser_del_service.add_argument(
     "service_name",
-    nargs="*",
+    #nargs="*",
+    choices=allowed_services,
 )
 parser_del_service.set_defaults(func=helper("del_service"))
 
 
-#argcomplete.autocomplete(parser)
+argcomplete.autocomplete(parser)
+# Here, argcomplete stops.
 args = parser.parse_args()
+# Here, helper callbacks get evaluated.
 args.func(args)
 
 
