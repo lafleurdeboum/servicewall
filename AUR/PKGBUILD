@@ -14,10 +14,9 @@ depends=('python')
 makedepends=('python-distribute')
 options=(!emptydirs)
 #source=("https://pypi.python.org/packages/source/p/${_pkgname}/${_pkgname}-${pkgver}.tar.bz2")
-#md5sums=('033227169230286a63b9c059e7465c77')
 source=("http://flip.local/~lafleur/${_pkgname}/${_pkgname}-${pkgver}.tar.gz")
-md5sums=("e3a8bd26aeacf5ddb5271ee83692b060")
+md5sums=("95a9543f42a368799f5bc4837134c913")
 package() {
   cd "${srcdir}/${_pkgname}-${pkgver}"
-  python setup.py install --root="${pkgdir}/" --optimize=1
+  python setup.py install --root="${pkgdir}/"
 }
