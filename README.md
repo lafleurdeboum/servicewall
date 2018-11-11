@@ -6,7 +6,7 @@ You have a personal device that you use as a client. You already know that some
 services need to use ports on the network card, such as Skype, MORPGames, or
 sharing files with someone using Samba, local games ...
 
-And you run a linux kernel and Network Manager
+And you run a linux kernel and Network Manager.
 
 You want a firewall that drops invalid traffic whatsoever, and allows "some"
 services at home for people at home, and usually less when you're in a ...
@@ -15,7 +15,7 @@ random place.
 This firewall adapts to the changes in the connection provider's declared name
 (the ESSID), using a set of rules for each of these realms. It stores the list
 of allowed services for each ESSID it meets in a dictionary, starting with a
-customisable default, adding the services you tell it to (for good).
+customisable default, adding the services you tell it to.
 
 ## Installation
 
@@ -25,7 +25,8 @@ As the header goes, install it with :
 
 This software needs python 3 and python-iptables to work. It also relies on
 Network Manager's dispatcher to fire the events on connectivity change. Any network
-event dispatcher would do, just need to call `toggler`. To locate the file, check :
+event dispatcher would do, it just needs to call `toggler`. To locate the file,
+check :
 
   `# pip show -f servicewall`
 
