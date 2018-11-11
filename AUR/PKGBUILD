@@ -15,7 +15,7 @@ makedepends=("python-distribute" "python-setuptools")
 #options=(!emptydirs)
 #source=("https://pypi.python.org/packages/source/p/${_pkgname}/${_pkgname}-${pkgver}.tar.bz2")
 source=("http://flip.local/~lafleur/${_pkgname}/${_pkgname}-${pkgver}.tar.gz")
-md5sums=("ee3909f7b251b4056dcf4ba76144b7e2")
+md5sums=("045d5535eeefaec867dad3f2a3232efa")
 
 build() {
   cd "${srcdir}/${_pkgname}-${pkgver}"

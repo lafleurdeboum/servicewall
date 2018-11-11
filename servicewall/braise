@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#PYTHON_ARGCOMPLETE_OK
 """braise - a dynamic firewall
 
 """
@@ -26,7 +27,7 @@ with open(service_defs_pickle, "rb") as fd:
 essid = get_essid()
 allowed_services = [ service_def for service_def in realm_defs[essid].keys() ]
 
-def helper(function_name):
+def parser_helper(function_name):
     """This function will return a pointer to a function named "function_name"
     in parser_helpers. This pointer will only be evaluated when it is called,
     ie after parser is done.
@@ -41,31 +42,31 @@ parser = argparse.ArgumentParser()
 
 # parser fails badly when invoked without argument ;
 # let's invoke basic help instead.
-parser.set_defaults(func=helper("no_arg_provided"))
+parser.set_defaults(func=parser_helper("no_arg_provided"))
 
 subparser = parser.add_subparsers()
 #subparser.required = True
 
 
 #
-# SUBPARSERS : enable, disable
+# SUBPARSERS : enable | disable
 #
 
 parser_enable = subparser.add_parser(
     "enable",
     help="enable the firewall"
 )
-parser_enable.set_defaults(func=helper("enable"))
+parser_enable.set_defaults(func=parser_helper("enable"))
 
 parser_disable = subparser.add_parser(
     "disable",
     help="disable the firewall"
 )
-parser_disable.set_defaults(func=helper("disable"))
+parser_disable.set_defaults(func=parser_helper("disable"))
 
 
 #
-# SUBPARSERS : show status, logs, realms, services, service
+# SUBPARSERS : show { status | logs | realms | services | service }
 #
 
 parser_show = subparser.add_parser("show")
@@ -75,13 +76,13 @@ parser_show_status = show_subparser.add_parser(
     "status",
     help="show iptables rules controlled by this firewall"
 )
-parser_show_status.set_defaults(func=helper("show_status"))
+parser_show_status.set_defaults(func=parser_helper("show_status"))
 
 parser_show_logs = show_subparser.add_parser(
     "logs",
     help="show logs of firewall"
 )
-parser_show_logs.set_defaults(func=helper("show_logs"))
+parser_show_logs.set_defaults(func=parser_helper("show_logs"))
 show_logs_subparser = parser_show_logs.add_subparsers()
 parser_show_logs_time = show_logs_subparser.add_parser(
     "since",
@@ -90,19 +91,19 @@ parser_show_logs_time = show_logs_subparser.add_parser(
 parser_show_logs_time.add_argument(
     "period",
 )
-parser_show_logs_time.set_defaults(func=helper("show_logs"))
+parser_show_logs_time.set_defaults(func=parser_helper("show_logs"))
 
 parser_show_realms = show_subparser.add_parser(
     "realms",
     help="show realm definitions"
 )
-parser_show_realms.set_defaults(func=helper("show_realms"))
+parser_show_realms.set_defaults(func=parser_helper("show_realms"))
 
 parser_show_services = show_subparser.add_parser(
     "services",
     help="show services list"
 )
-parser_show_services.set_defaults(func=helper("show_services"))
+parser_show_services.set_defaults(func=parser_helper("show_services"))
 
 parser_show_service = show_subparser.add_parser(
     "service",
@@ -121,11 +122,11 @@ parser_show_service.add_argument(
     #choices=[ name.split() for name in service_defs ],
     #help=""
 )
-parser_show_service.set_defaults(func=helper("show_service"))
+parser_show_service.set_defaults(func=parser_helper("show_service"))
 
 
 #
-# SUBPARSERS : add and del service
+# SUBPARSERS : { add | del } service
 #
 
 # create the parser for the "add" command
@@ -142,7 +143,7 @@ parser_add_service.add_argument(
     #nargs="*",
     choices=service_defs,
 )
-parser_add_service.set_defaults(func=helper("add_service"))
+parser_add_service.set_defaults(func=parser_helper("add_service"))
 
 # create the parser for the "del" command
 parser_del = subparser.add_parser("del")
@@ -158,7 +159,7 @@ parser_del_service.add_argument(
     #nargs="*",
     choices=allowed_services,
 )
-parser_del_service.set_defaults(func=helper("del_service"))
+parser_del_service.set_defaults(func=parser_helper("del_service"))
 
 
 argcomplete.autocomplete(parser)
