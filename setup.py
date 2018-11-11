@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+
 import setuptools
 from setuptools.command.install import install
 import os
@@ -27,10 +30,11 @@ setuptools.setup(
     name="servicewall",
     version="0.3",
     author="la Fleur",
-    author_email="lafleur@boum.org",
+    author_email="lafleur at boum point org",
     description="the desktop firewall that adapts to different network connections",
     keywords="dynamic adaptable iptables firewall",
     license="GNUv3",
+    python_requires=">=3",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="http://flip.local/~lafleur/servicewall",
@@ -38,7 +42,7 @@ setuptools.setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU License",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
     install_requires=["python-iptables"],
