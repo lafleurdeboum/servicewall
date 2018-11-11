@@ -32,7 +32,7 @@ setuptools.setup(
     name=name,
     version=version,
     author="la Fleur",
-    author_email="lafleur at boum point org",
+    author_email="lafleur@boum.org",
     description="the desktop firewall that adapts to different network connections",
     keywords="dynamic adaptable iptables firewall",
     license="GNUv3",
@@ -50,8 +50,8 @@ setuptools.setup(
     install_requires=["python-iptables"],
     scripts=["servicewall/braise"],
     data_files=[
-        ("/var/lib/servicewall", ["var/realms.p", "var/services.p"]),
-        ("/usr/lib/servicewall", ["servicewall/toggler"]),
+        ("lib/servicewall", ["var/realms.p", "var/services.p"]),
+        ("lib/servicewall", ["servicewall/toggler"]),
     ],
     cmdclass={"install": CustomInstallCommand,},
 )

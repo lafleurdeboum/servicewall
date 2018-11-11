@@ -15,7 +15,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     """
 
     identifier = "ServiceWall"
-    conf_dir = "/var/lib/servicewall/"
+    conf_dir = "/usr/lib/servicewall/"
     service_defs_pickle = conf_dir + "services.p"
     realm_defs_pickle = conf_dir + "realms.p"
 

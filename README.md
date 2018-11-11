@@ -46,9 +46,8 @@ allowed.
 
 To have details on the status, use :
 
-  `# braise show status`
+  `# braise status`
 
-TODO change to `braise status`
 If it doesn't reply at all, then obviously the firewall is down.
 
 To allow a specific service, do :

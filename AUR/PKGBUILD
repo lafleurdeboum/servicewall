@@ -10,19 +10,20 @@ arch=("any")
 #url="https://pypi.python.org/pypi/servicewall"
 url="https://flip.local/~lafleur/"
 license=("GPL3")
-depends=("python" "networkmanager" "python-iptables" "python-argcomplete")
+depends=("python" "networkmanager" "python-iptables")
+optdepends=("python-argcomplete")
 makedepends=("python-distribute" "python-setuptools")
 #options=(!emptydirs)
 #source=("https://pypi.python.org/packages/source/p/${_pkgname}/${_pkgname}-${pkgver}.tar.bz2")
 source=("http://flip.local/~lafleur/${_pkgname}/${_pkgname}-${pkgver}.tar.gz")
-md5sums=("b259a2d454fda0ac75dc523be8a3ef4b")
+md5sums=("d97e14379e73c1c8d36d85713e67856f")
 
 build() {
-  cd "${srcdir}/${_pkgname}-${pkgver}"
+  #cd "${srcdir}/${_pkgname}-${pkgver}"
   python setup.py build
 }
 
 package() {
-  cd "${srcdir}/${_pkgname}-${pkgver}"
+  #cd "${srcdir}/${_pkgname}-${pkgver}"
   python setup.py install --root="${pkgdir}/" --optimize=1 --skip-build
 }

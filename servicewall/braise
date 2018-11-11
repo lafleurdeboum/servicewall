@@ -12,7 +12,7 @@ import pickle
 from servicewall.network_helpers import get_essid
 
 
-conf_dir = "/var/lib/servicewall/"
+conf_dir = "/usr/lib/servicewall/"
 realm_defs_pickle = conf_dir + "realms.p"
 service_defs_pickle = conf_dir + "services.p"
 definitions_dir = "/etc/gufw/app_profiles"
@@ -40,16 +40,16 @@ def parser_helper(function_name):
 parser = argparse.ArgumentParser()
 #parser.required = True
 
-# parser fails badly when invoked without argument ;
-# let's invoke basic help instead.
-parser.set_defaults(func=parser_helper("no_arg_provided"))
+# parser fails badly when invoked without argument ; let's invoke basic help
+# instead (see def no_arg_provided(args) in service_helpers.py)
+#parser.set_defaults(func=parser_helper("no_arg_provided"))
 
 subparser = parser.add_subparsers()
-#subparser.required = True
+subparser.required = True
 
 
 #
-# SUBPARSERS : enable | disable
+# SUBPARSERS : enable | disable | status
 #
 
 parser_enable = subparser.add_parser(
@@ -64,23 +64,23 @@ parser_disable = subparser.add_parser(
 )
 parser_disable.set_defaults(func=parser_helper("disable"))
 
-
-#
-# SUBPARSERS : show { status | logs | realms | services | service }
-#
-
-parser_show = subparser.add_parser("show")
-show_subparser = parser_show.add_subparsers()
-
-parser_show_status = show_subparser.add_parser(
+parser_show_status = subparser.add_parser(
     "status",
     help="show iptables rules controlled by this firewall"
 )
 parser_show_status.set_defaults(func=parser_helper("show_status"))
 
+
+#
+# SUBPARSERS : show { logs | realms | services | service }
+#
+
+parser_show = subparser.add_parser("show")
+show_subparser = parser_show.add_subparsers()
+
 parser_show_logs = show_subparser.add_parser(
     "logs",
-    help="show logs of firewall"
+    help="show a digest of logs of the firewall"
 )
 parser_show_logs.set_defaults(func=parser_helper("show_logs"))
 show_logs_subparser = parser_show_logs.add_subparsers()
@@ -88,9 +88,7 @@ parser_show_logs_time = show_logs_subparser.add_parser(
     "since",
     help="restrict logs to those since [period] seconds"
 )
-parser_show_logs_time.add_argument(
-    "period",
-)
+parser_show_logs_time.add_argument("period")   # TODO cast int()
 parser_show_logs_time.set_defaults(func=parser_helper("show_logs"))
 
 parser_show_realms = show_subparser.add_parser(
@@ -105,23 +103,17 @@ parser_show_services = show_subparser.add_parser(
 )
 parser_show_services.set_defaults(func=parser_helper("show_services"))
 
+# For "show service", don't define help ; instead overwrite usage because it
+# prints the possible arguments twice, which is way too long.
+# TODO could tell to search for services with braise show services
+# and then don't display "positional arguments" - see
+# https://docs.python.org/3.2/library/argparse.html#formatter-class
 parser_show_service = show_subparser.add_parser(
     "service",
-    # don't define help ; instead overwrite the usage because
-    # it prints the possible arguments twice, which is way too long
-    help="prints the service definition",
-    # TODO could tell to search for services with braise show services
-    # and then don't display "positional arguments" - see
-    # https://docs.python.org/3.2/library/argparse.html#formatter-class
     usage="%s %s service_name - prints the service definition" %
     (parser_show.prog, "service")
 )
-parser_show_service.add_argument(
-    "service_name",
-    nargs="*",
-    #choices=[ name.split() for name in service_defs ],
-    #help=""
-)
+parser_show_service.add_argument("service_name", choices=service_defs)
 parser_show_service.set_defaults(func=parser_helper("show_service"))
 
 
@@ -129,36 +121,25 @@ parser_show_service.set_defaults(func=parser_helper("show_service"))
 # SUBPARSERS : { add | del } service
 #
 
-# create the parser for the "add" command
 parser_add = subparser.add_parser("add")
-# create the subparser for the "add service" command
 add_subparser = parser_add.add_subparsers()
 parser_add_service = add_subparser.add_parser(
     "service",
     usage="%s service service_name - add a service to authorized list" %
     parser_add.prog
 )
-parser_add_service.add_argument(
-    "service_name",
-    #nargs="*",
-    choices=service_defs,
-)
+parser_add_service.add_argument("service_name", choices=service_defs)
 parser_add_service.set_defaults(func=parser_helper("add_service"))
 
-# create the parser for the "del" command
 parser_del = subparser.add_parser("del")
-# create the subparser for the "del service" command
 del_subparser = parser_del.add_subparsers()
+# We could have used parser_add_service, but the choices aren't the same :
 parser_del_service = del_subparser.add_parser(
     "service",
     usage="%s service service_name - remove a service from authorized list" %
     parser_del.prog
 )
-parser_del_service.add_argument(
-    "service_name",
-    #nargs="*",
-    choices=allowed_services,
-)
+parser_del_service.add_argument("service_name", choices=allowed_services)
 parser_del_service.set_defaults(func=parser_helper("del_service"))
 
 

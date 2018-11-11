@@ -4,7 +4,7 @@
 
 """
 
-__all__ = ["no_arg_provided", "enable", "disable", "show_logs", "show_realms", "show_services", "show_service", "show status", "add_service", "del_service"]
+__all__ = ["no_arg_provided", "enable", "disable", "show_logs", "show_realms", "show_services", "show_service", "show_status", "add_service", "del_service"]
 
 
 import pickle
@@ -18,14 +18,10 @@ import datetime
 from servicewall import servicewall
 from servicewall import network_helpers
 
-# Needed to parse arguments :
-import argparse
-#import argcomplete
-
 import os
 
 
-conf_dir = "/var/lib/servicewall/"
+conf_dir = "/usr/lib/servicewall/"
 realm_defs_pickle = conf_dir + "realms.p"
 service_defs_pickle = conf_dir + "services.p"
 definitions_dir = "/etc/gufw/app_profiles"
@@ -35,11 +31,6 @@ with open(realm_defs_pickle, "rb") as fd:
     realm_defs = pickle.load(fd)
 with open(service_defs_pickle, "rb") as fd:
     service_defs = pickle.load(fd)
-
-def helper(func, args):
-    #wrapper = eval func.__name__
-    #wrapper(args)
-    func(args)
 
 def print_dict(dictionary):
     for key, value in dictionary.items():
@@ -55,12 +46,18 @@ def no_arg_provided(args):
     raise SystemExit("\n  argument needed !")
 
 def enable(args):
-    src = "/etc/NetworkManager/dispatcher.d/toggler"
-    dst = "/usr/lib/servicewall/toggler"
-    if os.path.exists(src):
+    """Create a link in the network dispatcher pointing to the event triggerer.
+    """
+    src = "/etc/NetworkManager/dispatcher.d/"
+    dst = "/usr/lib/servicewall/"
+    event_triggerer = "toggler"
+    if not os.path.exists(dst):
+        raise SystemExit("Could not find %s in %s" %
+                (event_triggerer, dst))
+    if os.path.exists(src + event_triggerer):
         print("Already enabled")
     else:
-        os.symlink(dst, src)
+        os.symlink(dst + event_triggerer, src + event_triggerer)
     firewall = servicewall.ServiceWall()
     if not firewall.up:
         firewall = servicewall.ServiceWall()
@@ -79,10 +76,10 @@ def disable(args):
         firewall.stop()
         print("Firewall stopped")
 
-
 def show_status(args):
     firewall = servicewall.ServiceWall()
     firewall.list_services_in()
+
 
 def show_realms(args):
     print_dict(realm_defs)
