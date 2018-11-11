@@ -3,7 +3,7 @@
 
 _pkgname=servicewall
 pkgname=servicewall
-pkgver=0.3
+pkgver=0.3.1
 pkgrel=1
 pkgdesc="the desktop firewall that adapts to different network connections"
 arch=("any")
@@ -15,7 +15,7 @@ makedepends=("python-distribute" "python-setuptools")
 #options=(!emptydirs)
 #source=("https://pypi.python.org/packages/source/p/${_pkgname}/${_pkgname}-${pkgver}.tar.bz2")
 source=("http://flip.local/~lafleur/${_pkgname}/${_pkgname}-${pkgver}.tar.gz")
-md5sums=("045d5535eeefaec867dad3f2a3232efa")
+md5sums=("b259a2d454fda0ac75dc523be8a3ef4b")
 
 build() {
   cd "${srcdir}/${_pkgname}-${pkgver}"

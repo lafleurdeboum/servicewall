@@ -25,10 +25,12 @@ with open("README.md", "r") as fh:
 here = path.abspath(path.dirname(__file__))
 print("included packages : %s" %
         setuptools.find_packages(exclude=['scriptlets']))
+name="servicewall"
+version = "0.3.1"
 
 setuptools.setup(
-    name="servicewall",
-    version="0.3",
+    name=name,
+    version=version,
     author="la Fleur",
     author_email="lafleur at boum point org",
     description="the desktop firewall that adapts to different network connections",
@@ -56,6 +58,7 @@ setuptools.setup(
 
 # Update PKGBUILD's md5sums
 try:
-    import update_md5sum_in_PKGBUILD
+    from update_md5sum_in_PKGBUILD import do_md5_sum
+    do_md5_sum("dist/" + name + "-" + version + ".tar.gz")
 except ModuleNotFoundError:
     pass
