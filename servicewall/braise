@@ -38,7 +38,7 @@ def parser_helper(function_name):
     return wrapper
 
 parser = argparse.ArgumentParser()
-#parser.required = True
+parser.required = True
 
 # parser fails badly when invoked without argument ; let's invoke basic help
 # instead (see def no_arg_provided(args) in service_helpers.py)
@@ -76,6 +76,7 @@ parser_show_status.set_defaults(func=parser_helper("show_status"))
 #
 
 parser_show = subparser.add_parser("show")
+parser_show.required = True
 show_subparser = parser_show.add_subparsers()
 
 parser_show_logs = show_subparser.add_parser(
@@ -88,7 +89,7 @@ parser_show_logs_time = show_logs_subparser.add_parser(
     "since",
     help="restrict logs to those since [period] seconds"
 )
-parser_show_logs_time.add_argument("period")   # TODO cast int()
+parser_show_logs_time.add_argument("period", type=int)
 parser_show_logs_time.set_defaults(func=parser_helper("show_logs"))
 
 parser_show_realms = show_subparser.add_parser(

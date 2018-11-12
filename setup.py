@@ -47,7 +47,12 @@ setuptools.setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
-    install_requires=["python-iptables"],
+    install_requires=[
+            "python-iptables",
+            "python-argparse",
+            "python-netifaces",
+            "python-systemd",
+    ],
     scripts=["servicewall/braise"],
     data_files=[
         ("lib/servicewall", ["var/realms.p", "var/services.p"]),
