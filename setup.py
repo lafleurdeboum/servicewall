@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+"""Install script for servicewall
+"""
 
 
 import setuptools
@@ -6,7 +8,10 @@ from setuptools.command.install import install
 import os
 from os import path, environ
 
+
 class CustomInstallCommand(install):
+    """Not in use anymore - the dispatcher link is made by braise enable.
+    """
     def run(self):
         #dst = os.readlink(here + "/links/toggler")
         src = "/etc/NetworkManager/dispatcher.d/toggler"
@@ -16,6 +21,7 @@ class CustomInstallCommand(install):
         #    print(key, item)
         install.run(self)
 
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
@@ -23,8 +29,9 @@ with open("README.md", "r") as fh:
 #   5 - Production/Stable
 
 here = path.abspath(path.dirname(__file__))
-print("included packages : %s" %
-        setuptools.find_packages(exclude=['scriptlets']))
+for package in setuptools.find_packages(exclude=('scriptlets')):
+    print("setuptools : including package %s" % package)
+
 name="servicewall"
 version = "0.3.2"
 
@@ -40,25 +47,28 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="http://flip.local/~lafleur/servicewall",
-    packages=setuptools.find_packages(exclude=['scriptlets']),
-    classifiers=[
+    packages=setuptools.find_packages(exclude=('scriptlets')),
+    classifiers=(
         'Development Status :: 3 - Alpha',
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
-    ],
-    install_requires=[
-            "python-iptables",
-            "python-argparse",
-            "python-netifaces",
-            "python-systemd",
-    ],
-    scripts=["servicewall/braise"],
-    data_files=[
-        ("lib/servicewall", ["var/realms.p", "var/services.p"]),
-        ("lib/servicewall", ["servicewall/toggler"]),
-    ],
-    cmdclass={"install": CustomInstallCommand,},
+    ),
+    install_requires=(
+        "python-iptables",
+        "python-argparse",
+        "python-netifaces",
+        "python-systemd",
+    ),
+    extras={
+        "python-argcomplete": "have tab-completion in bash as root"
+    }
+    scripts=("servicewall/braise"),
+    data_files=(
+        ("lib/servicewall", ("var/realms.p", "var/services.p")),
+        ("lib/servicewall", ("servicewall/toggler")),
+    ),
+    #cmdclass={"install": CustomInstallCommand,},
 )
 
 # Update PKGBUILD's md5sums

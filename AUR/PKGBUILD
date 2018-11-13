@@ -10,13 +10,13 @@ arch=("any")
 #url="https://pypi.python.org/pypi/servicewall"
 url="https://flip.local/~lafleur/"
 license=("GPL3")
-depends=("python" "networkmanager" "python-iptables" "python-argparse" "python-netifaces" "python-systemd")
-optdepends=("python-argcomplete" "systemd-dispatcher")
+depends=("python" "python-iptables" "python-argparse" "python-netifaces" "python-systemd")
+optdepends=("python-argcomplete" "networkd-dispatcher" "networkmanager")
 makedepends=("python-distribute" "python-setuptools")
 #options=(!emptydirs)
 #source=("https://pypi.python.org/packages/source/p/${_pkgname}/${_pkgname}-${pkgver}.tar.bz2")
 source=("http://flip.local/~lafleur/${_pkgname}/${_pkgname}-${pkgver}.tar.gz")
-md5sums=("c2d34af54be89c5d231ea935596a3a0a")
+md5sums=("657b4fc9cb6dd3fd421aca6fb6128179")
 
 build() {
   cd "${srcdir}/${_pkgname}-${pkgver}"

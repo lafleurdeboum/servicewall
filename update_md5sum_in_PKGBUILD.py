@@ -1,7 +1,7 @@
 import hashlib
 
 
-PKGBUILD = "AUR/PKGBUILD"
+PKGBUILD = "../AUR/PKGBUILD"
 
 def md5sum(filename, blocksize=65536):
     hash = hashlib.md5()
