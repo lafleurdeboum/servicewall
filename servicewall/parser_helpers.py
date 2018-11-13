@@ -53,23 +53,30 @@ def enable(args):
             "Network Manager": "/etc/NetworkManager/dispatcher.d/",
             "systemd-networkd": "/etc/networkd-dispatcher/carrier.d/",
     }
-    dst = "/usr/lib/servicewall/"
+    src = "/usr/lib/servicewall/"
     event_triggerer = "toggler"
-    if not os.path.exists(dst):
+    if not os.path.exists(src):
         # This should never happen ; pip should gracefully put it there.
         raise SystemExit("Could not find %s in %s" %
-                (event_triggerer, dst))
-    for dispatcher, src in dispatchers:
-        if os.path.exists(src + event_triggerer):
+                (event_triggerer, src))
+    witness = False
+    for dispatcher, dst in dispatchers.items():
+        if not os.path.exists(dst):
+            # Keep going with the next dispatcher.
+            continue
+        if os.path.exists(dst + event_triggerer):
             print("%s dispatcher was already enabled" % dispatcher)
+            witness = True
         else:
-            os.symlink(dst + event_triggerer, src + event_triggerer)
+            # symlink pointing to src in dst
+            os.symlink(src + event_triggerer, dst + event_triggerer)
+            witness = True
             print("%s dispatcher enabled" % dispatcher)
-    else:
-        raise SystemExit("Could not link to any network event dispatcher."
-                "You apparently aren't running neither Network Manager nor"
-                "systemd-networkd with networkd-dispatcher. You'll need one"
-                "of those to run this firewall as it relies on them to fire the"
+    if not witness:
+        raise SystemExit("Could not link to any network event dispatcher. "
+                "You apparently aren't running neither Network Manager nor "
+                "systemd-networkd with networkd-dispatcher. You'll need one "
+                "of those to run this firewall as it relies on them to fire the "
                 "network change events.")
 
     firewall = servicewall.ServiceWall()
@@ -88,15 +95,16 @@ def disable(args):
     }
     event_triggerer = "toggler"
     #target = "/etc/NetworkManager/dispatcher.d/toggler"
-    for name, target in dispatchers:
+    for dispatcher, target in dispatchers.items():
         # DEBUG This test would fail on a broken link :
         if os.path.exists(target + event_triggerer):
             os.remove(target + event_triggerer)
             print("%s dispatcher disabled" % dispatcher)
         else:
-            print("%s dispatcher was already disabled" % dispatcher)
-        firewall = servicewall.ServiceWall()
+            if os.path.exists(target):
+                print("%s dispatcher was already disabled" % dispatcher)
 
+    firewall = servicewall.ServiceWall()
     if firewall.up:
         firewall.stop()
         print("firewall stopped")
