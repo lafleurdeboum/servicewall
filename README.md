@@ -21,22 +21,24 @@ customisable default, adding the services you tell it to.
 
 As the header goes, install it with :
 
- `# pip install servicewall`
-It will need your computer to run systemd and NetworkManager. It will also pull
-python-iptables in, as it uses it intensively.
+    # pip install servicewall
+
+It will need your computer to run `NetworkManager` or `systemd-networkd`, because it
+needs a network dispatcher to trigger connectivity change events. With the latter,
+you will need networkd-dispatcher.
 
 This software needs python 3 and python-iptables to work. It also relies on
 Network Manager's dispatcher to fire the events on connectivity change. Any network
 event dispatcher would do, it just needs to call `toggler`. To locate the file,
 check :
 
-  `# pip show -f servicewall`
+    # pip show -f servicewall
 
 ## Usage
 
 The firewall is disabled by default. To enable it now and at boot-time :
 
-  `# braise enable`
+    # braise enable
 
 and the corresponding `disable`.
 
@@ -46,13 +48,13 @@ allowed.
 
 To have details on the status, use :
 
-  `# braise status`
+    # braise status
 
 If it doesn't reply at all, then obviously the firewall is down.
 
 To allow a specific service, do :
 
-  `# braise add "Service Name"`
+    # braise add "Service Name"
 
 which will add this service to this realm's definition. If you connect to
 internet in another place, the rules for this place (identified by the ESSID of
@@ -62,25 +64,26 @@ added in /etc/bash_completion.d/.
 
 Don't know what's the name of the service you want to allow ? You'll need to :
 
-  `# braise show services`
+    # braise show services
 
 The list is quite long. Once you want exhaustive informations on a single
 service, do
 
-  `# braise show service "Service Name"`
+    # braise show service "Service Name"
 
 These rules are stored in a dictionary called realm_defs. To interrogate it, do :
 
-  `# braise show realms`
+    # braise show realms
 
 And in the end, the firewall logs all that it drops ; there's a log processor
 tool included ; try it with
 
-  `# braise show logs`
+    # braise show logs
 
 or
 
-  `# braise show logs since NUMBER_OF_SECONDS`
+    # braise show logs since NUMBER_OF_SECONDS
 
 
 [GNU](http://www.gnu.org) Version 3 license
+
