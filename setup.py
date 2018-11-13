@@ -60,7 +60,7 @@ setuptools.setup(
     ),
     extras={
         "python-argcomplete": "have tab-completion in bash as root"
-    }
+    },
     scripts=("src/servicewall/braise"),
     data_files=(
         ("lib/servicewall", ("src/lib/realms.p", "src/lib/services.p")),
