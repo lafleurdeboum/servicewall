@@ -68,7 +68,7 @@ parser_show_status = subparser.add_parser(
     "status",
     help="show iptables rules controlled by this firewall"
 )
-parser_show_status.set_defaults(func=parser_helper("show_status"))
+parser_show_status.set_defaults(func=parser_helper("status"))
 
 
 #
@@ -103,6 +103,12 @@ parser_show_services = show_subparser.add_parser(
     help="show services list"
 )
 parser_show_services.set_defaults(func=parser_helper("show_services"))
+
+parser_show_input_chain = show_subparser.add_parser(
+    "input_chain",
+    help="show services allowed in current realm"
+)
+parser_show_input_chain.set_defaults(func=parser_helper("show_input_chain"))
 
 # For "show service", don't define help ; instead overwrite usage because it
 # prints the possible arguments twice, which is way too long.

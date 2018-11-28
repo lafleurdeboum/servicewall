@@ -3,8 +3,8 @@ from os import scandir
 
 def split_port_def(port_def):
     ports_list = []
-    # In the worst case, port_def is "13:15,124,128/udp|120:122/tcp"
-    # Which should mean 13 udp, 124 udp and range 120-122 tcp
+    # In the worst case, port_def is "13:15,124/udp|120:122/tcp"
+    # Which should mean 13 to 15 and 124, all udp, and 120 to 122 tcp
     try:
         port_subdefs = port_def.split("|")
     except ValueError:

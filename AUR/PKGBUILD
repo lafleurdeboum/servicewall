@@ -15,8 +15,8 @@ optdepends=("python-argcomplete" "networkd-dispatcher" "networkmanager")
 makedepends=("python-distribute" "python-setuptools")
 #options=(!emptydirs)
 #source=("https://pypi.python.org/packages/source/p/${_pkgname}/${_pkgname}-${pkgver}.tar.bz2")
-source=("http://flip.local/~lafleur/${_pkgname}/${_pkgname}-${pkgver}.tar.gz")
-md5sums=("657b4fc9cb6dd3fd421aca6fb6128179")
+source=("http://flip.local/~lafleur/${_pkgname}/dist/${_pkgname}-${pkgver}.tar.gz")
+md5sums=("15aefe7538c8e401eb1eed3408608ef9")
 
 build() {
   cd "${srcdir}/${_pkgname}-${pkgver}"

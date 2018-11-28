@@ -4,16 +4,17 @@
 - let this be done in a separate script to compartiment autocompletion
 - perhaps braise add rule RULE toChain { input | output }
 
+- XTABLES_LIBDIR doesn't get set to /usr/lib/iptables in raspberry Arch as it
+  should, don't know why
+- Need a working "python-iptables" PKGBUILD in AUR
+
 - have decent argparse help pages
 - don't propose "-h" in completion
 
 - on add service, DEBUG output
 - on service start, print service only once
 
-- to be implemented :
-        braise show table
-        braise status
-
+- have port ranges in services.p->service->ports because some have thousands, making the pickle huge.
 - use realms.p [and services.p ?] as a template, instanciate in /etc/servicewall
 - then, add braise add default service
 - then, we _should_ have custom rules separated from services, and run basic
@@ -22,6 +23,7 @@
 - FireWall logs : tell the essid the drop happened in
 - braise show logs : then, print the current realm as default in logs
 - braise show logs : variations : improve pattern matching with each found item
+- braise show logs : propose to see hostnames as braise show logs with hostnames
 
 - check nomenclatura : should we rather
         braise enable

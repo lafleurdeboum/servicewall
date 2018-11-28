@@ -26,7 +26,7 @@ with open("README.md", "r") as fh:
 
 here = path.abspath(path.dirname(__file__))
 #for package in setuptools.find_packages(exclude=('scriptlets')):
-for package in setuptools.find_packages(where="src"):
+for package in setuptools.find_packages():
     print("setuptools : including package %s" % package)
 
 name="servicewall"
@@ -44,28 +44,30 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="http://flip.local/~lafleur/servicewall",
-    #packages=setuptools.find_packages(exclude=('scriptlets')),
-    packages=setuptools.find_packages(where="src"),
-    classifiers=(
+    packages=setuptools.find_packages(),
+    #packages=setuptools.find_packages(where="src"),
+    classifiers=[
         'Development Status :: 3 - Alpha',
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-        "Operating System :: OS Independent",
-    ),
-    install_requires=(
+        #"Operating System :: OS Independent",
+        "Operating System :: POSIX",   # We need iptables.
+    ],
+    install_requires=[
         "python-iptables",
         "python-argparse",
         "python-netifaces",
         "python-systemd",
-    ),
-    extras={
-        "python-argcomplete": "have tab-completion in bash as root"
-    },
-    scripts=("src/servicewall/braise"),
-    data_files=(
-        ("lib/servicewall", ("src/lib/realms.p", "src/lib/services.p")),
-        ("lib/servicewall", ("src/servicewall/toggler")),
-    ),
+        "python-argcomplete",
+    ],
+    #extras={
+    #    "python-argcomplete": "have tab-completion in bash as root"
+    #},
+    scripts=["servicewall/braise"],
+    data_files=[
+        ("lib/servicewall", ["lib/realms.p", "lib/services.p"]),
+        ("lib/servicewall", ["servicewall/toggler"]),
+    ],
     #cmdclass={"install": CustomInstallCommand,},
 )
 

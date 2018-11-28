@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+"""Check the md5sum written in PKGBUILD compared to that of filename_in_source_url
+"""
+
+
 import hashlib
 
 
@@ -12,19 +17,27 @@ def md5sum(filename, blocksize=65536):
 
 def do_md5_sum(filename):
     new_sum = md5sum(filename)
-    print(new_sum)
 
     with open(PKGBUILD) as pkg_file:
         sheet = pkg_file.read()
-
     for line in sheet.split("\n"):
         if "md5sums" in line:
             old_sum = eval(line.split("=")[1])
             print(old_sum)
             break
+    print(new_sum)
 
     if old_sum == new_sum:
         raise SystemExit
-
     with open(PKGBUILD, "w") as pkg_file:
         pkg_file.write(sheet.replace(old_sum, new_sum))
+
+
+if __name__ == "__main__":
+    from sys import argv
+    if len(argv) != 2:
+        print("Usage : %s filename_in_source_url" % argv[0])
+        print(__doc__)
+        raise SystemExit("wrong number of arguments")
+    do_md5_sum(argv[1])
+

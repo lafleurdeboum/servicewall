@@ -68,10 +68,10 @@ def enable(args):
             print("%s dispatcher was already enabled" % dispatcher)
             witness = True
         else:
+            print("enabling %s dispatcher" % dispatcher)
             # symlink pointing to src in dst
             os.symlink(src + event_triggerer, dst + event_triggerer)
             witness = True
-            print("%s dispatcher enabled" % dispatcher)
     if not witness:
         raise SystemExit("Could not link to any network event dispatcher. "
                 "You apparently aren't running neither Network Manager nor "
@@ -98,9 +98,10 @@ def disable(args):
     for dispatcher, target in dispatchers.items():
         # DEBUG This test would fail on a broken link :
         if os.path.exists(target + event_triggerer):
+            print("disabling %s dispatcher" % dispatcher)
             os.remove(target + event_triggerer)
-            print("%s dispatcher disabled" % dispatcher)
         else:
+            # Report missing link only if dir is present
             if os.path.exists(target):
                 print("%s dispatcher was already disabled" % dispatcher)
 
@@ -109,10 +110,16 @@ def disable(args):
         firewall.stop()
         print("firewall stopped")
 
-def show_status(args):
+def status(args):
+    firewall = servicewall.ServiceWall()
+    if firewall.up:
+        print("enabled")
+    else:
+        print("disabled")
+
+def show_input_chain(args):
     firewall = servicewall.ServiceWall()
     firewall.list_services_in()
-
 
 def show_realms(args):
     print_dict(realm_defs)
