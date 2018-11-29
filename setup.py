@@ -60,9 +60,9 @@ setuptools.setup(
         "python-systemd",
         "python-argcomplete",
     ],
-    #extras={
-    #    "python-argcomplete": "have tab-completion in bash as root"
-    #},
+    extras={
+        "python-argcomplete": "have tab-completion in bash as root"
+    },
     scripts=["servicewall/braise"],
     data_files=[
         ("lib/servicewall", ["lib/realms.p", "lib/services.p"]),
@@ -71,9 +71,3 @@ setuptools.setup(
     #cmdclass={"install": CustomInstallCommand,},
 )
 
-# Update PKGBUILD's md5sums
-try:
-    from update_md5sum_in_PKGBUILD import do_md5_sum
-    do_md5_sum("dist/" + name + "-" + version + ".tar.gz")
-except ModuleNotFoundError:
-    pass

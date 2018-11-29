@@ -2,28 +2,37 @@
 # Contributor: la Fleur <lafleur@boum.org>
 
 _pkgname=servicewall
-pkgname=servicewall
+pkgname=servicewall-git
 pkgver=0.3.2
 pkgrel=1
 pkgdesc="the desktop firewall that adapts to different network connections"
 arch=("any")
-#url="https://pypi.python.org/pypi/servicewall"
-url="https://flip.local/~lafleur/"
+url="https://pypi.python.org/pypi/servicewall"
+#url="https://flip.local/~lafleur/"
 license=("GPL3")
 depends=("python" "python-iptables" "python-argparse" "python-netifaces" "python-systemd")
 optdepends=("python-argcomplete" "networkd-dispatcher" "networkmanager")
 makedepends=("python-distribute" "python-setuptools")
 #options=(!emptydirs)
 #source=("https://pypi.python.org/packages/source/p/${_pkgname}/${_pkgname}-${pkgver}.tar.bz2")
-source=("http://flip.local/~lafleur/${_pkgname}/dist/${_pkgname}-${pkgver}.tar.gz")
-md5sums=("15aefe7538c8e401eb1eed3408608ef9")
+#source=("http://flip.local/~lafleur/${_pkgname}/dist/${_pkgname}-${pkgver}.tar.gz")
+#source=("${pkgname%-git}::git+http://flip.local/~lafleur/${_pkgname}")
+source=("${pkgname%-git}::git://localhost/")
+md5sums=("SKIP")
+
+pkgver() {
+  #cd "${srcdir}/${_pkgname}-${pkgver}"
+  cd "${srcdir}/${pkgname%-git}"
+  # git, no tags available
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
 
 build() {
-  cd "${srcdir}/${_pkgname}-${pkgver}"
+  cd "${srcdir}/${pkgname%-git}"
   python setup.py build
 }
 
 package() {
-  cd "${srcdir}/${_pkgname}-${pkgver}"
+  cd "${srcdir}/${pkgname%-git}"
   python setup.py install --root="${pkgdir}/" --optimize=1 --skip-build
 }
