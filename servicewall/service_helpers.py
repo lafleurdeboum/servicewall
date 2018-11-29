@@ -1,10 +1,11 @@
 from os import scandir
 from collections import namedtuple
 
+PortDef = namedtuple("PortDef", "udp tcp")
+ServiceDef = namedtuple("ServiceDef", "title description ports categories reference")
 
 def split_port_def(port_def):
     ports_dict = {"udp": [], "tcp": []}
-    PortDef = namedtuple("ports", "udp tcp")
 
     # In the worst case, port_def is "13:15,124/udp|120:122"
     # Which should mean 13 to 15 and 124, all udp, and 120 to 122 both udp and tcp
@@ -17,7 +18,11 @@ def split_port_def(port_def):
     for proto_subdef in proto_subdefs:
         try:
             port_subdef, proto_def = proto_subdef.split("/")
-            protos = (proto_def, )
+            if proto_def == "tcp6":
+                protos = ("tcp", )
+                print("  WARNING : using tcp for tcp6")
+            else:
+                protos = (proto_def, )
         except ValueError:
             port_subdef = proto_subdef
             protos = ("udp", "tcp")
@@ -31,7 +36,8 @@ def split_port_def(port_def):
         # port_list is ("13:15", "124", "128"). Port ranges can be very wide,
         # yielding 10000 entries. We'll keep them as ranges.
         for proto in protos:
-            ports_dict[proto].append(*port_list)
+            for port in port_list:
+                ports_dict[proto].append(port)
 
     return PortDef(ports_dict["udp"], ports_dict["tcp"])
 
@@ -53,7 +59,6 @@ def scan_service_definitions(definitions_dir):
 
     filelist = scandir(definitions_dir)
     services = {}
-    ServiceDef = namedtuple("service", "title description ports categories reference")
     for filename in iter(filelist):
         print("processing %s" % filename.path)
         with open(filename.path, "r") as fd:
@@ -90,4 +95,11 @@ def scan_service_definitions(definitions_dir):
 
     return services
 
-
+if __name__ == "__main__":
+    import pickle
+    service_pickle = "../lib/services.p"
+    service_defs_dir = "/etc/gufw/app_profiles"
+    s = scan_service_definitions(service_defs_dir)
+    print("writing defs from %s to %s" % (service_defs_dir, service_pickle))
+    with open(service_pickle, "wb") as fd:
+        pickle.dump(s, fd)
