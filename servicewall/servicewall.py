@@ -67,14 +67,22 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         else:
             src = ""
 
-        for port, proto in self.service_defs[service_name]["ports"]:
-            self.add_rule(
-                    service_name,
-                    self.input_chain,
-                    "ACCEPT",
-                    src=src,
-                    dport=port,
-                    proto=proto,
+        s = self.service_defs[service_name]
+        for port in s.ports.tcp:
+            self.add_rule(service_name,
+                         self.input_chain,
+                         "ACCEPT",
+                         src=src,
+                         dport=port,
+                         proto="tcp"
+            )
+        for port in s.ports.udp:
+            self.add_rule(service_name,
+                         self.input_chain,
+                         "ACCEPT",
+                         src=src,
+                         dport=port,
+                         proto="udp"
             )
 
     def del_service_in(self, service_name):
