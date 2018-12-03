@@ -139,8 +139,16 @@ def show_service(args):
 def show_port(args):
     port = args.port_name
     for service_name, s_tuple in service_defs.items():
-        if port in s_tuple.ports.tcp or port in s_tuple.ports.udp:
-            print(service_name)
+        # port_range is a string containing either a number or a range,
+        # as in "80:88", "120"
+        for port_range in (*s_tuple.ports.tcp, *s_tuple.ports.udp):
+            if port_range.isalnum():
+                if port == port_range:
+                    print('service "%s" uses port %s' % (service_name, port))
+            else:
+                start, end = port_range.split(":")
+                if port in range(int(start), int(end)+1):
+                    print('service "%s" uses port range %s' % (service_name, port))
 
 def add_service(args):
     service_name = args.service_name
