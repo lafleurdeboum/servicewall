@@ -7,37 +7,28 @@ This script starts or stops a firewall as defined in servicewall.py
 """
 
 #from statefulfirewall import StateFulFireWall
-from servicewall import servicewall
+import servicewall
 from servicewall import network_helpers
 from sys import argv
 from os import environ
 
 
-
-def get_local_subnet(device):
-    """Returns the local subnet iface is connected to."""
-    try:
-        essid = environ["CONNECTION_ID"]
-        #uuid = environ["CONNECTION_UUID"]
-    except KeyError:
-        essid = ""
-    return(essid, network_helpers.get_subnetwork(device))
-
-
 if __name__ == "__main__":
 
+    # Normalize the way networkd-dispatcher launches this script :
+    state_flag = environ["STATE"]
+    if state_flag == "routable":
+        argv = [argv[0], environ["IFACE"], "up"]
+
     if len(argv) != 3:
-        print(__doc__)
         raise SystemError("wrong number of arguments : %s" % " ".join(argv))
     device = argv[1]
     action = argv[2]
-    #firewall = StateFulFireWall()
     firewall = servicewall.ServiceWall()
 
     if action == "up":
         if firewall.up:
             raise SystemExit()
-        #essid, local_subnet = get_local_subnet(device)
         firewall.start()
 
     elif action == "down":
@@ -47,7 +38,6 @@ if __name__ == "__main__":
 
     elif action == "connectivity-change":
         if firewall.up:
-            #essid, local_subnet = get_local_subnet(device)
             local_subnet = network_helpers.get_subnetwork()
             if local_subnet != firewall.subnetwork:
                 firewall.down()
@@ -60,6 +50,5 @@ if __name__ == "__main__":
             print("down")
 
     else:
-        print(__doc__)
         raise SystemError("wrong usage : %s" % " ".join(argv))
 
