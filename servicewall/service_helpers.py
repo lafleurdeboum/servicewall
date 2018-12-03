@@ -95,11 +95,16 @@ def scan_service_definitions(definitions_dir):
 
     return services
 
+
 if __name__ == "__main__":
     import pickle
-    service_pickle = "../lib/services.p"
+    import os
+    service_pickle = "lib/services.p"
     service_defs_dir = "/etc/gufw/app_profiles"
-    s = scan_service_definitions(service_defs_dir)
+    s = service_helpers.scan_service_definitions(service_defs_dir)
     print("writing defs from %s to %s" % (service_defs_dir, service_pickle))
+    if os.path.isfile(service_pickle):
+        raise SystemError("file already exists : %s" % service_pickle)
     with open(service_pickle, "wb") as fd:
         pickle.dump(s, fd)
+

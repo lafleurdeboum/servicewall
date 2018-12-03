@@ -8,6 +8,7 @@ __all__ = ["no_arg_provided", "enable", "disable", "show_logs", "show_realms", "
 
 
 import pickle
+
 # Needed to access logging :
 from systemd import journal
 import select
@@ -18,13 +19,16 @@ import datetime
 from servicewall import servicewall
 from servicewall import network_helpers
 
+# Needed to show services :
+from servicewall import service_helpers
+
 import os
 
 
 conf_dir = "/usr/lib/servicewall/"
 realm_defs_pickle = conf_dir + "realms.p"
 service_defs_pickle = conf_dir + "services.p"
-definitions_dir = "/etc/gufw/app_profiles"
+#definitions_dir = "/etc/gufw/app_profiles"
 program_name = "ServiceWall"
 
 with open(realm_defs_pickle, "rb") as fd:
@@ -125,23 +129,15 @@ def show_realms(args):
     print_dict(realm_defs)
 def show_services(args):
     for service in service_defs:
-        print("%s - %s" % (service, service_defs[service]["description"]))
+        print("%s - %s" % (service, service_defs[service].description))
 def show_service(args):
-    #service_name = args.service_name
-    # The calling parser has nargs="*", so args.service_name is a list
-    service_name = " ".join(args.service_name)
-    # Do our own validity testing
-    if service_name not in service_defs:
-        #parser_show_service.print_usage()
-        raise SystemExit('service "%s" not found. ')
-    print_dict(service_defs[service_name])
+    service_name = args.service_name
+    s = service_defs[service_name]._asdict()
+    s["ports"] = s["ports"]._asdict()
+    print_dict(s)
 
 def add_service(args):
     service_name = args.service_name
-    print(service_name, str(len(service_name)))
-    # Do our own validity testing
-    if service_name not in service_defs:
-        raise SystemExit('service "%s" not found. ')
     essid = network_helpers.get_essid()
     if service_name in realm_defs[essid]:
         raise SystemExit("Service %s already in realm %s's definition" %

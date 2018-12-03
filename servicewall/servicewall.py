@@ -5,19 +5,19 @@ and implements them in a FireWall class, either to allow them for the local
 subnetwork, or worldwide.
 """
 
-import pickle
 from servicewall import network_helpers
 from servicewall import statefulfirewall
 
 from collections import namedtuple
 
-from servicewall import service_helpers
-globals()["PortDef"] = service_helpers.PortDef
-globals()["ServiceDef"] = service_helpers.ServiceDef
+#from servicewall import service_helpers
+#globals()["PortDef"] = service_helpers.PortDef
+#globals()["ServiceDef"] = service_helpers.ServiceDef
 
-#from servicewall.service_helpers import PortDef, ServiceDef
-#globals()["PortDef"] = PortDef
-#globals()["ServiceDef"] = ServiceDef
+from servicewall.service_helpers import PortDef, ServiceDef
+globals()["PortDef"] = PortDef
+globals()["ServiceDef"] = ServiceDef
+import pickle
 
 
 class ServiceWall(statefulfirewall.StateFulFireWall):
@@ -78,7 +78,6 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             src = ""
 
         s = self.service_defs[service_name]
-        print(s)
         for port in s.ports.tcp:
             self.add_rule(service_name,
                          self.input_chain,
