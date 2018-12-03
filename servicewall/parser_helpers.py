@@ -139,7 +139,7 @@ def show_service(args):
 def show_port(args):
     port = args.port_name
     for service_name, s_tuple in service_defs.items():
-        if s_tuple.ports.tcp == port or s_tuple.ports.udp == port:
+        if port in s_tuple.ports.tcp or port in s_tuple.ports.udp:
             print(service_name)
 
 def add_service(args):
