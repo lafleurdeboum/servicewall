@@ -123,6 +123,13 @@ parser_show_service = show_subparser.add_parser(
 parser_show_service.add_argument("service_name", choices=service_defs)
 parser_show_service.set_defaults(func=parser_helper("show_service"))
 
+parser_show_port = show_subparser.add_parser(
+    "port",
+    help="show services associated to port"
+)
+parser_show_port.add_argument("port_name")
+parser_show_port.set_defaults(func=parser_helper("show_port"))
+
 
 #
 # SUBPARSERS : { add | del } service

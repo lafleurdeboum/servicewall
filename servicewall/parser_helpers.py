@@ -36,13 +36,14 @@ with open(realm_defs_pickle, "rb") as fd:
 with open(service_defs_pickle, "rb") as fd:
     service_defs = pickle.load(fd)
 
-def print_dict(dictionary):
+def print_dict(dictionary, depth=1):
+    prefix = "  " * depth
     for key, value in dictionary.items():
         if isinstance(value, dict):
-            print("=> %s :" % key)
-            print_dict(value)
+            print("%s=> %s :" % (prefix, key))
+            print_dict(value, depth+1)
         else:
-            print("%s : %s" % (key, value))
+            print("%s%s : %s" % (prefix, key, value))
 
 
 def no_arg_provided(args):
@@ -135,6 +136,11 @@ def show_service(args):
     s = service_defs[service_name]._asdict()
     s["ports"] = s["ports"]._asdict()
     print_dict(s)
+def show_port(args):
+    port = args.port_name
+    for service_name, s_tuple in service_defs.items():
+        if s_tuple.ports.tcp == port or s_tuple.ports.udp == port:
+            print(service_name)
 
 def add_service(args):
     service_name = args.service_name
