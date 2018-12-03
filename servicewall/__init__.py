@@ -13,3 +13,17 @@ __all__ = [
 # Load the main package
 from servicewall.servicewall import ServiceWall
 
+# This function needs to be here and have service_helpers imported
+# this way to have working pickle in the ServiceWall class.
+from servicewall import service_helpers
+def update_service_defs():
+    import pickle
+    service_pickle = "lib/services.p"
+    service_defs_dir = "/etc/gufw/app_profiles"
+    s = service_helpers.scan_service_definitions(service_defs_dir)
+    print("writing defs from %s to %s" % (service_defs_dir, service_pickle))
+    if os.path.isfile(service_pickle):
+        raise SystemError("There's already a file named %s" % service_pickle)
+    with open(service_pickle, "wb") as fd:
+        pickle.dump(s, fd)
+
