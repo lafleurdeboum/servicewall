@@ -41,6 +41,7 @@ class FireWall():
         Log anything that is dropped
         """
         # Drop all incoming. Basic but functional.
+        print("setting input policy to DROP")
         self.input_chain.set_policy("DROP")
         self.output_chain.set_policy("ACCEPT")
         # Accept all on localhost.
@@ -103,7 +104,7 @@ class FireWall():
         dport is destination port
         iface if not defined, will match any
         """
-        print("adding rule %s" % name)
+        #print("adding rule %s" % name)
         if (dport or sport) and not proto:
             for proto in "tcp", "udp":
                 self.add_rule(name, chain, target, dst, dport, src, sport, proto, iface)

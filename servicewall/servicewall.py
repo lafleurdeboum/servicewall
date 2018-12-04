@@ -55,6 +55,12 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                 self.add_service_in(service_name, local=False)
         super().start(**args)   # commits the table if relevant
 
+    def stop(self):
+        for service_name in self.realm_defs[self.essid]:
+            self.del_service_in(service_name)
+        for rule in self.input_chain.rules:
+            self.del_rule(super()._get_rule_name(rule), self.input_chain)
+
     def save(self):
         """Dumps the actual config to config file.
         """
@@ -78,6 +84,8 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             src = ""
 
         s = self.service_defs[service_name]
+        print("allowing service %s from %s" %
+              (service_name, local and src or "any"))
         for port in s.ports.tcp:
             self.add_rule(service_name,
                          self.input_chain,
@@ -98,11 +106,12 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     def del_service_in(self, service_name):
         """Closes ports for service service_name if they were opened.
         """
+        print("deleting rule for service %s" % service_name)
         for rule in self.input_chain.rules:
             # Call the FireWall's  private _get_rule_name function
             if super()._get_rule_name(rule) == service_name:
-                #self.del_rule(service_name, self.input_chain)
-                self.input_chain.delete_rule(rule)
+                self.del_rule(service_name, self.input_chain)
+                #self.input_chain.delete_rule(rule)
 
 
     def list_services_in(self):
