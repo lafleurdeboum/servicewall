@@ -7,6 +7,9 @@ subnetwork, or worldwide.
 
 from servicewall import network_helpers
 from servicewall import statefulfirewall
+# TODO should be loaded as a global from firewall.py through statefulfirewall.py
+identifier = "ServiceWall"
+#print(globals()["identifier"])
 
 from collections import namedtuple
 
