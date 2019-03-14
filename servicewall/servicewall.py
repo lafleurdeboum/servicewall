@@ -49,7 +49,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         else to any source.
         """
         if self.essid not in self.realm_defs:
-            # If we don't have a definition in there, load "FireWall:new"
+            # If we don't have a definition in there, load "ServiceWall:new"
             self.realm_defs[self.essid] = self.realm_defs[identifier + ":new"]
         for service_name, local_toggle in self.realm_defs[self.essid].items():
             if local_toggle:
