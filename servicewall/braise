@@ -23,7 +23,8 @@ with open(realm_defs_pickle, "rb") as fd:
 with open(service_defs_pickle, "rb") as fd:
     service_defs = pickle.load(fd)
 
-# Find allowed services to help autocompletion know what to delete.
+# Find allowed services to help autocompletion know what to delete. - TODO doesn't
+# work when the realm is unknown
 essid = get_essid()
 try:
     allowed_services = [ service_def for service_def in realm_defs[essid].keys() ]

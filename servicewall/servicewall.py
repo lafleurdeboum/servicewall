@@ -49,17 +49,21 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         else to any source.
         """
         if self.essid not in self.realm_defs:
-            # If we don't have a definition in there, load "ServiceWall:new"
+            # If we don't have a realm definition, load "ServiceWall:new"
             self.realm_defs[self.essid] = self.realm_defs[identifier + ":new"]
         for service_name, local_toggle in self.realm_defs[self.essid].items():
             if local_toggle:
                 self.add_service_in(service_name, local=True)
             else:
                 self.add_service_in(service_name, local=False)
-        super().start(**args)   # commits the table if relevant
+        super().start(**args)   # Commits the table if relevant.
 
     def stop(self):
-        for service_name in self.realm_defs[self.essid]:
+        if self.essid not in self.realm_defs:
+            realm = identifier + ":new"
+        else:
+            realm = self.essid
+        for service_name in self.realm_defs[realm]:
             self.del_service_in(service_name)
         for rule in self.input_chain.rules:
             self.del_rule(super()._get_rule_name(rule), self.input_chain)
