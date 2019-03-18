@@ -29,7 +29,7 @@ conf_dir = "/usr/lib/servicewall/"
 realm_defs_pickle = conf_dir + "realms.p"
 service_defs_pickle = conf_dir + "services.p"
 #definitions_dir = "/etc/gufw/app_profiles"
-program_name = "ServiceWall"
+identifier = "ServiceWall"
 
 with open(realm_defs_pickle, "rb") as fd:
     realm_defs = pickle.load(fd)
@@ -138,24 +138,32 @@ def show_service(args):
     print_dict(s)
 def show_port(args):
     port = args.port_name
+    port_list = []
     for service_name, s_tuple in service_defs.items():
         # port_range is a string containing either a number or a range,
         # as in "80:88", "120"
         for port_range in (*s_tuple.ports.tcp, *s_tuple.ports.udp):
             if port_range.isalnum():
                 if port == port_range:
-                    print('service "%s" uses port %s' % (service_name, port))
+                    port_list += port
             else:
                 start, end = port_range.split(":")
                 if port in range(int(start), int(end)+1):
-                    print('service "%s" uses port range %s' % (service_name, port))
+                    port_list += port
+        print('services using port %s :' % port)
+        for i in port_list:
+            print(" - " + i)
 
 def add_service(args):
-    service_name = args.service_name
     essid = network_helpers.get_essid()
+    if essid not in realm_defs:
+        print("adding ESSID %s to list of known realms." % essid)
+        realm_defs[essid] = realm_defs[identifier + ":new"]
+    service_name = args.service_name
     if service_name in realm_defs[essid]:
-        raise SystemExit("Service %s already in realm %s's definition" %
+        raise SystemExit("Service %s already allowed in realm %s" %
                 (service_name, essid))
+    # Make it local by default :
     realm_defs[essid][service_name] = False
     with open(realm_defs_pickle, "wb") as fd:
         pickle.dump(realm_defs, fd)
@@ -164,15 +172,18 @@ def add_service(args):
     print("Allowed %s to be served when in realm %s." % (service_name, essid))
 
 def del_service(args):
+    essid = network_helpers.get_essid()
+    if essid not in realm_defs:
+        print("adding ESSID %s to list of known realms." % essid)
+        realm_defs[essid] = realm_defs[identifier + ":new"]
     service_name = args.service_name
     # Do our own validity testing
     if service_name not in service_defs:
         raise KeyError('service "%s" not found. ')
-    essid = network_helpers.get_essid()
     if service_name in realm_defs[essid]:
         del realm_defs[essid][service_name]
     else:
-        raise KeyError('service "%s" not allowed in realm %s anyway.'
+        raise KeyError('service "%s" was not allowed in realm %s anyway.'
                 % (service_name, essid))
     with open(realm_defs_pickle, "wb") as fd:
         pickle.dump(realm_defs, fd)
@@ -264,9 +275,9 @@ def log_yielder(period=""):
             if age > period:
                 break
         # Only catch messages sent by iptables log :
-        if log["MESSAGE"].startswith(program_name):
+        if log["MESSAGE"].startswith(identifier):
             message_dict = {}
-            message = log["MESSAGE"].strip(program_name + ":").strip()
+            message = log["MESSAGE"].strip(identifier + ":").strip()
             message_dict["DATE"] = log["__REALTIME_TIMESTAMP"]
             for item in message.split():
                 if item.count("="):

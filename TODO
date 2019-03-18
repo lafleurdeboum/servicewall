@@ -1,3 +1,5 @@
+- show default rule with input_chain
+
 - Just a bright idea, have braise add rule RULE and braise commit
 - perhaps braise add match MATCH toRule RULE
 - let autocompletion check for iptables modules (in python-iptables ?)
