@@ -164,7 +164,7 @@ def add_service(args):
         raise SystemExit("Service %s already allowed in realm %s" %
                 (service_name, essid))
     # Make it local by default :
-    realm_defs[essid][service_name] = False
+    realm_defs[essid][service_name] = True
     with open(realm_defs_pickle, "wb") as fd:
         pickle.dump(realm_defs, fd)
     firewall = servicewall.ServiceWall()
