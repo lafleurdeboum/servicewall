@@ -36,8 +36,14 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         super().__init__()
         # TODO if the FW is already up, we need to check what was the
         # essid it connected to, to see if we need to reload.
-        self.essid = network_helpers.get_essid()
-        self.subnetwork = network_helpers.get_subnetwork()
+        try:
+            self.essid = network_helpers.get_essid()
+        except KeyError:
+            self.essid = False
+        if self.essid:
+            self.subnetwork = network_helpers.get_subnetwork()
+        else:
+            self.subnetwork = False
         with open(self.service_defs_pickle, "rb") as fd:
             self.service_defs = pickle.load(fd)
         with open(self.realm_defs_pickle, "rb") as fd:
