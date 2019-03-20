@@ -44,8 +44,8 @@ if __name__ == "__main__":
         if firewall.up:
             local_subnet = network_helpers.get_subnetwork()
             if local_subnet != firewall.subnetwork:
-                firewall.down()
-                firewall.up()
+                firewall.stop()
+                firewall.start()
 
     elif action == "status":
         if firewall.up:
