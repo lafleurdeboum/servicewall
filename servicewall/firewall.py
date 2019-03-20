@@ -158,7 +158,7 @@ class FireWall():
         for rule in chain.rules:
             if self._get_rule_name(rule) == name:
                 chain.delete_rule(rule)
-                print("deleted rule %s" % name)
+                #print("deleted rule %s" % name)
                 break
 
     def list_rules(self, chain):
