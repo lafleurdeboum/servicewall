@@ -12,9 +12,10 @@ import pickle
 from servicewall.network_helpers import get_essid
 
 
-conf_dir = "/usr/lib/servicewall/"
+conf_dir = "/etc/servicewall/"
+lib_dir = "/usr/lib/servicewall/"
 realm_defs_pickle = conf_dir + "realms.p"
-service_defs_pickle = conf_dir + "services.p"
+service_defs_pickle = lib_dir + "services.p"
 definitions_dir = "/etc/gufw/app_profiles"
 program_name = "ServiceWall"
 

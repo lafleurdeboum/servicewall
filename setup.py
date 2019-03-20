@@ -30,7 +30,7 @@ for package in setuptools.find_packages():
     print("setuptools : including package %s" % package)
 
 name="servicewall"
-version = "0.3.3.1"
+version = "0.3.3.3"
 
 setuptools.setup(
     name=name,
@@ -65,8 +65,8 @@ setuptools.setup(
     },
     scripts=["servicewall/braise"],
     data_files=[
-        ("lib/servicewall", ["lib/realms.p", "lib/services.p"]),
-        ("lib/servicewall", ["servicewall/toggler"]),
+        ("/etc/servicewall", ["lib/realms.p"]),
+        ("lib/servicewall", ["lib/services.p", "servicewall/toggler"]),
     ],
     #cmdclass={"install": CustomInstallCommand,},
 )
