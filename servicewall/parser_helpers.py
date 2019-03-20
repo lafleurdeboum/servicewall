@@ -118,7 +118,11 @@ def disable(args):
 def status(args):
     firewall = servicewall.ServiceWall()
     if firewall.up:
-        print("enabled")
+        if firewall.essid:
+            realm_name = firewall.essid
+        else:
+            realm_name = "no network"
+        print("enabled - using profile for %s" % realm_name)
     else:
         print("disabled")
 

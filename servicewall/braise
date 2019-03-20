@@ -28,8 +28,7 @@ with open(service_defs_pickle, "rb") as fd:
 try:
     essid = get_essid()
 except KeyError:
-    # No network but servicewall might still be enabled.
-    print("no network")
+    # No network ()but servicewall might still be enabled).
     essid = False
 if essid:
     try:
