@@ -28,22 +28,30 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     """
 
     identifier = "ServiceWall"
-    conf_dir = "/usr/lib/servicewall/"
-    service_defs_pickle = conf_dir + "services.p"
+    conf_dir = "/etc/servicewall/"
+    lib_dir = "/usr/lib/servicewall/"
     realm_defs_pickle = conf_dir + "realms.p"
+    service_defs_pickle = lib_dir + "services.p"
 
     def __init__(self):
         super().__init__()
+        # We need to know 2 things :
+        # - wether we are online
+        # - wether the firewall is enabled
         # TODO if the FW is already up, we need to check what was the
         # essid it connected to, to see if we need to reload.
         try:
             self.essid = network_helpers.get_essid()
-        except KeyError:
+            self.online = True
+        except KeyError:    # We don't have any network connection.
             self.essid = False
-        if self.essid:
+            self.online = False
+
+        if self.online:
             self.subnetwork = network_helpers.get_subnetwork()
         else:
             self.subnetwork = False
+
         with open(self.service_defs_pickle, "rb") as fd:
             self.service_defs = pickle.load(fd)
         with open(self.realm_defs_pickle, "rb") as fd:
@@ -54,23 +62,25 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         are set as True, they are matched with the provided subnetwork,
         else to any source.
         """
-        if self.essid not in self.realm_defs:
-            # If we don't have a realm definition, load "ServiceWall:new"
-            self.realm_defs[self.essid] = self.realm_defs[identifier + ":new"]
-        for service_name, local_toggle in self.realm_defs[self.essid].items():
-            if local_toggle:
-                self.add_service_in(service_name, local=True)
-            else:
-                self.add_service_in(service_name, local=False)
-        super().start(**args)   # Commits the table if relevant.
+        if self.online:
+            if self.essid not in self.realm_defs:
+                # If we don't have a realm definition, load "ServiceWall:new"
+                self.realm_defs[self.essid] = self.realm_defs[identifier + ":new"]
+            for service_name, local_toggle in self.realm_defs[self.essid].items():
+                if local_toggle:
+                    self.add_service_in(service_name, local=True)
+                else:
+                    self.add_service_in(service_name, local=False)
+        # Commits the table if relevant, and brings other rules in :
+        super().start(**args)
 
     def stop(self):
         if self.essid not in self.realm_defs:
             realm = identifier + ":new"
         else:
             realm = self.essid
-        for service_name in self.realm_defs[realm]:
-            self.del_service_in(service_name)
+        #for service_name in self.realm_defs[realm]:
+        #    self.del_service_in(service_name)
         for rule in self.input_chain.rules:
             self.del_rule(super()._get_rule_name(rule), self.input_chain)
 
@@ -88,7 +98,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         if src is "local", use self.subnetwork instead.
         """
         if service_name not in self.service_defs:
-            raise KeyError("service_defs knows no service service_named %s."
+            raise KeyError("undefined service : %s."
                     % service_name)
 
         if local:
@@ -119,12 +129,20 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     def del_service_in(self, service_name):
         """Closes ports for service service_name if they were opened.
         """
-        print("deleting rule for service %s" % service_name)
+        # Do our own validity testing
+        if service_name not in self.service_defs:
+            raise KeyError('service "%s" not found. ')
+        if service_name in self.realm_defs[self.essid]:
+            del self.realm_defs[self.essid][service_name]
+        else:
+            raise KeyError('service "%s" was not allowed in realm %s anyway.'
+                    % (service_name, self.essid))
         for rule in self.input_chain.rules:
             # Call the FireWall's  private _get_rule_name function
             if super()._get_rule_name(rule) == service_name:
                 self.del_rule(service_name, self.input_chain)
                 #self.input_chain.delete_rule(rule)
+
 
 
     def list_services_in(self):

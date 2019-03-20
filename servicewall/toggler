@@ -16,11 +16,15 @@ from os import environ
 if __name__ == "__main__":
 
     # Normalize the way networkd-dispatcher launches this script :
-    state_flag = environ["STATE"]
+    try:
+        state_flag = environ["STATE"]
+    except KeyError:
+        state_flag = None
     if state_flag == "routable":
         argv = [argv[0], environ["IFACE"], "up"]
 
     if len(argv) != 3:
+        print(__doc__)
         raise SystemError("wrong number of arguments : %s" % " ".join(argv))
     device = argv[1]
     action = argv[2]

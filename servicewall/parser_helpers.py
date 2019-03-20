@@ -25,16 +25,15 @@ from servicewall import service_helpers
 import os
 
 
-conf_dir = "/usr/lib/servicewall/"
-realm_defs_pickle = conf_dir + "realms.p"
-service_defs_pickle = conf_dir + "services.p"
-#definitions_dir = "/etc/gufw/app_profiles"
-identifier = "ServiceWall"
+dispatchers = {
+    "Network Manager": "/etc/NetworkManager/dispatcher.d/",
+    "systemd-networkd": "/etc/networkd-dispatcher/carrier.d/",
+}
+event_triggerer = "toggler"
 
-with open(realm_defs_pickle, "rb") as fd:
-    realm_defs = pickle.load(fd)
-with open(service_defs_pickle, "rb") as fd:
-    service_defs = pickle.load(fd)
+
+firewall = servicewall.ServiceWall()
+
 
 def print_dict(dictionary, depth=1):
     prefix = "  " * depth
@@ -54,28 +53,23 @@ def enable(args):
     """Create a link in the network dispatcher pointing to the event triggerer,
     and start the firewall.
     """
-    dispatchers = {
-            "Network Manager": "/etc/NetworkManager/dispatcher.d/",
-            "systemd-networkd": "/etc/networkd-dispatcher/carrier.d/",
-    }
-    src = "/usr/lib/servicewall/"
-    event_triggerer = "toggler"
-    if not os.path.exists(src):
+    src_dir = firewall.lib_dir
+    if not os.path.exists(src_dir):
         # This should never happen ; pip should gracefully put it there.
         raise SystemExit("Could not find %s in %s" %
-                (event_triggerer, src))
+                (event_triggerer, src_dir))
     witness = False
-    for dispatcher, dst in dispatchers.items():
-        if not os.path.exists(dst):
+    for dispatcher, dst_dir in dispatchers.items():
+        if not os.path.exists(dst_dir):
             # Keep going with the next dispatcher.
             continue
-        if os.path.exists(dst + event_triggerer):
+        if os.path.exists(dst_dir + event_triggerer):
             print("%s dispatcher was already enabled" % dispatcher)
             witness = True
         else:
             print("enabling %s dispatcher" % dispatcher)
-            # symlink pointing to src in dst
-            os.symlink(src + event_triggerer, dst + event_triggerer)
+            # symlink pointing to src in dst_dir
+            os.symlink(src_dir + event_triggerer, dst_dir + event_triggerer)
             witness = True
     if not witness:
         raise SystemExit("Could not link to any network event dispatcher. "
@@ -84,22 +78,17 @@ def enable(args):
                 "of those to run this firewall as it relies on them to fire the "
                 "network change events.")
 
-    firewall = servicewall.ServiceWall()
-    if not firewall.up:
-        firewall = servicewall.ServiceWall()
+    if firewall.up:
+        print("%s was already up" % firewall.identifier)
+    else:
         firewall.start()
-        print("firewall started")
+        print("%s started" % firewall.identifier)
 
 def disable(args):
     """Destroy the link in the network dispatcher pointing to the event triggerer,
     and stop the firewall.
     """
-    dispatchers = {
-            "Network Manager": "/etc/NetworkManager/dispatcher.d/",
-            "systemd-networkd": "/etc/networkd-dispatcher/carrier.d/",
-    }
-    event_triggerer = "toggler"
-    #target = "/etc/NetworkManager/dispatcher.d/toggler"
+
     for dispatcher, target in dispatchers.items():
         # DEBUG This test would fail on a broken link :
         if os.path.exists(target + event_triggerer):
@@ -110,13 +99,14 @@ def disable(args):
             if os.path.exists(target):
                 print("%s dispatcher was already disabled" % dispatcher)
 
-    firewall = servicewall.ServiceWall()
     if firewall.up:
         firewall.stop()
         print("firewall stopped")
+        print("%s stopped" % firewall.identifier)
+    else:
+        print("%s was already down" % firewall.identifier)
 
 def status(args):
-    firewall = servicewall.ServiceWall()
     if firewall.up:
         if firewall.essid:
             realm_name = firewall.essid
@@ -127,73 +117,49 @@ def status(args):
         print("disabled")
 
 def show_input_chain(args):
-    firewall = servicewall.ServiceWall()
     firewall.list_services_in()
 
 def show_realms(args):
-    print_dict(realm_defs)
+    print_dict(firewall.realm_defs)
 def show_services(args):
-    for service in service_defs:
-        print("%s - %s" % (service, service_defs[service].description))
+    for service in firewall.service_defs:
+        print("%s - %s" % (service, firewall.service_defs[service].description))
 def show_service(args):
     service_name = args.service_name
-    s = service_defs[service_name]._asdict()
+    s = firewall.service_defs[service_name]._asdict()
     s["ports"] = s["ports"]._asdict()
     print_dict(s)
 def show_port(args):
     port = args.port_name
-    port_list = []
-    for service_name, s_tuple in service_defs.items():
+    services_list = []
+    for service_name, s_tuple in firewall.service_defs.items():
         # port_range is a string containing either a number or a range,
         # as in "80:88", "120"
         for port_range in (*s_tuple.ports.tcp, *s_tuple.ports.udp):
             if port_range.isalnum():
                 if port == port_range:
-                    port_list += port
+                    services_list.append(service_name)
             else:
                 start, end = port_range.split(":")
                 if port in range(int(start), int(end)+1):
-                    port_list += port
-        print('services using port %s :' % port)
-        for i in port_list:
-            print(" - " + i)
+                    services_list.append(service_name)
+
+    print('services using port %s :' % port)
+    for i in services_list:
+        print(" - " + i)
 
 def add_service(args):
-    essid = network_helpers.get_essid()
-    if essid not in realm_defs:
-        print("adding ESSID %s to list of known realms." % essid)
-        realm_defs[essid] = realm_defs[identifier + ":new"]
     service_name = args.service_name
-    if service_name in realm_defs[essid]:
-        raise SystemExit("Service %s already allowed in realm %s" %
-                (service_name, essid))
     # Make it local by default :
-    realm_defs[essid][service_name] = True
-    with open(realm_defs_pickle, "wb") as fd:
-        pickle.dump(realm_defs, fd)
-    firewall = servicewall.ServiceWall()
-    firewall.add_service_in(service_name, local=False)
-    print("Allowed %s to be served when in realm %s." % (service_name, essid))
+    firewall.add_service_in(service_name, local=True)
+    print("Allowed %s to be served when in realm %s." %
+          (service_name, firewall.essid))
 
 def del_service(args):
-    essid = network_helpers.get_essid()
-    if essid not in realm_defs:
-        print("adding ESSID %s to list of known realms." % essid)
-        realm_defs[essid] = realm_defs[identifier + ":new"]
     service_name = args.service_name
-    # Do our own validity testing
-    if service_name not in service_defs:
-        raise KeyError('service "%s" not found. ')
-    if service_name in realm_defs[essid]:
-        del realm_defs[essid][service_name]
-    else:
-        raise KeyError('service "%s" was not allowed in realm %s anyway.'
-                % (service_name, essid))
-    with open(realm_defs_pickle, "wb") as fd:
-        pickle.dump(realm_defs, fd)
-    firewall = servicewall.ServiceWall()
     firewall.del_service_in(service_name)
-    print("Removed %s from allowed services on realm %s." % (service_name, essid))
+    print("Removed %s from allowed services on realm %s." %
+          (service_name, firewall.essid))
 
 def show_logs(args):
     if "period" in args:
@@ -279,9 +245,9 @@ def log_yielder(period=""):
             if age > period:
                 break
         # Only catch messages sent by iptables log :
-        if log["MESSAGE"].startswith(identifier):
+        if log["MESSAGE"].startswith(firewall.identifier):
             message_dict = {}
-            message = log["MESSAGE"].strip(identifier + ":").strip()
+            message = log["MESSAGE"].strip(firewall.identifier + ":").strip()
             message_dict["DATE"] = log["__REALTIME_TIMESTAMP"]
             for item in message.split():
                 if item.count("="):
