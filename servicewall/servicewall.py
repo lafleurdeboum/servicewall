@@ -84,10 +84,10 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         for rule in self.input_chain.rules:
             self.del_rule(super()._get_rule_name(rule), self.input_chain)
 
-    def save(self):
+    def save_rules(self):
         """Dumps the actual config to config file.
         """
-        with open(realm_defs_pickle, "wb") as fd:
+        with open(self.realm_defs_pickle, "wb") as fd:
             pickle.dump(self.realm_defs, fd)
         print("Modified realm rules for %s written to file." % self.essid)
 
