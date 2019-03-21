@@ -73,11 +73,11 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                     self.realm_defs[self.essid] = copy.deepcopy(self.realm_defs[identifier + ":default"])
                 for service_name, local_toggle in self.realm_defs[self.essid].items():
                     if local_toggle:
-                        self.add_service_in(service_name, local=True)
+                        self.insert_service_rule(service_name, local=True)
                     else:
-                        self.add_service_in(service_name, local=False)
+                        self.insert_service_rule(service_name, local=False)
         else:
-            raise SystemExit("not starting, firewall disabled. Enable it with\n# braise enable")
+            raise SystemExit("not starting, firewall disabled. Enable it with\n\t# braise enable")
         # Commits the table if relevant, and brings other rules in :
         super().start(**args)
 
@@ -89,11 +89,11 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                 else:
                     realm = self.essid
             #for service_name in self.realm_defs[realm]:
-            #    self.del_service_in(service_name)
+            #    self.remove_service_rule(service_name)
             for rule in self.input_chain.rules:
                 self.del_rule(super()._get_rule_name(rule), self.input_chain)
         else:
-            raise SystemExit("not stopping, firewall disabled. Disable it with\n# braise disable")
+            raise SystemExit("not stopping, firewall disabled. Enable it with\n\t# braise enable")
 
     def reload(self):
         self.stop()
@@ -109,25 +109,24 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
               (self.essid, self.realm_defs_dict))
 
     def add_service_in(self, service_name, local=False):
-        """Open ports for a service hosted on this machine.
-        
-        service_name should be one of self.service_defs' keys.
-        if src is "local", use self.subnetwork instead.
-        """
         # Create an entry for this realm's essid if there weren't any :
         if self.essid not in self.realm_defs:
             self.realm_defs[self.essid] = copy.deepcopy(self.realm_defs[identifier + ":default"])
-
         if service_name not in self.service_defs:
-            raise KeyError("undefined service : %s."
-                    % service_name)
-
-        if service_name in self.realm_defs[self.essid]:
-            print("%s is already in realm def %s" %
-                  (service_name, self.essid))
-        else:
+            raise KeyError("undefined service : %s." %
+                    service_name)
+        if service_name not in self.realm_defs[self.essid]:
             self.realm_defs[self.essid][service_name] = local
+            print("added %s to realm def %s" %
+                  (service_name, self.essid))
+            self.reload()
 
+    def insert_service_rule(self, service_name, local=False):
+        """Open ports for a service hosted on this machine.
+
+        service_name should be one of self.service_defs' keys.
+        if src is "local", use self.subnetwork instead.
+        """
         if local:
             src = self.subnetwork
         else:
@@ -157,9 +156,8 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                          proto="udp"
             )
 
+
     def del_service_in(self, service_name):
-        """Closes ports for service service_name if they were opened.
-        """
         # Create an entry for this realm's essid if there weren't any :
         if self.essid not in self.realm_defs:
             self.realm_defs[self.essid] = copy.deepcopy(self.realm_defs[identifier + ":default"])
@@ -168,9 +166,16 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             raise KeyError('service "%s" not found. ')
         if service_name in self.realm_defs[self.essid]:
             del self.realm_defs[self.essid][service_name]
+            print("removed service %s from realm %s" %
+                    (service_name, self.essid))
         else:
             raise KeyError('service "%s" was not allowed in realm %s anyway.'
                     % (service_name, self.essid))
+        self.remove_service_rule(service_name)
+
+    def remove_service_rule(self, service_name):
+        """Closes ports for service service_name if they were opened.
+        """
         for rule in self.input_chain.rules:
             # Call the FireWall's  private _get_rule_name function
             if super()._get_rule_name(rule) == service_name:
