@@ -9,18 +9,19 @@
 import argcomplete
 import argparse
 import pickle
+import json
 from servicewall.network_helpers import get_essid
 
 
 conf_dir = "/etc/servicewall/"
 lib_dir = "/usr/lib/servicewall/"
-realm_defs_pickle = conf_dir + "realms.p"
+realm_defs_dict = conf_dir + "realms.json"
 service_defs_pickle = lib_dir + "services.p"
 definitions_dir = "/etc/gufw/app_profiles"
 program_name = "ServiceWall"
 
-with open(realm_defs_pickle, "rb") as fd:
-    realm_defs = pickle.load(fd)
+with open(realm_defs_dict, "rb") as fd:
+    realm_defs = json.load(fd)
 with open(service_defs_pickle, "rb") as fd:
     service_defs = pickle.load(fd)
 

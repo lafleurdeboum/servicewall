@@ -21,6 +21,7 @@ from servicewall.service_helpers import PortDef, ServiceDef
 globals()["PortDef"] = PortDef
 globals()["ServiceDef"] = ServiceDef
 import pickle
+import json
 
 
 class ServiceWall(statefulfirewall.StateFulFireWall):
@@ -30,7 +31,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     identifier = "ServiceWall"
     conf_dir = "/etc/servicewall/"
     lib_dir = "/usr/lib/servicewall/"
-    realm_defs_pickle = conf_dir + "realms.p"
+    realm_defs_dict = conf_dir + "realms.json"
     service_defs_pickle = lib_dir + "services.p"
 
     def __init__(self):
@@ -54,8 +55,8 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
 
         with open(self.service_defs_pickle, "rb") as fd:
             self.service_defs = pickle.load(fd)
-        with open(self.realm_defs_pickle, "rb") as fd:
-            self.realm_defs = pickle.load(fd)
+        with open(self.realm_defs_dict, "rb") as fd:
+            self.realm_defs = json.load(fd)
 
     def start(self, **args):
         """Will load a set of rules from self.realm_defs . If these rules
@@ -65,7 +66,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         if self.online:
             if self.essid not in self.realm_defs:
                 # If we don't have a realm definition, load "ServiceWall:new"
-                self.realm_defs[self.essid] = self.realm_defs[identifier + ":new"]
+                self.realm_defs[self.essid] = self.realm_defs[identifier + ":default"]
             for service_name, local_toggle in self.realm_defs[self.essid].items():
                 if local_toggle:
                     self.add_service_in(service_name, local=True)
@@ -76,7 +77,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
 
     def stop(self):
         if self.essid not in self.realm_defs:
-            realm = identifier + ":new"
+            realm = identifier + ":default"
         else:
             realm = self.essid
         #for service_name in self.realm_defs[realm]:
@@ -87,8 +88,8 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     def save_rules(self):
         """Dumps the actual config to config file.
         """
-        with open(self.realm_defs_pickle, "wb") as fd:
-            pickle.dump(self.realm_defs, fd)
+        with open(self.realm_defs_dict, "wb") as fd:
+            json.dump(self.realm_defs, fd)
         print("Modified realm rules for %s written to file." % self.essid)
 
     def add_service_in(self, service_name, local=False):
