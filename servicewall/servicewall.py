@@ -115,7 +115,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         if src is "local", use self.subnetwork instead.
         """
         # Create an entry for this realm's essid if there weren't any :
-        if self.essid not in self.service_defs:
+        if self.essid not in self.realm_defs:
             self.realm_defs[self.essid] = copy.deepcopy(self.realm_defs[identifier + ":default"])
 
         if service_name not in self.service_defs:
@@ -123,7 +123,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                     % service_name)
 
         if service_name in self.realm_defs[self.essid]:
-            print("%s is already allowed in realm %s" %
+            print("%s is already in realm def %s" %
                   (service_name, self.essid))
         else:
             self.realm_defs[self.essid][service_name] = local
@@ -132,6 +132,10 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             src = self.subnetwork
         else:
             src = ""
+
+        for rule in self.input_chain.rules:
+            if super()._get_rule_name(rule) == service_name:
+                raise KeyError("rule already in input chain")
 
         s = self.service_defs[service_name]
         print("allowing service %s from %s" %
@@ -157,7 +161,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         """Closes ports for service service_name if they were opened.
         """
         # Create an entry for this realm's essid if there weren't any :
-        if self.essid not in self.service_defs:
+        if self.essid not in self.realm_defs:
             self.realm_defs[self.essid] = copy.deepcopy(self.realm_defs[identifier + ":default"])
         # Do our own validity testing
         if service_name not in self.service_defs:

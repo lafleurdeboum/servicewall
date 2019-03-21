@@ -156,15 +156,11 @@ def add_service(args):
     service_name = args.service_name
     # Make it local by default :
     firewall.add_service_in(service_name, local=True)
-    print("Allowed %s to be served when in realm %s." %
-          (service_name, firewall.essid))
     firewall.save_rules()
 
 def del_service(args):
     service_name = args.service_name
     firewall.del_service_in(service_name)
-    print("Removed %s from allowed services on realm %s." %
-          (service_name, firewall.essid))
     firewall.save_rules()
 
 def show_logs(args):
