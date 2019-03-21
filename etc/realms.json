@@ -1,1 +1,1 @@
-{"Jia": {"DHCP": true, "Samba": true, "mDNS": true, "http": false, "upnp": true, "ssh": false}, "ServiceWall:default": {"DHCP": true, "http": true, "ssh": false}}
+{"ServiceWall:default": {"DHCP": true, "http": true, "ssh": false}}
