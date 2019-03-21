@@ -58,14 +58,13 @@ setuptools.setup(
         "python-argparse",
         "python-netifaces",
         "python-systemd",
-        "python-argcomplete",
     ],
-    extras={
-        "python-argcomplete": "have tab-completion in bash as root"
+    extras_require={
+        "argument completion as root": "python-argcomplete",
     },
     scripts=["servicewall/braise"],
     data_files=[
-        ("/etc/servicewall", ["lib/realms.json"]),
+        ("/etc/servicewall", ["etc/realms.json"]),
         ("lib/servicewall", ["lib/services.p", "servicewall/toggler"]),
     ],
     #cmdclass={"install": CustomInstallCommand,},
