@@ -55,7 +55,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
 
         with open(self.service_defs_pickle, "rb") as fd:
             self.service_defs = pickle.load(fd)
-        with open(self.realm_defs_dict, "rb") as fd:
+        with open(self.realm_defs_dict, "r") as fd:
             self.realm_defs = json.load(fd)
 
     def start(self, **args):
@@ -88,7 +88,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     def save_rules(self):
         """Dumps the actual config to config file.
         """
-        with open(self.realm_defs_dict, "wb") as fd:
+        with open(self.realm_defs_dict, "w") as fd:
             json.dump(self.realm_defs, fd)
         print("Modified realm rules for %s written to file." % self.essid)
 
