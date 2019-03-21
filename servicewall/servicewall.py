@@ -22,6 +22,7 @@ globals()["PortDef"] = PortDef
 globals()["ServiceDef"] = ServiceDef
 import pickle
 import json
+import copy
 
 
 class ServiceWall(statefulfirewall.StateFulFireWall):
@@ -65,7 +66,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         """
         if self.online:
             if self.essid not in self.realm_defs:
-                # If we don't have a realm definition, load "ServiceWall:new"
+                # If we don't have a realm definition, load "ServiceWall:default"
                 self.realm_defs[self.essid] = self.realm_defs[identifier + ":default"]
             for service_name, local_toggle in self.realm_defs[self.essid].items():
                 if local_toggle:
@@ -99,6 +100,10 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         service_name should be one of self.service_defs' keys.
         if src is "local", use self.subnetwork instead.
         """
+        # Create an entry for this realm's essid if there weren't any :
+        if self.essid not in self.service_defs:
+            self.realm_defs[self.essid] = copy.deepcopy(self.realm_defs[identifier + ":default"])
+
         if service_name not in self.service_defs:
             raise KeyError("undefined service : %s."
                     % service_name)
@@ -137,6 +142,9 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     def del_service_in(self, service_name):
         """Closes ports for service service_name if they were opened.
         """
+        # Create an entry for this realm's essid if there weren't any :
+        if self.essid not in self.service_defs:
+            self.realm_defs[self.essid] = copy.deepcopy(self.realm_defs[identifier + ":default"])
         # Do our own validity testing
         if service_name not in self.service_defs:
             raise KeyError('service "%s" not found. ')

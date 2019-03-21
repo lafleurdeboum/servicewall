@@ -6,7 +6,7 @@
 _pkgname=servicewall
 pkgname=servicewall-git
 pkgdesc="the desktop firewall that adapts to different network connections"
-pkgver=0.3.8.r2.155a05c
+pkgver=0.3.8.r4.9511ace
 pkgrel=1
 arch=("any")
 url="https://pypi.python.org/pypi/servicewall"
@@ -16,7 +16,7 @@ depends=("python" "python-iptables" "python-argparse" "python-netifaces" "python
 optdepends=("python-argcomplete" "networkd-dispatcher" "networkmanager")
 makedepends=("python-distribute" "python-setuptools" "git")
 # Backup the recorded realms : actually works better when commented
-#backup=("etc/servicewall/realms.json")
+backup=("etc/servicewall/realms.json")
 
 # Sources for non-git repos :
 #options=(!emptydirs)
@@ -27,7 +27,8 @@ makedepends=("python-distribute" "python-setuptools" "git")
 #source=("${pkgname%-git}::git+http://flip.local/~lafleur/${_pkgname}")
 
 # Go in the local git source, issue a "$ git sert", and use this source :
-source=("${pkgname%-git}::git://localhost/#branch=testing")
+#source=("${pkgname%-git}::git://localhost/#branch=testing")
+source=("${pkgname%-git}::git://localhost/")
 
 md5sums=("SKIP")
 
