@@ -131,22 +131,8 @@ def show_service(args):
     print_dict(s)
 def show_port(args):
     port = args.port_name
-    services_list = []
-    for service_name, s_tuple in firewall.service_defs.items():
-        # port_range is a string containing either a number or a range,
-        # as in "80:88", "120"
-        for port_range in (*s_tuple.ports.tcp, *s_tuple.ports.udp):
-            if port_range.isalnum():
-                if port == port_range:
-                    services_list.append(service_name)
-            else:
-                start, end = port_range.split(":")
-                if port in range(int(start), int(end)+1):
-                    services_list.append(service_name)
-
     print('services using port %s :' % port)
-    for i in services_list:
-        print(" - " + i)
+    [ print("  - %s" % i) for i in firewall.list_services_by_port(port) ]
 
 def add_service(args):
     service_name = args.service_name

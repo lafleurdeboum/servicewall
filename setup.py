@@ -30,7 +30,7 @@ for package in setuptools.find_packages():
     print("setuptools : including package %s" % package)
 
 name="servicewall"
-version = "0.3.3.3"
+version = "0.3.7"
 
 setuptools.setup(
     name=name,

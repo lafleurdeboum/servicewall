@@ -150,3 +150,20 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         """Lists services for which we have allowed ports.
         """
         self.list_rules(self.input_chain)
+
+    def list_services_by_port(self, port):
+        services_list = []
+        for service_name, s_tuple in self.service_defs.items():
+            for service_port_range in (*s_tuple.ports.tcp, *s_tuple.ports.udp):
+                # service_port_range is a string containing either a number or a
+                # range, as in "80:88", "120"
+                if service_port_range.isalnum():
+                    if port == service_port_range:
+                        services_list.append(service_name)
+                else:   # it's a range
+                    start, end = service_port_range.split(":")
+                    if port in range(int(start), int(end)+1):
+                        services_list.append(service_name)
+        return services_list
+
+
