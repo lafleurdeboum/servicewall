@@ -4,10 +4,11 @@
 
 """
 
-__all__ = ["no_arg_provided", "enable", "disable", "show_logs", "show_realms", "show_services", "show_service", "show_status", "add_service", "del_service"]
+__all__ = ["no_arg_provided", "enable", "disable", "reload", "show_logs", "show_realms", "show_services", "show_service", "show_status", "add_service", "del_service"]
 
 
 import pickle
+import json
 
 # Needed to access logging :
 from systemd import journal
@@ -52,20 +53,25 @@ def enable(args):
         # This should never happen ; pip should gracefully put it there.
         raise SystemExit("Could not find %s in %s" %
                 (event_triggerer, src_dir))
-    witness = False
+    linked = False
     for dispatcher, dst_dir in dispatchers.items():
         if not os.path.exists(dst_dir):
             # Keep going with the next dispatcher.
             continue
         if os.path.exists(dst_dir + event_triggerer):
             print("%s dispatcher was already enabled" % dispatcher)
-            witness = True
+            linked = True
         else:
             print("enabling %s dispatcher" % dispatcher)
             # symlink pointing to src in dst_dir
             os.symlink(src_dir + event_triggerer, dst_dir + event_triggerer)
-            witness = True
-    if not witness:
+            linked = True
+    if linked:
+        # Mark as enabled :
+        firewall.config["enabled"] = True
+        with open(firewall.config_file, 'w') as fd:
+             json.dump(firewall.config, fd)
+    else:
         raise SystemExit("Could not link to any network event dispatcher. "
                 "You apparently aren't running neither Network Manager nor "
                 "systemd-networkd with networkd-dispatcher. You'll need one "
@@ -95,13 +101,19 @@ def disable(args):
 
     if firewall.up:
         firewall.stop()
-        print("firewall stopped")
+        # Mark as disabled:
+        firewall.config["enabled"] = False
+        with open(firewall.config_file, 'w') as fd:
+             json.dump(firewall.config, fd)
         print("%s stopped" % firewall.identifier)
     else:
         print("%s was already down" % firewall.identifier)
 
+def reload(args):
+    firewall.reload()
+
 def status(args):
-    if firewall.up:
+    if firewall.config["enabled"]:
         if firewall.essid:
             realm_name = firewall.essid
         else:

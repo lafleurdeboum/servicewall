@@ -31,27 +31,28 @@ if __name__ == "__main__":
     firewall = servicewall.ServiceWall()
 
     if action == "up":
-        if firewall.up:
-            raise SystemExit()
-        firewall.start()
+        if firewall.enabled:
+            firewall.reload()
+        else:
+            raise SystemError("cannot bring firewall up, it's disabled")
 
     elif action == "down":
-        if not firewall.up:
-            raise SystemExit()
-        firewall.stop()
+        if firewall.enabled:
+            firewall.reload()
+        else:
+            raise SystemError("cannot bring firewall down, it's disabled")
 
     elif action == "connectivity-change":
-        if firewall.up:
-            local_subnet = network_helpers.get_subnetwork()
-            if local_subnet != firewall.subnetwork:
-                firewall.stop()
-                firewall.start()
+        if firewall.enabled:
+            firewall.reload()
+        else:
+            raise SystemError("cannot update firewall, it's disabled")
 
     elif action == "status":
-        if firewall.up:
-            print("up")
+        if firewall.enabled:
+            print("enabled")
         else:
-            print("down")
+            print("disabled")
 
     else:
         raise SystemError("wrong usage : %s" % " ".join(argv))

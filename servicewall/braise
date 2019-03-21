@@ -62,7 +62,7 @@ subparser.required = True
 
 
 #
-# SUBPARSERS : enable | disable | status
+# SUBPARSERS : enable | disable | status | reload
 #
 
 parser_enable = subparser.add_parser(
@@ -82,6 +82,12 @@ parser_show_status = subparser.add_parser(
     help="show iptables rules controlled by this firewall"
 )
 parser_show_status.set_defaults(func=parser_helper("status"))
+
+parser_reload = subparser.add_parser(
+    "reload",
+    help="reload rules"
+)
+parser_reload.set_defaults(func=parser_helper("reload"))
 
 
 #

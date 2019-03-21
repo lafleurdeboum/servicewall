@@ -30,10 +30,10 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     """
 
     identifier = "ServiceWall"
-    conf_dir = "/etc/servicewall/"
     lib_dir = "/usr/lib/servicewall/"
-    realm_defs_dict = conf_dir + "realms.json"
-    service_defs_pickle = lib_dir + "services.p"
+    service_defs_pickle = "/usr/lib/servicewall/services.p"
+    realm_defs_dict = "/etc/servicewall/realms.json"
+    config_file = "/etc/servicewall/config.json"
 
     def __init__(self):
         super().__init__()
@@ -54,6 +54,8 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         else:
             self.subnetwork = False
 
+        with open(self.config_file, 'r') as fd:
+            self.config = json.load(fd)
         with open(self.realm_defs_dict, "r") as fd:
             self.realm_defs = json.load(fd)
         with open(self.service_defs_pickle, "rb") as fd:
@@ -64,27 +66,39 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         are set as True, they are matched with the provided subnetwork,
         else to any source.
         """
-        if self.online:
-            if self.essid not in self.realm_defs:
-                # If we don't have a realm definition, load "ServiceWall:default"
-                self.realm_defs[self.essid] = self.realm_defs[identifier + ":default"]
-            for service_name, local_toggle in self.realm_defs[self.essid].items():
-                if local_toggle:
-                    self.add_service_in(service_name, local=True)
-                else:
-                    self.add_service_in(service_name, local=False)
+        if self.config["enabled"]:
+            if self.online:
+                if self.essid not in self.realm_defs:
+                    # If we don't have a realm definition, load "ServiceWall:default"
+                    self.realm_defs[self.essid] = copy.deepcopy(self.realm_defs[identifier + ":default"])
+                for service_name, local_toggle in self.realm_defs[self.essid].items():
+                    if local_toggle:
+                        self.add_service_in(service_name, local=True)
+                    else:
+                        self.add_service_in(service_name, local=False)
+        else:
+            raise SystemExit("not starting, firewall disabled. Enable it with\n# braise enable")
         # Commits the table if relevant, and brings other rules in :
         super().start(**args)
 
     def stop(self):
-        if self.essid not in self.realm_defs:
-            realm = identifier + ":default"
+        if self.config["enabled"]:
+            if self.online:
+                if self.essid not in self.realm_defs:
+                    realm = identifier + ":default"
+                else:
+                    realm = self.essid
+            #for service_name in self.realm_defs[realm]:
+            #    self.del_service_in(service_name)
+            for rule in self.input_chain.rules:
+                self.del_rule(super()._get_rule_name(rule), self.input_chain)
         else:
-            realm = self.essid
-        #for service_name in self.realm_defs[realm]:
-        #    self.del_service_in(service_name)
-        for rule in self.input_chain.rules:
-            self.del_rule(super()._get_rule_name(rule), self.input_chain)
+            raise SystemExit("not stopping, firewall disabled. Disable it with\n# braise disable")
+
+    def reload(self):
+        self.stop()
+        self.start()
+        print("%s reloaded" % self.identifier)
 
     def save_rules(self):
         """Dumps the actual config to config file.

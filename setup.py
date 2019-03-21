@@ -64,7 +64,7 @@ setuptools.setup(
     },
     scripts=["servicewall/braise"],
     data_files=[
-        ("/etc/servicewall", ["etc/realms.json"]),
+        ("/etc/servicewall", ["etc/realms.json", "etc/config.json"]),
         ("lib/servicewall", ["lib/services.p", "servicewall/toggler"]),
     ],
     #cmdclass={"install": CustomInstallCommand,},
