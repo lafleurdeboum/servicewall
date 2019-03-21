@@ -53,10 +53,10 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         else:
             self.subnetwork = False
 
-        with open(self.service_defs_pickle, "rb") as fd:
-            self.service_defs = pickle.load(fd)
         with open(self.realm_defs_dict, "r") as fd:
             self.realm_defs = json.load(fd)
+        with open(self.service_defs_pickle, "rb") as fd:
+            self.service_defs = pickle.load(fd)
 
     def start(self, **args):
         """Will load a set of rules from self.realm_defs . If these rules
@@ -90,7 +90,8 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         """
         with open(self.realm_defs_dict, "w") as fd:
             json.dump(self.realm_defs, fd)
-        print("Modified realm rules for %s written to file." % self.essid)
+        print("Modified realm rules for %s written to file %s." %
+              (self.essid, self.realm_defs_dict))
 
     def add_service_in(self, service_name, local=False):
         """Open ports for a service hosted on this machine.
@@ -101,6 +102,12 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         if service_name not in self.service_defs:
             raise KeyError("undefined service : %s."
                     % service_name)
+
+        if service_name in self.realm_defs[self.essid]:
+            print("%s is already allowed in realm %s" %
+                  (service_name, self.essid))
+        else:
+            self.realm_defs[self.essid][service_name] = local
 
         if local:
             src = self.subnetwork

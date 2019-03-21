@@ -15,13 +15,7 @@ import select
 #import putch
 import datetime
 
-# Needed to add/del services :
 from servicewall import servicewall
-from servicewall import network_helpers
-
-# Needed to show services :
-from servicewall import service_helpers
-
 import os
 
 
@@ -30,7 +24,7 @@ dispatchers = {
     "systemd-networkd": "/etc/networkd-dispatcher/carrier.d/",
 }
 event_triggerer = "toggler"
-
+debug = False
 
 firewall = servicewall.ServiceWall()
 
@@ -131,8 +125,15 @@ def show_service(args):
     print_dict(s)
 def show_port(args):
     port = args.port_name
-    print('services using port %s :' % port)
-    [ print("  - %s" % i) for i in firewall.list_services_by_port(port) ]
+    services_list = firewall.list_services_by_port(port)
+    if services_list:
+        if len(services_list) == 1:
+            print("service using port %s : %s" % (port, services_list[0]))
+        else:
+            print('services using port %s :' % port)
+            [ print("  - %s" % i) for i in services_list ]
+    else:
+        print("port %s unknown." % port)
 
 def add_service(args):
     service_name = args.service_name
@@ -186,7 +187,16 @@ def show_logs(args):
         print("Host %s" % src)
         for dpt, logs in ports.items():
             age = str(now - logs[0]["DATE"]).split(".")[0]
-            if dpt == "-1":
+            if dpt != "-1":     # Then dpt is a valid port.
+                print("  asked %i times for port %s until %s ago" %
+                    (len(logs), dpt, age))
+                services_list = firewall.list_services_by_port(dpt)
+                if services_list:
+                    if len(services_list) == 1:
+                        print('    (should be service %s)' % services_list[0])
+                    else:
+                        print('    (could be any of services %s)' % services_list)
+            elif debug:         # Then dpt is undefined.
                 # These packets don't have any destination port.
                 # We'll print the first, and any variations on it.
                 variations = []
@@ -208,9 +218,6 @@ def show_logs(args):
                     print("  variations :")
                     for var in variations:
                         print("    " + var)
-            else:
-                print("  asked %i times for port %s until %s ago" %
-                    (len(logs), dpt, age))
 
 def log_yielder(period=""):
     """get logs we implemented in iptables from journald"""
