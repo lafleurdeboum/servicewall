@@ -27,7 +27,7 @@ makedepends=("python-distribute" "python-setuptools" "git")
 #source=("${pkgname%-git}::git+http://flip.local/~lafleur/${_pkgname}")
 
 # Go in the local git source, issue a "$ git sert", and use this source :
-source=("${pkgname%-git}::git://localhost/")
+source=("${pkgname%-git}::git://localhost/#branch=testing")
 
 md5sums=("SKIP")
 
