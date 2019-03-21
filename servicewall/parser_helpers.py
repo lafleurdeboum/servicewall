@@ -30,6 +30,9 @@ debug = False
 firewall = servicewall.ServiceWall()
 
 
+def prettyprint(obj):
+    print(json.dumps(obj, indent=2))
+
 def print_dict(dictionary, depth=1):
     prefix = "  " * depth
     for key, value in dictionary.items():
@@ -126,7 +129,8 @@ def show_input_chain(args):
     firewall.list_services_in()
 
 def show_realms(args):
-    print_dict(firewall.realm_defs)
+    #print_dict(firewall.realm_defs)
+    prettyprint(firewall.realm_defs)
 def show_services(args):
     for service in firewall.service_defs:
         print("%s - %s" % (service, firewall.service_defs[service].description))
@@ -134,7 +138,7 @@ def show_service(args):
     service_name = args.service_name
     s = firewall.service_defs[service_name]._asdict()
     s["ports"] = s["ports"]._asdict()
-    print_dict(s)
+    prettyprint(s)
 def show_port(args):
     port = args.port_name
     services_list = firewall.list_services_by_port(port)
@@ -143,7 +147,8 @@ def show_port(args):
             print("service using port %s : %s" % (port, services_list[0]))
         else:
             print('services using port %s :' % port)
-            [ print("  - %s" % i) for i in services_list ]
+            prettyprint(services_list)
+            #[ print("  - %s" % i) for i in services_list ]
     else:
         print("port %s unknown." % port)
 
