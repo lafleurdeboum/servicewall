@@ -9,6 +9,7 @@ import argparse
 import argcomplete
 import pickle
 import json
+from servicewall import parser_helpers
 from servicewall.network_helpers import get_essid
 
 
@@ -39,7 +40,6 @@ if essid:
 else:
     allowed_services = []
 
-from servicewall import parser_helpers, logger_helpers
 def parser_helper(function_name):
     """This function will return a pointer to a function named "function_name"
     in parser_helpers. This pointer will only be evaluated when it is called,
@@ -47,14 +47,6 @@ def parser_helper(function_name):
     """
     def wrapper(args):
         eval("parser_helpers." + function_name)(args)
-    return wrapper
-def logger_helper(function_name):
-    """This function will return a pointer to a function named "function_name"
-    in parser_helpers. This pointer will only be evaluated when it is called,
-    ie after parser is done.
-    """
-    def wrapper(args):
-        eval("logger_helpers." + function_name)(args)
     return wrapper
 
 parser = argparse.ArgumentParser()
@@ -109,14 +101,14 @@ parser_show_logs = show_subparser.add_parser(
     "logs",
     help="show a digest of logs of the firewall"
 )
-parser_show_logs.set_defaults(func=logger_helper("show_logs"))
+parser_show_logs.set_defaults(func=parser_helper("show_logs"))
 show_logs_subparser = parser_show_logs.add_subparsers()
 parser_show_logs_time = show_logs_subparser.add_parser(
     "since",
     help="restrict logs to those since [period] seconds"
 )
 parser_show_logs_time.add_argument("period", type=int)
-parser_show_logs_time.set_defaults(func=logger_helper("show_logs"))
+parser_show_logs_time.set_defaults(func=parser_helper("show_logs"))
 
 parser_show_realms = show_subparser.add_parser(
     "realms",
