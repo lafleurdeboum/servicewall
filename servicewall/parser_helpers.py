@@ -10,11 +10,10 @@ __all__ = ["no_arg_provided", "enable", "disable", "reload", "show_logs", "show_
 import os
 import pickle
 import json
-from systemd import journal
 from datetime import datetime
 #import select
 #import putch
-from servicewall import servicewall
+import servicewall
 
 
 debug = False
@@ -35,8 +34,8 @@ def print_dict(dictionary, depth=1):
 
 
 def no_arg_provided(args):
-    #parser.print_help()
-    raise SystemExit("\n  argument needed !")
+    parser.print_help()
+    #raise SystemExit("\n  argument needed !")
 
 def enable(args):
     firewall.enable()
@@ -97,9 +96,9 @@ def del_service(args):
 
 def show_logs(args):
     if "period" in args:
-        yielder = log_yielder(int(args.period))
+        yielder = firewall.log_yielder(int(args.period))
     else:
-        yielder = log_yielder()
+        yielder = firewall.log_yielder()
     now = datetime.today()
 
     # log_folder is a dict that contains host adresses as keys,
@@ -163,40 +162,5 @@ def show_logs(args):
                     print("  variations :")
                     for var in variations:
                         print("    " + var)
-
-def log_yielder(period=""):
-    """get logs we implemented in iptables from journald"""
-    # Equivalent to :
-    #   journalctl --identifier kernel -p warning | grep ServiceWall
-    reader = journal.Reader()
-    reader.log_level(journal.LOG_WARNING)
-    reader.add_match(SYSLOG_IDENTIFIER="kernel")
-    now = datetime.today()
-    #p = select.poll()
-    #p.register(reader, reader.get_events())
-    #p.poll()
-    reader.seek_tail()
-    while True:
-        log = reader.get_previous()
-        # Quit if there's no message :
-        if not "MESSAGE" in log:
-            break
-        # Quit if log older than period :
-        if period:
-            age = datetime.timestamp(now) - datetime.timestamp(log["__REALTIME_TIMESTAMP"])
-            if age > period:
-                break
-        # Only catch messages sent by iptables log :
-        if log["MESSAGE"].startswith(firewall.identifier):
-            message_dict = {}
-            message = log["MESSAGE"].strip(firewall.identifier + ":").strip()
-            message_dict["DATE"] = log["__REALTIME_TIMESTAMP"]
-            for item in message.split():
-                if item.count("="):
-                    key, value = item.split("=")
-                    message_dict[key] = value
-                else:
-                    message_dict[item] = ""
-            yield message_dict
 
 

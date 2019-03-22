@@ -3,7 +3,7 @@ name = "servicewall"
 __all__ = [
     "service_helpers",
     "network_helpers",
-    "servicewall",
+    "main",
     "statefulfirewall",
     "firewall",
 ]
@@ -11,7 +11,7 @@ __all__ = [
 #__path__ = extend_path(__path__, __name__)
 
 # Load the main package
-from servicewall.servicewall import ServiceWall
+from servicewall.main import ServiceWall
 
 # This function needs to be here and have service_helpers imported
 # this way to have working pickle in the ServiceWall class.

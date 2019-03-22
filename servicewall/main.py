@@ -3,6 +3,11 @@
 Uses service definitions provided by jhansonxi
 and implements them in a FireWall class, either to allow them for the local
 subnetwork, or worldwide.
+
+This firewall records the services you allow your computer to serve on a
+specific network profile, switching between profiles as network provider
+changes.
+
 """
 
 from servicewall import network_helpers
@@ -12,6 +17,8 @@ identifier = "ServiceWall"
 #print(globals()["identifier"])
 
 from collections import namedtuple
+from systemd import journal
+from datetime import datetime
 
 #from servicewall import service_helpers
 #globals()["PortDef"] = service_helpers.PortDef
@@ -261,4 +268,51 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                     if port in range(int(start), int(end)+1):
                         services_list.append(service_name)
         return services_list
+
+
+    def log_yielder(self, limit=None, period=""):
+        """get logs we implemented in iptables from journald"""
+        # Equivalent to :
+        #   journalctl --identifier kernel -p warning | grep ServiceWall
+        reader = journal.Reader()
+        reader.log_level(journal.LOG_WARNING)
+        reader.add_match(SYSLOG_IDENTIFIER="kernel")
+        now = datetime.today()
+        #p = select.poll()
+        #p.register(reader, reader.get_events())
+        #p.poll()
+        reader.seek_tail()
+        if limit:
+            limit = int(limit)
+            i = 0
+        while True:
+            log = reader.get_previous()
+            if not "MESSAGE" in log:
+                continue
+
+            # Only catch messages sent by iptables log :
+            if log["MESSAGE"].startswith(self.identifier):
+                message_dict = {}
+                message = log["MESSAGE"].strip(self.identifier + ":").strip()
+                message_dict["DATE"] = log["__REALTIME_TIMESTAMP"]
+                for item in message.split():
+                    if item.count("="):
+                        key, value = item.split("=")
+                        message_dict[key] = value
+                    else:
+                        message_dict[item] = ""
+                if "DPT" not in message:
+                    continue
+                # Quit if log older than period :
+                if period:
+                    age = datetime.timestamp(now) - datetime.timestamp(log["__REALTIME_TIMESTAMP"])
+                    if age > period:
+                        break
+                if limit:
+                    if i >= limit:
+                        break
+                    else:
+                        i += 1
+                yield message_dict
+
 

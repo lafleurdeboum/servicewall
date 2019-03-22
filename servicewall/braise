@@ -9,6 +9,7 @@ import argparse
 import argcomplete
 import pickle
 import json
+from sys import argv
 from servicewall import parser_helpers
 from servicewall.network_helpers import get_essid
 
@@ -50,14 +51,15 @@ def parser_helper(function_name):
     return wrapper
 
 parser = argparse.ArgumentParser()
-parser.required = True
 
 # parser fails badly when invoked without argument ; let's invoke basic help
-# instead (see def no_arg_provided(args) in service_helpers.py)
-parser.set_defaults(func=parser_helper("no_arg_provided"))
+# instead (see def no_arg_provided(args) in parser_helpers.py)
+#parser.set_defaults(func=parser_helper("no_arg_provided"))
+#parser.set_defaults(func=parser.print_help())
+#defarg = parser.add_argument("-s", action='store_true')
+#defarg.set_defaults(func=parser.print_help())
 
 subparser = parser.add_subparsers()
-subparser.required = True
 
 
 #
@@ -93,8 +95,10 @@ parser_reload.set_defaults(func=parser_helper("reload"))
 # SUBPARSERS : show { logs | realms | services | service }
 #
 
-parser_show = subparser.add_parser("show")
-parser_show.required = True
+parser_show = subparser.add_parser(
+    "show",
+    help="show different useful things"
+)
 show_subparser = parser_show.add_subparsers()
 
 parser_show_logs = show_subparser.add_parser(
@@ -109,6 +113,12 @@ parser_show_logs_time = show_logs_subparser.add_parser(
 )
 parser_show_logs_time.add_argument("period", type=int)
 parser_show_logs_time.set_defaults(func=parser_helper("show_logs"))
+parser_show_logs_limit = show_logs_subparser.add_parser(
+    "limit",
+    help="limit to last LIMIT logs"
+)
+parser_show_logs_limit.add_argument("limit", type=int)
+parser_show_logs_limit.set_defaults(func=parser_helper("show_logs"))
 
 parser_show_realms = show_subparser.add_parser(
     "realms",
@@ -176,10 +186,14 @@ parser_del_service.set_defaults(func=parser_helper("del_service"))
 
 
 argcomplete.autocomplete(parser)
+
+if len(argv) == 1:
+    # display help message when no args are passed.
+    parser.print_help()
+    raise SystemExit()
+
 # Here, argcomplete stops.
 args = parser.parse_args()
 # Here, helper callbacks get evaluated.
 args.func(args)
-
-
 

@@ -4,6 +4,8 @@
 import os
 import wx.adv
 import wx
+import json
+import servicewall
 
 
 lib_path = "/usr/lib/servicewall/"
@@ -23,13 +25,17 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
     def __init__(self, frame):
         self.frame = frame
         super(TaskBarIcon, self).__init__()
-        self.set_icon(TRAY_ICON)
+        self.set_icon(TRAY_ICON2)
         #self.SetIcon(wx.Icon(wx.IconLocation(TRAY_ICON)), "ServiceWall")
         self.Bind(wx.adv.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
 
     def CreatePopupMenu(self):
         menu = wx.Menu()
-        create_menu_item(menu, 'Site', self.on_hello)
+        fw = servicewall.ServiceWall()
+        yielder = fw.log_yielder(limit=10)
+        for y in yielder:
+            item_text = y["SRC"] + " " + y["DPT"] + " " + str(y["DATE"])
+            create_menu_item(menu, item_text, self.log_callback)
         create_menu_item(menu, 'Exit', self.on_exit)
         #site_item = menu.Append(-1, "run...", "run")
         menu.AppendSeparator()
@@ -44,11 +50,18 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
 
     def on_left_down(self, event):      
         print('Tray icon was left-clicked.')
-        self.set_icon(TRAY_ICON2)
+        #self.set_icon(TRAY_ICON2)
         self.PopupMenu(self.CreatePopupMenu())
 
     def on_hello(self, event):
         print('Hello, world!')
+
+    def log_callback(self, event):
+        menu_item = event.GetEventObject()
+        # TODO get the right menu item.
+        m = menu_item.GetMenuItems()[0]
+        #print(dir(m))
+        print(m.GetItemLabel())
 
     def on_exit(self, event):
         wx.CallAfter(self.Destroy)
