@@ -5,6 +5,7 @@ implements a firewall using python-iptables
 
 from os import environ
 from iptc import Rule, Match, Chain, Table
+from iptc.ip4tc import IPTCError
 
 
 identifier = "ServiceWall"
@@ -23,7 +24,11 @@ class FireWall():
     - ruleset Object.
     """
     def __init__(self):
-        self._table = Table(Table.FILTER)
+        try:
+            self._table = Table(Table.FILTER)
+        except IPTCError:
+            print("You are not root - only logging available")
+            return
 
         # _table.autocommit is True by default.
         #self._table.autocommit = False
