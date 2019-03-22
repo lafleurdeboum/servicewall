@@ -102,15 +102,15 @@ def disable(args):
             if os.path.exists(target):
                 print("%s dispatcher was already disabled" % dispatcher)
 
-    if firewall.up:
-        firewall.stop()
+    firewall.stop()
+    if firewall.config["enabled"]:
         # Mark as disabled:
         firewall.config["enabled"] = False
-        with open(firewall.config_file, 'w') as fd:
-             json.dump(firewall.config, fd)
         print("%s stopped" % firewall.identifier)
     else:
         print("%s was already down" % firewall.identifier)
+    with open(firewall.config_file, 'w') as fd:
+        json.dump(firewall.config, fd)
 
 def reload(args):
     firewall.reload()

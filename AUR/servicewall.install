@@ -1,14 +1,16 @@
 ## arg 1:  the new package version
 post_install() {
-    echo "reloading ServiceWall";
-    braise reload
+    echo "enabling ServiceWall";
+    braise enable
 }
 
 ## arg 1:  the new package version
 ## arg 2:  the old package version
 post_upgrade() {
-    echo "reloading ServiceWall";
-    braise reload
+    braise status && (
+        echo "reloading ServiceWall";
+        braise reload
+    )
 }
 
 ## arg 1:  the old package version
