@@ -13,9 +13,9 @@ class CustomInstallCommand(install):
     """Not in use anymore - the dispatcher link is made by braise enable.
     """
     def run(self):
-        print("setup.py - running install with environ :")
-        for key, item in environ.items():
-            print(key, item)
+        #print("setup.py - running install with environ :")
+        #for key, item in environ.items():
+        #    print(key, item)
         install.run(self)
 
 
@@ -66,7 +66,12 @@ setuptools.setup(
     scripts=["servicewall/braise"],
     data_files=[
         ("/etc/servicewall", ["etc/realms.json", "etc/config.json"]),
-        ("lib/servicewall", ["lib/services.p", "servicewall/toggler"]),
+        ("lib/servicewall", [
+                "lib/services.p",
+                "lib/toggler",
+                "lib/icon.png",
+                "lib/icon2.png",
+        ]),
     ],
     cmdclass={"install": CustomInstallCommand,},
 )
