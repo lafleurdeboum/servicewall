@@ -28,38 +28,41 @@ import copy
 class ServiceWall(statefulfirewall.StateFulFireWall):
     """ServiceWall - a FireWall in which you can add services on the fly.
     """
-
     identifier = "ServiceWall"
     lib_dir = "/usr/lib/servicewall/"
     service_defs_pickle = "/usr/lib/servicewall/services.p"
     realm_defs_dict = "/etc/servicewall/realms.json"
     config_file = "/etc/servicewall/config.json"
+    dispatchers = {
+        "Network Manager": "/etc/NetworkManager/dispatcher.d/",
+        "systemd-networkd": "/etc/networkd-dispatcher/carrier.d/",
+    }
+    dispatcher_toggler = "toggler"
 
     def __init__(self):
         super().__init__()
         # We need to know 2 things :
-        # - wether we are online
         # - wether the firewall is enabled
-        # TODO if the FW is already up, we need to check what was the
-        # essid it connected to, to see if we need to reload.
-        try:
-            self.essid = network_helpers.get_essid()
-            self.online = True
-        except KeyError:    # We don't have any network connection.
-            self.essid = False
-            self.online = False
-
-        if self.online:
-            self.subnetwork = network_helpers.get_subnetwork()
-        else:
-            self.subnetwork = False
-
+        # - wether we are online
         with open(self.config_file, 'r') as fd:
             self.config = json.load(fd)
         with open(self.realm_defs_dict, "r") as fd:
             self.realm_defs = json.load(fd)
         with open(self.service_defs_pickle, "rb") as fd:
             self.service_defs = pickle.load(fd)
+        if self.config["enabled"]:
+            try:
+                self.essid = network_helpers.get_essid()
+                self.online = True
+            except KeyError:    # We don't have any network connection.
+                self.essid = False
+                self.online = False
+
+            if self.online:
+                self.subnetwork = network_helpers.get_subnetwork()
+            else:
+                self.subnetwork = False
+
 
     def start(self, **args):
         """Will load a set of rules from self.realm_defs . If these rules
@@ -100,13 +103,68 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         self.start()
         print("%s reloaded" % self.identifier)
 
-    def save_rules(self):
-        """Dumps the actual config to config file.
+    def enable(self):
+        """Create a link in the network dispatcher pointing to the event triggerer,
+        and start the firewall.
         """
-        with open(self.realm_defs_dict, "w") as fd:
-            json.dump(self.realm_defs, fd)
-        print("Modified realm rules for %s written to file %s." %
-              (self.essid, self.realm_defs_dict))
+        if not os.path.exists(self.lib_dir):    # Should be installed by setup.py .
+            raise SystemExit("Could not find %s in %s. Check your installation !" %
+                    (dispatcher_toggler, self.lib_dir))
+        # We will only mark as enabled if we can link to a network dispatcher :
+        linked = False
+        for dispatcher, dst_dir in self.dispatchers.items():
+            if not os.path.exists(dst_dir):
+                # Keep going with the next dispatcher.
+                continue
+            if os.path.exists(dst_dir + self.dispatcher_toggler):
+                print("  %s dispatcher was already enabled" % dispatcher)
+                linked = True
+            else:
+                print("  enabling %s dispatcher" % dispatcher)
+                # symlink pointing to src in dst_dir
+                os.symlink(self.lib_dir + self.dispatcher_toggler, dst_dir + self.dispatcher_toggler)
+                linked = True
+        if linked:
+            # Mark as enabled :
+            self.config["enabled"] = True
+            with open(self.config_file, 'w') as fd:
+                 json.dump(self.config, fd)
+        else:
+            raise SystemExit("Could not link to any network event dispatcher. "
+                    "You apparently aren't running neither Network Manager nor "
+                    "systemd-networkd with networkd-dispatcher. You'll need one "
+                    "of those to run this self as it relies on them to fire the "
+                    "network change events.")
+        if self.up:
+            self.reload()
+            print("%s was already up, reloaded" % self.identifier)
+        else:
+            self.start()
+            print("%s enabled" % self.identifier)
+
+    def disable(self):
+        """Destroy the link in the network dispatcher pointing to the event triggerer,
+        and stop the firewall.
+        """
+        for dispatcher, target in self.dispatchers.items():
+            # DEBUG This test would fail on a broken link :
+            if os.path.exists(target + self.dispatcher_toggler):
+                os.remove(target + self.dispatcher_toggler)
+                print("Network dispatcher %s disabled" % dispatcher)
+            else:
+                # Report missing link only if dir is present
+                if os.path.exists(target):
+                    print("%s dispatcher was already disabled" % dispatcher)
+        self.stop()
+        if self.config["enabled"]:
+            # Mark as disabled:
+            self.config["enabled"] = False
+            with open(self.config_file, 'w') as fd:
+                json.dump(self.config, fd)
+            print("%s disabled" % self.identifier)
+        else:
+            print("%s was already disabled" % self.identifier)
+
 
     def add_service_in(self, service_name, local=False):
         # Create an entry for this realm's essid if there weren't any :
@@ -183,7 +241,6 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                 #self.input_chain.delete_rule(rule)
 
 
-
     def list_services_in(self):
         """Lists services for which we have allowed ports.
         """
@@ -203,5 +260,4 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                     if port in range(int(start), int(end)+1):
                         services_list.append(service_name)
         return services_list
-
 

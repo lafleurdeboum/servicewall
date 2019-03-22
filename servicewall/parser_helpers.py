@@ -19,14 +19,7 @@ import datetime
 from servicewall import servicewall
 import os
 
-
-dispatchers = {
-    "Network Manager": "/etc/NetworkManager/dispatcher.d/",
-    "systemd-networkd": "/etc/networkd-dispatcher/carrier.d/",
-}
-event_triggerer = "toggler"
 debug = False
-
 firewall = servicewall.ServiceWall()
 
 
@@ -48,69 +41,10 @@ def no_arg_provided(args):
     raise SystemExit("\n  argument needed !")
 
 def enable(args):
-    """Create a link in the network dispatcher pointing to the event triggerer,
-    and start the firewall.
-    """
-    src_dir = firewall.lib_dir
-    if not os.path.exists(src_dir):
-        # This should never happen ; pip should gracefully put it there.
-        raise SystemExit("Could not find %s in %s" %
-                (event_triggerer, src_dir))
-    linked = False
-    for dispatcher, dst_dir in dispatchers.items():
-        if not os.path.exists(dst_dir):
-            # Keep going with the next dispatcher.
-            continue
-        if os.path.exists(dst_dir + event_triggerer):
-            print("%s dispatcher was already enabled" % dispatcher)
-            linked = True
-        else:
-            print("enabling %s dispatcher" % dispatcher)
-            # symlink pointing to src in dst_dir
-            os.symlink(src_dir + event_triggerer, dst_dir + event_triggerer)
-            linked = True
-    if linked:
-        # Mark as enabled :
-        firewall.config["enabled"] = True
-        with open(firewall.config_file, 'w') as fd:
-             json.dump(firewall.config, fd)
-    else:
-        raise SystemExit("Could not link to any network event dispatcher. "
-                "You apparently aren't running neither Network Manager nor "
-                "systemd-networkd with networkd-dispatcher. You'll need one "
-                "of those to run this firewall as it relies on them to fire the "
-                "network change events.")
-
-    if firewall.up:
-        print("%s was already up" % firewall.identifier)
-    else:
-        firewall.start()
-        print("%s started" % firewall.identifier)
+    firewall.enable()
 
 def disable(args):
-    """Destroy the link in the network dispatcher pointing to the event triggerer,
-    and stop the firewall.
-    """
-
-    for dispatcher, target in dispatchers.items():
-        # DEBUG This test would fail on a broken link :
-        if os.path.exists(target + event_triggerer):
-            print("disabling %s dispatcher" % dispatcher)
-            os.remove(target + event_triggerer)
-        else:
-            # Report missing link only if dir is present
-            if os.path.exists(target):
-                print("%s dispatcher was already disabled" % dispatcher)
-
-    firewall.stop()
-    if firewall.config["enabled"]:
-        # Mark as disabled:
-        firewall.config["enabled"] = False
-        print("%s stopped" % firewall.identifier)
-    else:
-        print("%s was already down" % firewall.identifier)
-    with open(firewall.config_file, 'w') as fd:
-        json.dump(firewall.config, fd)
+    firewall.disable()
 
 def reload(args):
     firewall.reload()
@@ -135,9 +69,8 @@ def show_services(args):
     for service in firewall.service_defs:
         print("%s - %s" % (service, firewall.service_defs[service].description))
 def show_service(args):
-    service_name = args.service_name
-    s = firewall.service_defs[service_name]._asdict()
-    s["ports"] = s["ports"]._asdict()
+    s = firewall.service_defs[args.service_name]._asdict()
+    #s["ports"] = s["ports"]._asdict()
     prettyprint(s)
 def show_port(args):
     port = args.port_name
