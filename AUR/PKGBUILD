@@ -6,7 +6,7 @@
 _pkgname=servicewall
 pkgname=servicewall-git
 pkgdesc="the desktop firewall that adapts to different network connections"
-pkgver=0.3.8.r9.17f6f96
+pkgver=0.3.8.r11.4aa1164
 pkgrel=1
 arch=("any")
 url="https://pypi.python.org/pypi/servicewall"
@@ -15,6 +15,7 @@ license=("GPL3")
 depends=("python" "python-iptables" "python-argparse" "python-netifaces" "python-systemd")
 optdepends=("python-argcomplete" "networkd-dispatcher" "networkmanager")
 makedepends=("python-distribute" "python-setuptools" "git")
+install=servicewall.install
 # Backup the recorded realms : actually works better when commented
 backup=("etc/servicewall/realms.json" "etc/servicewall/config.json")
 
