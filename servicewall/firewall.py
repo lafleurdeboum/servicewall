@@ -53,7 +53,7 @@ class FireWall():
                 )
         # Log all that is refused.
         self.add_rule(
-                "log",
+                "journalctl",
                 self.input_chain,
                 "LOG"
                 )

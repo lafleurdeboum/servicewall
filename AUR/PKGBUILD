@@ -6,7 +6,7 @@
 _pkgname=servicewall
 pkgname=servicewall-git
 pkgdesc="the desktop firewall that adapts to different network connections"
-pkgver=0.3.8.r9.9a9679d
+pkgver=0.3.8.r9.17f6f96
 pkgrel=1
 arch=("any")
 url="https://pypi.python.org/pypi/servicewall"

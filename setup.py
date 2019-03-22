@@ -13,8 +13,9 @@ class CustomInstallCommand(install):
     """Not in use anymore - the dispatcher link is made by braise enable.
     """
     def run(self):
-        #for key, item in environ.items():
-        #    print(key, item)
+        print("setup.py - running install with environ :")
+        for key, item in environ.items():
+            print(key, item)
         install.run(self)
 
 
@@ -67,6 +68,6 @@ setuptools.setup(
         ("/etc/servicewall", ["etc/realms.json", "etc/config.json"]),
         ("lib/servicewall", ["lib/services.p", "servicewall/toggler"]),
     ],
-    #cmdclass={"install": CustomInstallCommand,},
+    cmdclass={"install": CustomInstallCommand,},
 )
 
