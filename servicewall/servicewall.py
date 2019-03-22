@@ -23,6 +23,7 @@ globals()["ServiceDef"] = ServiceDef
 import pickle
 import json
 import copy
+import os
 
 
 class ServiceWall(statefulfirewall.StateFulFireWall):
@@ -42,26 +43,26 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     def __init__(self):
         super().__init__()
         # We need to know 2 things :
-        # - wether the firewall is enabled
-        # - wether we are online
+        #   - wether the firewall is enabled
+        #   - wether we are online
+
         with open(self.config_file, 'r') as fd:
             self.config = json.load(fd)
         with open(self.realm_defs_dict, "r") as fd:
             self.realm_defs = json.load(fd)
         with open(self.service_defs_pickle, "rb") as fd:
             self.service_defs = pickle.load(fd)
-        if self.config["enabled"]:
-            try:
-                self.essid = network_helpers.get_essid()
-                self.online = True
-            except KeyError:    # We don't have any network connection.
-                self.essid = False
-                self.online = False
+        try:
+            self.essid = network_helpers.get_essid()
+            self.online = True
+        except KeyError:    # We don't have any network connection.
+            self.essid = False
+            self.online = False
 
-            if self.online:
-                self.subnetwork = network_helpers.get_subnetwork()
-            else:
-                self.subnetwork = False
+        if self.online:
+            self.subnetwork = network_helpers.get_subnetwork()
+        else:
+            self.subnetwork = False
 
 
     def start(self, **args):
