@@ -43,7 +43,6 @@ class FireWall():
         """Start a basic FireWall.
 
         Drops all incoming, accepts only localhost.
-        Log anything that is dropped
         """
         # Drop all incoming. Basic but functional.
         print("setting input policy to DROP")
@@ -55,12 +54,6 @@ class FireWall():
                 self.input_chain,
                 "ACCEPT",
                 iface="lo"
-                )
-        # Log all that is refused.
-        self.add_rule(
-                "journalctl",
-                self.input_chain,
-                "LOG"
                 )
         if not self._table.autocommit:
             self._table.commit()
@@ -96,7 +89,7 @@ class FireWall():
         else:
             return False
 
-    def add_rule(self, name, chain, target, dst="", dport="", src="", sport="", proto="", iface=""):
+    def add_rule(self, name, chain, target, dst="", dport="", src="", sport="", proto="", iface="", position="top"):
         """Add rule.
 
         chain should be either self.input_chain or self.output_chain.
@@ -143,10 +136,12 @@ class FireWall():
             comment_match.comment = identifier + ":" + name
             # Try to set it into chain.
             rule.final_check()
-            if target == "LOG":
+            if position == "bottom":
                 chain.append_rule(rule)
-            else:
+            elif position == "top":
                 chain.insert_rule(rule)
+            else:
+                raise SystemError("position should be top or bottom")
             if not rule in chain.rules:
                 print("Need to check %s rule." % name)
 

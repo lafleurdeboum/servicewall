@@ -13,6 +13,7 @@ class StateFulFireWall(firewall.FireWall):
     """Implement some useful stateful rules :
     
     - accept related/established packets
+    - log anything that is dropped
     - drop invalid packets
     """
 
@@ -36,8 +37,17 @@ class StateFulFireWall(firewall.FireWall):
         # Top rule should be to allow related, established connections.
         self.add_conntrack_rule_in("ACCEPT", "ctstate", "RELATED,ESTABLISHED")
 
+        # Log all that is refused.
+        self.add_rule(
+                "journalctl",
+                self.input_chain,
+                "LOG",
+                position="bottom"
+                )
+ 
         # Drop invalid packets - as diagnosed by the conntrack processor.
         self.add_conntrack_rule_in("DROP", "ctstate", "INVALID", position="bottom")
+
         super().start(**args)   # commits the table if relevant
 
     def add_conntrack_rule_in(self, target, param_key, param_value, position="top"):
