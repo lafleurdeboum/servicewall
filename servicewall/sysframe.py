@@ -16,6 +16,7 @@ TRAY_ICON2 = lib_path + "icon2.png"
 
 def create_menu_item(menu, label, func):
     item = wx.MenuItem(menu, -1, label)
+    #item = wx.MenuItem(menu, item.GetId(), label)
     menu.Bind(wx.EVT_MENU, func, id=item.GetId())
     menu.Append(item)
     return item
@@ -33,14 +34,18 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         menu = wx.Menu()
         fw = servicewall.ServiceWall()
         yielder = fw.log_yielder(limit=10)
+        i = 0
         for y in yielder:
+            i += 1
             item_text = y["SRC"] + " " + y["DPT"] + " " + str(y["DATE"])
-            create_menu_item(menu, item_text, self.log_callback)
+            #create_menu_item(menu, item_text, self.log_callback)
+            j = menu.Append(i, item_text, item_text)
+            self.Bind(wx.EVT_MENU, self.log_callback, j)
         create_menu_item(menu, 'Exit', self.on_exit)
         #site_item = menu.Append(-1, "run...", "run")
+        #self.Bind(wx.EVT_MENU, self.on_left_down, site_item)
         menu.AppendSeparator()
         #exit_item = menu.Append(-1, "exit...", "exit")
-        #self.Bind(wx.EVT_MENU, self.on_left_down, site_item)
         #self.Bind(wx.EVT_MENU, self.on_exit, exit_item)
         return menu
 
@@ -57,10 +62,9 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         print('Hello, world!')
 
     def log_callback(self, event):
-        menu_item = event.GetEventObject()
-        # TODO get the right menu item.
-        m = menu_item.GetMenuItems()[0]
-        #print(dir(m))
+        menu = event.GetEventObject()
+        m = menu.GetMenuItems()[event.Id]
+        print(dir(m))
         print(m.GetItemLabel())
 
     def on_exit(self, event):
