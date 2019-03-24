@@ -39,7 +39,7 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
             i += 1
             item_text = y["SRC"] + " " + y["DPT"] + " " + str(y["DATE"])
             #create_menu_item(menu, item_text, self.log_callback)
-            j = menu.Append(i, item_text, item_text)
+            j = menu.Append(i, "verbose_item_text", item_text)
             self.Bind(wx.EVT_MENU, self.log_callback, j)
         create_menu_item(menu, 'Exit', self.on_exit)
         #site_item = menu.Append(-1, "run...", "run")
@@ -49,6 +49,27 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         #self.Bind(wx.EVT_MENU, self.on_exit, exit_item)
         return menu
 
+    def CreatePopup(self):
+        window = wx.PopupTransientWindow(self.frame, flags=wx.BORDER_NONE)
+        fw = servicewall.ServiceWall()
+        yielder = fw.log_yielder(limit=10)
+        panel = wx.Panel(window)
+        i = 0
+        for y in yielder:
+            i += 1
+            item_text = y["SRC"] + " " + y["DPT"] + " " + str(y["DATE"])
+            box = wx.BoxSizer(wx.HORIZONTAL)
+            #icon = wx.StaticBitmap(panel, TRAY_ICON)
+            icon = wx.StaticBitmap(panel)
+            label = wx.StaticText(panel, label=item_text, pos=(100, 50))
+            box.Add(icon, 1, wx.ALL, 5)
+            box.Add(label, 7, wx.ALL, 5)
+        panel.SetSizer(box)
+        panel.SetAutoLayout(True)
+        box.Fit(panel)
+        #window.Show(True)
+        return window
+
     def set_icon(self, path):
         icon = wx.Icon(path)
         self.SetIcon(icon, TRAY_TOOLTIP)
@@ -56,7 +77,9 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
     def on_left_down(self, event):      
         print('Tray icon was left-clicked.')
         #self.set_icon(TRAY_ICON2)
-        self.PopupMenu(self.CreatePopupMenu())
+        #self.PopupMenu(self.CreatePopupMenu())
+        # DEBUG doesn't like our PopupTransientWindow
+        self.PopupMenu(self.CreatePopup())
 
     def on_hello(self, event):
         print('Hello, world!')
