@@ -31,6 +31,7 @@ import pickle
 import json
 import copy
 import os
+import arpreq
 
 
 class ServiceWall(statefulfirewall.StateFulFireWall):
@@ -51,7 +52,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         super().__init__()
         # We need to know 2 things :
         #   - wether the firewall is enabled
-        #   - wether we are online
+        #   - wether we are online and on which network realm
 
         with open(self.config_file, 'r') as fd:
             self.config = json.load(fd)
@@ -65,7 +66,10 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         except KeyError:    # We don't have any network connection.
             self.essid = False
             self.online = False
-
+        except OSError:     # We have network but no essid ; find the ISP's MAC :
+            self.essid = False
+            self.gateway_mac = arpreq.arpreq(network_helpers.get_gateway_address())
+            self.online = True
         if self.online:
             self.subnetwork = network_helpers.get_subnetwork()
         else:
