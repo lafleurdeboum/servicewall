@@ -63,7 +63,10 @@ setuptools.setup(
     extras_require={
         "argument completion as root": "python-argcomplete",
     },
-    scripts=["servicewall/braise"],
+    scripts=[
+                "servicewall/braise",
+                "lib/systray.py",
+    ],
     data_files=[
         ("/etc/servicewall", ["etc/realms.json", "etc/config.json"]),
         ("lib/servicewall", [
