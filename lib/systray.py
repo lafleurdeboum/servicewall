@@ -15,30 +15,22 @@ TRAY_TOOLTIP = 'ServiceWall'
 TRAY_ICON = lib_path + "icon.png"
 TRAY_ICON2 = lib_path + "icon2.png"
 
-def create_menu_item(menu, label, func):
-    item = wx.MenuItem(menu, -1, label)
-    #item = wx.MenuItem(menu, item.GetId(), label)
-    menu.Bind(wx.EVT_MENU, func, id=item.GetId())
-    menu.Append(item)
-    return item
-
 
 class TaskBarIcon(wx.adv.TaskBarIcon):
+    """A systray icon with a panel showing latest hits
+    """
     def __init__(self, frame):
         self.frame = frame
         super(TaskBarIcon, self).__init__()
-        self.set_icon(TRAY_ICON2)
-        #self.SetIcon(wx.Icon(wx.IconLocation(TRAY_ICON)), "ServiceWall")
+        self.SetIcon(wx.Icon(wx.IconLocation(TRAY_ICON2)), "ServiceWall")
         self.Bind(wx.adv.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
 
     def CreatePopupMenu(self):
+        """gets automatically called on systray's right-click"""
         menu = wx.Menu()
-        create_menu_item(menu, 'Exit', self.on_exit)
-        #site_item = menu.Append(-1, "run...", "run")
-        #self.Bind(wx.EVT_MENU, self.on_left_down, site_item)
+        exit_item = menu.Append(-1, "Exit", "exit")
+        self.Bind(wx.EVT_MENU, self.on_exit, exit_item)
         #menu.AppendSeparator()
-        #exit_item = menu.Append(-1, "exit...", "exit")
-        #self.Bind(wx.EVT_MENU, self.on_exit, exit_item)
         return menu
 
     def CreateApplet(self):
@@ -74,17 +66,20 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
                 # DEBUG does it work with days ?
                 age = ":".join(str(delta).split(".")[0].split(":")[0:2])
             sizers.append(wx.BoxSizer(wx.HORIZONTAL))
-            #icons.append(wx.StaticBitmap(panel))
-            icons.append(wx.Icon(TRAY_ICON))
+            #rawbitmap = wx.Bitmap(TRAY_ICON2, type=wx.BITMAP_TYPE_ANY)
+            #bitmap = wx.Bitmap(rawbitmap.ConvertToImage().Rescale(40, 40))
+            image = wx.Image(TRAY_ICON2, type=wx.BITMAP_TYPE_ANY).Scale(40, 40)
+            bitmap = wx.Bitmap(image)
+            icons.append(wx.StaticBitmap(panel, -1, bitmap))
             labels.append([
-                    wx.StaticText(panel, label="port %s" % logpile[0]["DPT"]),
-                    wx.StaticText(panel, label="%i hits" % len(logpile)),
-                    wx.StaticText(panel, label="%s ago" % age)
+                    wx.StaticText(panel, wx.ALIGN_RIGHT, label="port %s" % logpile[0]["DPT"]),
+                    wx.StaticText(panel, wx.ALIGN_RIGHT, label="%i hits" % len(logpile)),
+                    wx.StaticText(panel, wx.ALIGN_RIGHT, label="%s ago" % age)
             ])
-            #sizers[i].Add(icons[i], 1, wx.ALL, 5)
-            sizers[i].Add(labels[i][0], 6, wx.ALL, 5)
-            sizers[i].Add(labels[i][1], 4, wx.ALL, 5)
-            sizers[i].Add(labels[i][2], 3, wx.ALL, 5)
+            sizers[i].Add(icons[i], 0, 5)
+            sizers[i].Add(labels[i][0], 1, 5)
+            sizers[i].Add(labels[i][1], 1, 5)
+            sizers[i].Add(labels[i][2], 1, wx.ALIGN_RIGHT, 5)
             list_sizer.Add(sizers[i], 1, wx.ALL, 0)
             i += 1
         panel.SetSizer(panel_sizer)
@@ -95,10 +90,6 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         #window.Show(True)
         window.Popup()
         return window
-
-    def set_icon(self, path):
-        icon = wx.Icon(path)
-        self.SetIcon(icon, TRAY_TOOLTIP)
 
     def on_left_down(self, event):      
         #self.set_icon(TRAY_ICON2)
