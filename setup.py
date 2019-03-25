@@ -65,11 +65,11 @@ setuptools.setup(
     },
     scripts=[
                 "servicewall/braise",
-                "lib/systray.py",
     ],
     data_files=[
         ("/etc/servicewall", ["etc/realms.json", "etc/config.json"]),
         ("lib/servicewall", [
+                "lib/systray.py",
                 "lib/services.p",
                 "lib/toggler",
                 "lib/icon.png",

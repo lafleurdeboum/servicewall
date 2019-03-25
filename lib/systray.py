@@ -10,6 +10,7 @@ import servicewall
 
 lib_path = "/usr/lib/servicewall/"
 #lib_path = os.path.dirname(os.path.abspath(__file__)) + "/"
+LOG_LIMIT = 20
 TRAY_TOOLTIP = 'ServiceWall' 
 TRAY_ICON = lib_path + "icon.png"
 TRAY_ICON2 = lib_path + "icon2.png"
@@ -45,7 +46,7 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         position = (r.top, r.right)
         window = wx.PopupTransientWindow(self.frame, flags=wx.BORDER_NONE)
         fw = servicewall.ServiceWall()
-        yielder = fw.log_yielder(limit=10)
+        yielder = fw.log_yielder(limit=LOG_LIMIT)
         panel = wx.Panel(window)
         i = 0
         panel_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -65,21 +66,26 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
 
         # Then display them :
         for name, logpile in logs_by_port.items():
-            #age = int(datetime.timestamp(now) - datetime.timestamp(logpile[0]["DATE"]))
             date = logpile[0]["DATE"]
             delta = date.now() - date
             if delta.seconds <= 60:
                 age = str(delta.seconds) + "'"
             else:
+                # DEBUG does it work with days ?
                 age = ":".join(str(delta).split(".")[0].split(":")[0:2])
-            item_text = "port %s : %i hits %s %s ago" % (name, len(logpile), logpile[0]["SRC"], age)
             sizers.append(wx.BoxSizer(wx.HORIZONTAL))
             #icons.append(wx.StaticBitmap(panel))
             icons.append(wx.Icon(TRAY_ICON))
-            labels.append(wx.StaticText(panel, label=item_text, pos=(100, 50)))
+            labels.append([
+                    wx.StaticText(panel, label="port %s" % logpile[0]["DPT"]),
+                    wx.StaticText(panel, label="%i hits" % len(logpile)),
+                    wx.StaticText(panel, label="%s ago" % age)
+            ])
             #sizers[i].Add(icons[i], 1, wx.ALL, 5)
-            sizers[i].Add(labels[i], 7, wx.ALL, 0)
-            list_sizer.Add(sizers[i], 1, wx.ALL, 5)
+            sizers[i].Add(labels[i][0], 6, wx.ALL, 5)
+            sizers[i].Add(labels[i][1], 4, wx.ALL, 5)
+            sizers[i].Add(labels[i][2], 3, wx.ALL, 5)
+            list_sizer.Add(sizers[i], 1, wx.ALL, 0)
             i += 1
         panel.SetSizer(panel_sizer)
         panel.SetAutoLayout(True)
