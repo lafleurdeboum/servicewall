@@ -61,12 +61,10 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         with open(self.service_defs_pickle, "rb") as fd:
             self.service_defs = pickle.load(fd)
         try:
-            self.essid = network_helpers.get_realm_id()
-            print("online ; realm id : %s" % self.essid)
+            self.realm_id = network_helpers.get_realm_id()
             self.online = True
         except KeyError:    # We don't have any network connection.
-            print("No network")
-            self.essid = None
+            self.realm_id = None
             self.online = False
 
         if self.online:
@@ -82,10 +80,10 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         """
         if self.config["enabled"]:
             if self.online:
-                if self.essid not in self.realm_defs:
+                if self.realm_id not in self.realm_defs:
                     # If we don't have a realm definition, load "ServiceWall:default"
-                    self.realm_defs[self.essid] = copy.deepcopy(self.realm_defs[identifier + ":default"])
-                for service_name, local_toggle in self.realm_defs[self.essid].items():
+                    self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[identifier + ":default"])
+                for service_name, local_toggle in self.realm_defs[self.realm_id].items():
                     if local_toggle:
                         self.insert_service_rule(service_name, local=True)
                     else:
@@ -97,13 +95,6 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
 
     def stop(self):
         if self.config["enabled"]:
-            if self.online:
-                if self.essid not in self.realm_defs:
-                    realm = identifier + ":default"
-                else:
-                    realm = self.essid
-            #for service_name in self.realm_defs[realm]:
-            #    self.remove_service_rule(service_name)
             # DEBUG should only remove rules from ServiceWall
             for rule in self.input_chain.rules:
                 self.del_rule(super()._get_rule_name(rule), self.input_chain)
@@ -184,16 +175,16 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
 
     def add_service_in(self, service_name, local=False):
         # Create an entry for this realm's essid if there weren't any :
-        if self.essid not in self.realm_defs:
-            self.realm_defs[self.essid] = copy.deepcopy(self.realm_defs[identifier + ":default"])
+        if self.realm_id not in self.realm_defs:
+            self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[identifier + ":default"])
         if service_name not in self.service_defs:
             raise KeyError("undefined service : %s." %
                     service_name)
-        if service_name not in self.realm_defs[self.essid]:
-            self.realm_defs[self.essid][service_name] = local
+        if service_name not in self.realm_defs[self.realm_id]:
+            self.realm_defs[self.realm_id][service_name] = local
             self.save_rules()
             print("added %s to realm def %s" %
-                  (service_name, self.essid))
+                  (service_name, self.realm_id))
             self.reload()
 
     def insert_service_rule(self, service_name, local=False):
@@ -234,19 +225,19 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
 
     def del_service_in(self, service_name):
         # Create an entry for this realm's essid if there weren't any :
-        if self.essid not in self.realm_defs:
-            self.realm_defs[self.essid] = copy.deepcopy(self.realm_defs[identifier + ":default"])
+        if self.realm_id not in self.realm_defs:
+            self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[identifier + ":default"])
         # Do our own validity testing
         if service_name not in self.service_defs:
-            raise KeyError('service "%s" not found. ')
-        if service_name in self.realm_defs[self.essid]:
-            del self.realm_defs[self.essid][service_name]
+            raise KeyError('service "%s" not found.')
+        if service_name in self.realm_defs[self.realm_id]:
+            del self.realm_defs[self.realm_id][service_name]
             self.save_rules()
             print("removed service %s from realm %s" %
-                    (service_name, self.essid))
+                    (service_name, self.realm_id))
         else:
             raise KeyError('service "%s" was not allowed in realm %s anyway.'
-                    % (service_name, self.essid))
+                    % (service_name, self.realm_id))
         self.remove_service_rule(service_name)
 
     def remove_service_rule(self, service_name):

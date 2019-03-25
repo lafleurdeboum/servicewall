@@ -48,11 +48,11 @@ def reload(args):
 
 def status(args):
     if firewall.config["enabled"]:
-        if firewall.essid:
-            realm_name = firewall.essid
+        if firewall.realm_id:
+            realm_name = firewall.realm_id
         else:
             realm_name = "no network"
-        print("enabled - using profile for %s" % realm_name)
+        print("enabled - using profile for realm %s" % realm_name)
     else:
         print("disabled")
 
