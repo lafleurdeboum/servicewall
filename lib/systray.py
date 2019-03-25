@@ -10,7 +10,7 @@ import servicewall
 
 lib_path = "/usr/lib/servicewall/"
 #lib_path = os.path.dirname(os.path.abspath(__file__)) + "/"
-LOG_LIMIT = 20
+LOG_LIMIT = 10
 TRAY_TOOLTIP = 'ServiceWall' 
 TRAY_ICON = lib_path + "icon.png"
 TRAY_ICON2 = lib_path + "icon2.png"
@@ -42,9 +42,6 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         panel = wx.Panel(window)
         i = 0
         panel_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        list_sizer = wx.BoxSizer(wx.VERTICAL)
-        panel_sizer.Add(list_sizer, 1, wx.ALL, 5)
-        sizers = []
         icons = []
         labels = []
         logs_by_port = {}
@@ -57,35 +54,43 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
                 logs_by_port[log["DPT"]].append(log)
 
         # Then display them :
+        logs_sizer = wx.GridSizer(len(logs_by_port) + 1, 4, 3, 3)
+        status = wx.StaticText(panel, label="", style=wx.ALIGN_CENTER)
+        status.SetLabelMarkup("<big>ServiceWall\nstatus</big>")
+        panel_sizer.Add(status, 1, wx.ALIGN_CENTER, 5)
+        panel_sizer.Add(logs_sizer, 1, wx.ALL, 5)
+        image = wx.Image(TRAY_ICON2, type=wx.BITMAP_TYPE_ANY).Scale(32, 32)
+        bitmap = wx.Bitmap(image)
+        logs_sizer.Add(wx.StaticText(panel, label=""))
+        logs_sizer.Add(wx.StaticText(panel, label='port'), 1, wx.ALIGN_RIGHT, 0)
+        logs_sizer.Add(wx.StaticText(panel, label="hits"), 1, wx.ALIGN_RIGHT, 0)
+        logs_sizer.Add(wx.StaticText(panel, label="age"), 1, wx.ALIGN_RIGHT, 0)
         for name, logpile in logs_by_port.items():
             date = logpile[0]["DATE"]
             delta = date.now() - date
             if delta.seconds <= 60:
                 age = str(delta.seconds) + "'"
             else:
-                # DEBUG does it work with days ?
                 age = ":".join(str(delta).split(".")[0].split(":")[0:2])
-            sizers.append(wx.BoxSizer(wx.HORIZONTAL))
             #rawbitmap = wx.Bitmap(TRAY_ICON2, type=wx.BITMAP_TYPE_ANY)
             #bitmap = wx.Bitmap(rawbitmap.ConvertToImage().Rescale(40, 40))
-            image = wx.Image(TRAY_ICON2, type=wx.BITMAP_TYPE_ANY).Scale(40, 40)
-            bitmap = wx.Bitmap(image)
             icons.append(wx.StaticBitmap(panel, -1, bitmap))
             labels.append([
-                    wx.StaticText(panel, wx.ALIGN_RIGHT, label="port %s" % logpile[0]["DPT"]),
-                    wx.StaticText(panel, wx.ALIGN_RIGHT, label="%i hits" % len(logpile)),
-                    wx.StaticText(panel, wx.ALIGN_RIGHT, label="%s ago" % age)
+                    wx.StaticText(panel, label="%s" % logpile[0]["DPT"], style=wx.ALIGN_RIGHT),
+                    wx.StaticText(panel, label="%i" % len(logpile)),
+                    wx.StaticText(panel, label="%s" % age)
             ])
-            sizers[i].Add(icons[i], 0, 5)
-            sizers[i].Add(labels[i][0], 1, 5)
-            sizers[i].Add(labels[i][1], 1, 5)
-            sizers[i].Add(labels[i][2], 1, wx.ALIGN_RIGHT, 5)
-            list_sizer.Add(sizers[i], 1, wx.ALL, 0)
+            logs_sizer.Add(icons[i], 1, wx.ALL, 0)
+            logs_sizer.Add(labels[i][0], 1, wx.ALIGN_RIGHT, 25)
+            logs_sizer.Add(labels[i][1], 1, wx.ALIGN_RIGHT, 0)
+            logs_sizer.Add(labels[i][2], 1, wx.ALIGN_RIGHT, 0)
+            #for j in range(3):
+            #    logs_sizer.Add(labels[i][j], 6)
             i += 1
         panel.SetSizer(panel_sizer)
         panel.SetAutoLayout(True)
         panel_sizer.Fit(panel)
-        window.SetPosition((r.right - panel_sizer.Size[0], r.top))
+        window.SetPosition((r.right - panel_sizer.Size[0] + 1, r.top))
         window.SetSize(panel_sizer.Size)
         #window.Show(True)
         window.Popup()
