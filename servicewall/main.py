@@ -173,6 +173,10 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         else:
             print("%s was already disabled" % self.identifier)
 
+    def save_rules(self):
+        with open(self.realm_defs_dict, "w") as fd:
+            json.dump(self.realm_defs, fd)
+        print("saved realm defs to config")
 
     def add_service_in(self, service_name, local=False):
         # Create an entry for this realm's essid if there weren't any :
@@ -183,6 +187,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                     service_name)
         if service_name not in self.realm_defs[self.essid]:
             self.realm_defs[self.essid][service_name] = local
+            self.save_rules()
             print("added %s to realm def %s" %
                   (service_name, self.essid))
             self.reload()
@@ -232,6 +237,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             raise KeyError('service "%s" not found. ')
         if service_name in self.realm_defs[self.essid]:
             del self.realm_defs[self.essid][service_name]
+            self.save_rules()
             print("removed service %s from realm %s" %
                     (service_name, self.essid))
         else:

@@ -27,7 +27,7 @@ class FireWall():
         try:
             self._table = Table(Table.FILTER)
         except IPTCError:
-            print("You are not root - only logging available")
+            # user is not root - return silently ; all writing ops will fail
             return
 
         # _table.autocommit is True by default.

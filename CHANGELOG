@@ -1,0 +1,9 @@
+0.3.8           logs can tell services asked for
+0.3.7           entroducing /etc/servicewall/realms.json
+0.3.6           added offline mode
+0.3.5           various bugfixes
+0.3.4           "braise show port" lists services by port
+0.3.3           service_defs pickle uses namedtuple
+0.3.2           networkd-dispatcher support
+0.3             Object Oriented rewrite
+0.2             alpha release - basic functionality
