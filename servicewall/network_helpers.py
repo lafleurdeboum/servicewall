@@ -1,5 +1,13 @@
 """Useful system calls to ask different things to the wireless controler.
+
 """
+
+# Most of them use fnctl.ioctl to pack and unpack a request.
+# https://pymotw.com/2/socket/addressing.html has some insights on packing an address.
+
+# For those taking an interface name iface as argument, see struct ifreq in
+#     /usr/include/net/if.h
+# ifreq will be mimicked using struct.pack("256s", bytes(ifname[:16], "utf-8")) .
 
 
 import socket
@@ -43,7 +51,32 @@ def get_ip_address(ifname):
     return socket.inet_ntoa(fcntl.ioctl(
             s.fileno(),
             0x8915,  # SIOCGIFADDR
-            struct.pack("256s", bytes(ifname[:15], "utf-8"))
+            struct.pack("256s", bytes(ifname[:16], "utf-8"))
+    )[20:24])
+
+def get_outside_ip_address(ifname):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    return socket.inet_ntoa(fcntl.ioctl(
+            s.fileno(),
+            0x8927, # SIOCGIFHWADDR
+        struct.pack("256s", bytes(ifname[:16], "utf-8"))
+    )[20:24])
+
+def get_mac_address(ip):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    interface = get_active_interface()
+    # SIOCGARP is documented in man 7 arp
+    # and struct arpreq in /usr/include/net/if_arp.h
+    # It refers to struct sockaddr, defined in /usr/inlude/sys/socket.h
+    request = array.array("b")
+    request.frombytes(
+            interface.ljust(16, "\x00").encode()
+    )
+    return socket.inet_ntoa(fcntl.ioctl(
+            s.fileno(),
+            0x8951, # SIOCGARP , mac address, according to man ioctl_list
+            #0x8954, # SIOCGARP , mac address
+            request
     )[20:24])
 
 def get_netmask(ifname):
@@ -51,7 +84,7 @@ def get_netmask(ifname):
     return socket.inet_ntoa(fcntl.ioctl(
             s.fileno(),
             0x891b, # SIOCGIFNETMASK
-            struct.pack("256s", bytes(ifname[:15], "utf-8"))
+            struct.pack("256s", bytes(ifname[:16], "utf-8"))
     )[20:24])
 
 

@@ -59,6 +59,7 @@ setuptools.setup(
         "python-argparse",
         "python-netifaces",
         "python-systemd",
+        "python-arpreq",
     ],
     extras_require={
         "argument completion as root": "python-argcomplete",
