@@ -69,6 +69,7 @@ setuptools.setup(
     ],
     data_files=[
         ("/etc/servicewall", ["etc/realms.json", "etc/config.json"]),
+        ("/etc/xdg/autostart", ["lib/servicewall-systray.desktop"]),
         ("lib/servicewall", [
                 "lib/systray.py",
                 "lib/services.p",

@@ -54,11 +54,20 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
                 logs_by_port[log["DPT"]].append(log)
 
         # Then display them :
-        logs_sizer = wx.GridSizer(len(logs_by_port) + 1, 4, 3, 3)
-        status = wx.StaticText(panel, label="", style=wx.ALIGN_CENTER)
-        status.SetLabelMarkup("<big>ServiceWall\nstatus</big>")
-        panel_sizer.Add(status, 1, wx.ALIGN_CENTER, 5)
-        panel_sizer.Add(logs_sizer, 1, wx.ALL, 5)
+        status_sizer = wx.BoxSizer(wx.VERTICAL)
+        logs_sizer = wx.GridSizer(len(logs_by_port) + 1, 4, 0, 0)
+        status_label = wx.StaticText(panel, label="", style=wx.ALIGN_CENTER)
+        status_details = wx.StaticText(panel, label="\nrealm : %s" % fw.realm_id, style=wx.ALIGN_CENTER)
+        if fw.config["enabled"]:
+            status_str = "enabled"
+        else:
+            status_str = "disabled"
+        status_label.SetLabelMarkup("<big>ServiceWall\n%s</big>" %
+                (status_str))
+        status_sizer.Add(status_label, 1, wx.ALIGN_CENTER, 25)
+        status_sizer.Add(status_details, 1, wx.ALIGN_CENTER, 25)
+        panel_sizer.Add(status_sizer, 1, wx.ALIGN_CENTER, 5)
+        panel_sizer.Add(logs_sizer, 1, wx.ALL, 20)
         image = wx.Image(TRAY_ICON2, type=wx.BITMAP_TYPE_ANY).Scale(32, 32)
         bitmap = wx.Bitmap(image)
         logs_sizer.Add(wx.StaticText(panel, label=""))

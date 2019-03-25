@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=ServiceWall systray
+GenericName=ServiceWall systray
+Keywords=firewall;
+Exec=/usr/lib/servicewall/systray.py
+Icon=mark-location-symbolic
+NoDisplay=true
+Terminal=false
+Type=Application
+
