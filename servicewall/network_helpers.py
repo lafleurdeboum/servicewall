@@ -44,7 +44,18 @@ def get_essid():
     name = essid.tobytes().strip(b"\x00").decode()
     if name:
         return name
-    return None
+    else:
+        return None
+
+def get_realm_id():
+    """Return a unique identifier for the Internet Service Provider
+    """
+    isp_id = get_essid()
+    if not isp_id:
+        import arpreq
+        #isp_id = arpreq.arpreq(get_ip_address(get_active_interface()))
+        isp_id = arpreq.arpreq(get_gateway_address())
+    return isp_id
 
 def get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -60,23 +71,6 @@ def get_outside_ip_address(ifname):
             s.fileno(),
             0x8927, # SIOCGIFHWADDR
         struct.pack("256s", bytes(ifname[:16], "utf-8"))
-    )[20:24])
-
-def get_mac_address(ip):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    interface = get_active_interface()
-    # SIOCGARP is documented in man 7 arp
-    # and struct arpreq in /usr/include/net/if_arp.h
-    # It refers to struct sockaddr, defined in /usr/inlude/sys/socket.h
-    request = array.array("b")
-    request.frombytes(
-            interface.ljust(16, "\x00").encode()
-    )
-    return socket.inet_ntoa(fcntl.ioctl(
-            s.fileno(),
-            0x8951, # SIOCGARP , mac address, according to man ioctl_list
-            #0x8954, # SIOCGARP , mac address
-            request
     )[20:24])
 
 def get_netmask(ifname):
@@ -114,6 +108,25 @@ def get_essid_mac_address(ifname):
     # From convention : MAC addressing is 6 hexadecimal double ints.
     address = payload[index:index+6].hex()
     return ":".join([ address[i:i+2] for i in range(0, 12, 2) ])
+
+def get_mac_address(ip):
+    """NOT WORKING - need to find how to mimic arpreq struct
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    interface = get_active_interface()
+    # SIOCGARP is documented in man 7 arp
+    # and struct arpreq in /usr/include/net/if_arp.h
+    # It refers to struct sockaddr, defined in /usr/inlude/sys/socket.h
+    request = array.array("b")
+    request.frombytes(
+            interface.ljust(16, "\x00").encode()
+    )
+    return socket.inet_ntoa(fcntl.ioctl(
+            s.fileno(),
+            0x8951, # SIOCGARP , mac address, according to man ioctl_list
+            #0x8954, # SIOCGARP , mac address
+            request
+    )[20:24])
 
 def get_essid_alt(ifname):
     from subprocess import Popen, PIPE

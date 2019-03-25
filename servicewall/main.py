@@ -61,15 +61,14 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         with open(self.service_defs_pickle, "rb") as fd:
             self.service_defs = pickle.load(fd)
         try:
-            self.essid = network_helpers.get_essid()
+            self.essid = network_helpers.get_realm_id()
+            print("online ; realm id : %s" % self.essid)
             self.online = True
         except KeyError:    # We don't have any network connection.
-            self.essid = False
+            print("No network")
+            self.essid = None
             self.online = False
-        except OSError:     # We have network but no essid ; find the ISP's MAC :
-            self.essid = False
-            self.gateway_mac = arpreq.arpreq(network_helpers.get_gateway_address())
-            self.online = True
+
         if self.online:
             self.subnetwork = network_helpers.get_subnetwork()
         else:
@@ -105,6 +104,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                     realm = self.essid
             #for service_name in self.realm_defs[realm]:
             #    self.remove_service_rule(service_name)
+            # DEBUG should only remove rules from ServiceWall
             for rule in self.input_chain.rules:
                 self.del_rule(super()._get_rule_name(rule), self.input_chain)
         else:
