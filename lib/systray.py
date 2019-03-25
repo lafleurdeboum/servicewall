@@ -32,42 +32,62 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
 
     def CreatePopupMenu(self):
         menu = wx.Menu()
-        fw = servicewall.ServiceWall()
-        yielder = fw.log_yielder(limit=10)
-        i = 0
-        for y in yielder:
-            i += 1
-            item_text = y["SRC"] + " " + y["DPT"] + " " + str(y["DATE"])
-            #create_menu_item(menu, item_text, self.log_callback)
-            j = menu.Append(i, "verbose_item_text", item_text)
-            self.Bind(wx.EVT_MENU, self.log_callback, j)
         create_menu_item(menu, 'Exit', self.on_exit)
         #site_item = menu.Append(-1, "run...", "run")
         #self.Bind(wx.EVT_MENU, self.on_left_down, site_item)
-        menu.AppendSeparator()
+        #menu.AppendSeparator()
         #exit_item = menu.Append(-1, "exit...", "exit")
         #self.Bind(wx.EVT_MENU, self.on_exit, exit_item)
         return menu
 
-    def CreatePopup(self):
+    def CreateApplet(self):
+        r = wx.GetClientDisplayRect()
+        position = (r.top, r.right)
         window = wx.PopupTransientWindow(self.frame, flags=wx.BORDER_NONE)
         fw = servicewall.ServiceWall()
         yielder = fw.log_yielder(limit=10)
         panel = wx.Panel(window)
         i = 0
-        for y in yielder:
+        panel_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        list_sizer = wx.BoxSizer(wx.VERTICAL)
+        panel_sizer.Add(list_sizer, 1, wx.ALL, 5)
+        sizers = []
+        icons = []
+        labels = []
+        logs_by_port = {}
+
+        # First sort logs by port :
+        for log in yielder:
+            if log["DPT"] not in logs_by_port:
+                logs_by_port[log["DPT"]] = [log,]
+            else:
+                logs_by_port[log["DPT"]].append(log)
+
+        # Then display them :
+        for name, logpile in logs_by_port.items():
+            #age = int(datetime.timestamp(now) - datetime.timestamp(logpile[0]["DATE"]))
+            date = logpile[0]["DATE"]
+            delta = date.now() - date
+            if delta.seconds <= 60:
+                age = str(delta.seconds) + "'"
+            else:
+                age = ":".join(str(delta).split(".")[0].split(":")[0:2])
+            item_text = "port %s : %i hits %s %s ago" % (name, len(logpile), logpile[0]["SRC"], age)
+            sizers.append(wx.BoxSizer(wx.HORIZONTAL))
+            #icons.append(wx.StaticBitmap(panel))
+            icons.append(wx.Icon(TRAY_ICON))
+            labels.append(wx.StaticText(panel, label=item_text, pos=(100, 50)))
+            #sizers[i].Add(icons[i], 1, wx.ALL, 5)
+            sizers[i].Add(labels[i], 7, wx.ALL, 0)
+            list_sizer.Add(sizers[i], 1, wx.ALL, 5)
             i += 1
-            item_text = y["SRC"] + " " + y["DPT"] + " " + str(y["DATE"])
-            box = wx.BoxSizer(wx.HORIZONTAL)
-            #icon = wx.StaticBitmap(panel, TRAY_ICON)
-            icon = wx.StaticBitmap(panel)
-            label = wx.StaticText(panel, label=item_text, pos=(100, 50))
-            box.Add(icon, 1, wx.ALL, 5)
-            box.Add(label, 7, wx.ALL, 5)
-        panel.SetSizer(box)
+        panel.SetSizer(panel_sizer)
         panel.SetAutoLayout(True)
-        box.Fit(panel)
+        panel_sizer.Fit(panel)
+        window.SetPosition((r.right - panel_sizer.Size[0], r.top))
+        window.SetSize(panel_sizer.Size)
         #window.Show(True)
+        window.Popup()
         return window
 
     def set_icon(self, path):
@@ -75,11 +95,10 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         self.SetIcon(icon, TRAY_TOOLTIP)
 
     def on_left_down(self, event):      
-        print('Tray icon was left-clicked.')
         #self.set_icon(TRAY_ICON2)
         #self.PopupMenu(self.CreatePopupMenu())
-        # DEBUG doesn't like our PopupTransientWindow
-        self.PopupMenu(self.CreatePopup())
+        tray = event.GetEventObject()
+        self.CreateApplet()
 
     def on_hello(self, event):
         print('Hello, world!')
@@ -87,8 +106,6 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
     def log_callback(self, event):
         menu = event.GetEventObject()
         m = menu.GetMenuItems()[event.Id]
-        print(dir(m))
-        print(m.GetItemLabel())
 
     def on_exit(self, event):
         wx.CallAfter(self.Destroy)
@@ -97,7 +114,7 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
 
 class App(wx.App):
     def OnInit(self):
-        frame=wx.Frame(None)
+        frame = wx.Frame(None)
         self.SetTopWindow(frame)
         TaskBarIcon(frame)
         return True
