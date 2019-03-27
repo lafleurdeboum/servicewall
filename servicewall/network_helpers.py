@@ -3,11 +3,16 @@
 """
 
 # Most of them use fnctl.ioctl to pack and unpack a request.
-# https://pymotw.com/2/socket/addressing.html has some insights on packing an address.
+
+# some insights on packing an address :
+# https://pymotw.com/2/socket/addressing.html
 
 # For those taking an interface name iface as argument, see struct ifreq in
 #     /usr/include/net/if.h
-# ifreq will be mimicked using struct.pack("256s", bytes(ifname[:16], "utf-8")) .
+# we'll mimic ifreq with struct.pack("256s", bytes(ifname[:15], "utf-8"))
+# details on constructing a C struct in python :
+# https://docs.python.org/2/library/ctypes.html#arrays
+
 
 
 import socket
@@ -62,15 +67,16 @@ def get_ip_address(ifname):
     return socket.inet_ntoa(fcntl.ioctl(
             s.fileno(),
             0x8915,  # SIOCGIFADDR
-            struct.pack("256s", bytes(ifname[:16], "utf-8"))
+            struct.pack("256s", bytes(ifname[:15], "utf-8"))
     )[20:24])
 
 def get_outside_ip_address(ifname):
+    """DOESN'T WORK and I don't know what is this IP it's outputting"""
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     return socket.inet_ntoa(fcntl.ioctl(
             s.fileno(),
             0x8927, # SIOCGIFHWADDR
-        struct.pack("256s", bytes(ifname[:16], "utf-8"))
+        struct.pack("256s", bytes(ifname[:15], "utf-8"))
     )[20:24])
 
 def get_netmask(ifname):
@@ -78,7 +84,7 @@ def get_netmask(ifname):
     return socket.inet_ntoa(fcntl.ioctl(
             s.fileno(),
             0x891b, # SIOCGIFNETMASK
-            struct.pack("256s", bytes(ifname[:16], "utf-8"))
+            struct.pack("256s", bytes(ifname[:15], "utf-8"))
     )[20:24])
 
 
@@ -95,7 +101,8 @@ def get_subnetwork():
     return "/".join((".".join(subnetwork), ".".join(netmask) ))
 
 def get_essid_mac_address(ifname):
-    """Return the ssid's MAC address as declared by the network controller
+    """Return the ssid's MAC address as declared by the network controller.
+    DEBUG Doesn't work with ethernet network providers though.
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     payload = fcntl.ioctl(
@@ -110,7 +117,10 @@ def get_essid_mac_address(ifname):
     return ":".join([ address[i:i+2] for i in range(0, 12, 2) ])
 
 def get_mac_address(ip):
-    """NOT WORKING - need to find how to mimic arpreq struct
+    """NOT WORKING - need to find how to mimic arpreq struct - clues in
+    https://stackoverflow.com/questions/159137/getting-mac-address
+    example of what's expected, written in C :
+    https://stackoverflow.com/questions/11929556/how-to-get-the-mac-address-of-client-using-ioctl-function
     """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     interface = get_active_interface()
@@ -120,7 +130,7 @@ def get_mac_address(ip):
     request = array.array("b")
     request.frombytes(
             interface.ljust(16, "\x00").encode()
-    )
+/bin/bash: q: command not found
     return socket.inet_ntoa(fcntl.ioctl(
             s.fileno(),
             0x8951, # SIOCGARP , mac address, according to man ioctl_list
