@@ -130,7 +130,7 @@ def get_mac_address(ip):
     request = array.array("b")
     request.frombytes(
             interface.ljust(16, "\x00").encode()
-/bin/bash: q: command not found
+    )
     return socket.inet_ntoa(fcntl.ioctl(
             s.fileno(),
             0x8951, # SIOCGARP , mac address, according to man ioctl_list
