@@ -4,7 +4,7 @@
 
 """
 
-__all__ = ["no_arg_provided", "enable", "disable", "reload", "show_logs", "show_realms", "show_services", "show_service", "show_status", "add_service", "del_service"]
+__all__ = ["no_arg_provided", "enable", "disable", "reload", "show_logs", "show_realms", "show_services", "show_service", "show_status", "allow_service", "disallow_service"]
 
 
 import os
@@ -82,12 +82,12 @@ def show_port(args):
     else:
         print("port %s unknown." % port)
 
-def add_service(args):
+def allow_service(args):
     service_name = args.service_name
     # Make it local by default :
     firewall.add_service_in(service_name, local=True)
 
-def del_service(args):
+def disallow_service(args):
     service_name = args.service_name
     firewall.del_service_in(service_name)
 

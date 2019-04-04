@@ -59,15 +59,15 @@ To have details on the status, use :
 
     # braise status
 
+ServiceWall works with service definitions provided by [jhansonxi](https://www.blogger.com/profile/02954133518928245196). They link a service to ports it needs.
 To allow a specific service, do :
 
-    # braise add "Service Name"
+    # braise allow service "Service Name"
 
 which will add this service to this realm's definition. If you connect to
-internet in another place, the rules for this place (identified by the ESSID of
-the connection) will be put aside, and brought back when you connect to it
-again. All this supports completion with `python-argcomplete`, so make shure you have
-it !
+internet in another place, the rules for this place will be put aside, and brought
+back when you connect to it again. You can move back with
+`braise disallow service ...`
 
 Don't know what's the exact name of the service you want to allow ? You'll need to :
 
@@ -77,7 +77,12 @@ The list is quite long. Once you want exhaustive informations on a single servic
 
     # braise show service "Service Name"
 
-These rules are stored in a dictionary called realm_defs. To interrogate it, do :
+And if you wonder which services use to use port 80, do
+
+    # braise show port 80
+
+These rules are stored together with a string identifying the network you're
+connected to, in a dictionary called realm_defs. To interrogate it, do :
 
     # braise show realms
 
@@ -89,6 +94,7 @@ tool included ; try it with
 or
 
     # braise show logs since NUMBER_OF_SECONDS
+
 
 ## Copyright
 

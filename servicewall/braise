@@ -162,29 +162,29 @@ parser_show_port.set_defaults(func=parser_helper("show_port"))
 
 
 #
-# SUBPARSERS : { add | del } service
+# SUBPARSERS : { allow | disallow } service
 #
 
-parser_add = subparser.add_parser("add")
-add_subparser = parser_add.add_subparsers()
-parser_add_service = add_subparser.add_parser(
+parser_allow = subparser.add_parser("allow")
+allow_subparser = parser_allow.add_subparsers()
+parser_allow_service = allow_subparser.add_parser(
     "service",
     usage="%s service service_name - add a service to authorized list" %
-    parser_add.prog
+    parser_allow.prog
 )
-parser_add_service.add_argument("service_name", choices=service_defs)
-parser_add_service.set_defaults(func=parser_helper("add_service"))
+parser_allow_service.add_argument("service_name", choices=service_defs)
+parser_allow_service.set_defaults(func=parser_helper("allow_service"))
 
-parser_del = subparser.add_parser("del")
-del_subparser = parser_del.add_subparsers()
+parser_disallow = subparser.add_parser("disallow")
+disallow_subparser = parser_disallow.add_subparsers()
 # We could have used parser_add_service, but the choices aren't the same :
-parser_del_service = del_subparser.add_parser(
+parser_disallow_service = disallow_subparser.add_parser(
     "service",
     usage="%s service service_name - remove a service from authorized list" %
-    parser_del.prog
+    parser_disallow.prog
 )
-parser_del_service.add_argument("service_name", choices=allowed_services)
-parser_del_service.set_defaults(func=parser_helper("del_service"))
+parser_disallow_service.add_argument("service_name", choices=allowed_services)
+parser_disallow_service.set_defaults(func=parser_helper("disallow_service"))
 
 
 argcomplete.autocomplete(parser)
