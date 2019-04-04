@@ -90,17 +90,19 @@ class FireWall():
             return False
 
     def add_rule(self, name, chain, target, dst="", dport="", src="", sport="", proto="", iface="", position="top"):
-        """Add rule.
+        """Add a rule to the input chain self.input_chain.
 
         chain should be either self.input_chain or self.output_chain.
-        traget is a string saying what to do, like
-                "ACCEPT", "DENY", "DROP"
+        name can be any string
+        target is a string saying what to do, like
+                "ACCEPT", "DENY", "DROP", "LOG"
         proto (if not defined, is assumed both udp and tcp)
         src is a realm in the form XXX.XXX.XXX.XXX/YY
         sport is source port. Currently ignored
         dst is a realm in the same form as src
         dport is destination port
-        iface if not defined, will match any
+        iface is the interface, will be in_interface if chain is the input chain.
+                                       out_interface if chain is the output chain.
         """
         #print("adding rule %s" % name)
         if (dport or sport) and not proto:
@@ -129,9 +131,13 @@ class FireWall():
                 proto_match.sport = str(sport)
                 rule.protocol = proto
             if iface:
-                rule.in_interface = iface
-                rule.out_interface = iface
-            # Add a signature as a comment.
+                if chain.name == self.input_chain.name:
+                    rule.in_interface = iface
+                elif chain.name == self.output_chain.name:
+                    rule.out_interface = iface
+                if src == dst:
+                    print("warning, both source and dest are set to %s" % src)
+           # Add a signature as a comment.
             comment_match = rule.create_match("comment")
             comment_match.comment = identifier + ":" + name
             # Try to set it into chain.
