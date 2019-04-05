@@ -6,9 +6,8 @@
 ServiceWall is a firewall intended for laptops and all devices that connect to
 several different networks. It will drop incoming requests, excepted for those
 that you allow. Each service you allow in will be remembered either :
-
-    - for the network you're connected to (the realm's ruleset), or
-    - for unregistered networks (the default ruleset)
+- for the network you're connected to (the realm's ruleset), or
+- for unregistered networks (the default ruleset)
 
 At the moment the default ruleset is : accept `ssh` and `DHCP` incoming 
 connections. `ssh` connections are accepted from anywhere, whereas `DHCP` ones
