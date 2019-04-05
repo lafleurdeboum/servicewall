@@ -5,7 +5,7 @@
 
 import setuptools
 from setuptools.command.install import install
-import os
+import sys
 from os import path, environ
 
 
@@ -22,16 +22,12 @@ class CustomInstallCommand(install):
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-#   4 - Beta
-#   5 - Production/Stable
-
 here = path.abspath(path.dirname(__file__))
-#for package in setuptools.find_packages(exclude=('scriptlets')):
 for package in setuptools.find_packages():
-    print("setuptools : including package %s" % package)
+    print("setuptools : including package %s" % package, file=sys.stderr)
 
 name="servicewall"
-version = "0.3.7"
+version = "0.4.2"
 
 setuptools.setup(
     name=name,
@@ -44,11 +40,11 @@ setuptools.setup(
     python_requires=">=3",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="http://flip.local/~lafleur/servicewall",
+    url="https://github.com/lafleurdeboum/servicewall",
     packages=setuptools.find_packages(),
     #packages=setuptools.find_packages(where="src"),
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         #"Operating System :: OS Independent",

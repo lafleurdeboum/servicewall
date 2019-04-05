@@ -47,30 +47,30 @@ software shouldn't be really fitted.
 
 ### Dependencies
 
-This software needs the `python 3`, `iptables`, `python-iptables` and
-`python-netifaces` packages to manage its very basic iptables rules. It relies 
-as well on `python-argparse` to parse the cmdline arguments. Finally, you will 
-need `python-setuptools` to install it using the provided `setup.py`.
+Required dependencies are `python 3`, `iptables`, `systemd`, and either 
+`NetworkManager` or `systemd-networkd` enabled. If you run a linux on a laptop,
+you should be all set.
 
-It will also need your computer to run `NetworkManager` or `systemd-networkd`,
-because it needs a network dispatcher to trigger connectivity change events.
-Any network event dispatcher would do, it just needs to call the script called
-`toggler` in the `lib` directory (`setup.py` would install it in
-`$PREFIX/lib/servicewall/`).
+There are python packages needed as well, but if you use a decent install 
+method like `pip`, they should be managed all right. Those are :
+- optional : `python-argcomplete`
+- build-time : `python-setuptools`
+- `python-iptables`
+- `python-netifaces`
+- `python-argparse`
 
-You might also wish to have `python-argcomplete` for the command-line 
+You might really wish to have `python-argcomplete` for the command-line 
 completion to work. This can really prove handy when you're looking for a 
 service to allow.
 
 ### Install
 
-You could very simply install the package with :
+Once you have the required dependencies, install the package with :
 
-    # ./setup.py install
+    # pip install servicewall
 
-For those using Arch linux, there is a PKGBUILD script for this, but at the 
-moment it's not uploaded. Coming soon ! There also is a pip package, but it's 
-quite outdated at the moment.
+For those using Arch linux, there is a PKGBUILD script for this, coming soon 
+into AUR. Give it a try !
 
 
 ## Usage
