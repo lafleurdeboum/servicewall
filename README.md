@@ -1,21 +1,45 @@
 # ServiceWall
 
-## Target audience
 
-You have a personal device that you use as a client. You already know that some
-services need to use ports on the network card, such as Skype, MORPGames, or
-sharing files with someone using Samba, local games ...
+## What to expect
 
-And you run a linux kernel and Network Manager.
+ServiceWall is a firewall intended for laptops and all devices that connect to
+several different networks. It will drop incoming requests, excepted for those that
+you allow. Each service you allow in will be remembered either :
+    - for the network you're connected to (the realm's ruleset), or
+    - for unregistered networks (the default ruleset)
 
-You want a firewall that drops invalid traffic whatsoever, and allows "some"
-services at home for people at home, and usually less when you're in a ...
-random place.
+At the moment the default ruleset is : accept ssh and DHCP incoming connections. ssh
+connections are accepted from anywhere, whereas DHCP ones are only accepted on the
+local network (connected to the same gateway as you). All new rules will be limited
+to this local network.
 
-This firewall adapts to the changes in the connection provider's declared name
-(the ESSID), using a set of rules for each of these realms. It stores the list
-of allowed services for each ESSID it meets in a dictionary, starting with a
-customisable default, adding the services you tell it to.
+It won't remember the network you're connected to until you change the default
+ruleset. Once you do, it writes down an identifier for the network realm, together
+with the default ruleset plus the rule you added. Now when you connect to another
+network, it will put this identified ruleset aside, and try to find a ruleset for
+the new network. If it can't find any, it'll fallback to the default ruleset. When you
+connect to the identified network back, it will automagically bring back the rules
+you chose (magic here involves a network dispatcher telling it network changes).
+
+The default ruleset also has a few basic stateful rules : accept icmp requests,
+accept all from the localhost loop, accept already established connections, drop
+invalid packets, and log anything dropped.
+
+
+## What _not_ to expect
+
+This firewall works on incoming traffic ; it won't be very useful on a server needing
+to forward anything.
+
+At the moment, you can't expect it to let any traffic come in from out of the local
+network realm either (excepted ssh, which is is a kind of "special" rule). At the 
+moment, you can't either change the default ruleset on the command line ; you would 
+have to manually edit /etc/servicewall/realms.json for that.
+
+So basically, if your device is not a laptop you use as a personal device, this
+software shouldn't be really fitted.
+
 
 ## Installation
 
@@ -44,6 +68,7 @@ You could very simply install the package with :
 For those using Arch linux, there is a PKGBUILD script for this, but at the moment
 it's not uploaded. Coming soon ! There also is a pip package, but it's quite outdated
 at the moment.
+
 
 ## Usage
 
