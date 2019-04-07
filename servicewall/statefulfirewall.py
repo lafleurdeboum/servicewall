@@ -85,6 +85,8 @@ class StateFulFireWall(firewall.FireWall):
         if limit:
             limit = int(limit)
             i = 0
+        if period:
+            period = int(period)
         while True:
             log = reader.get_previous()
             if not "MESSAGE" in log:
@@ -92,6 +94,16 @@ class StateFulFireWall(firewall.FireWall):
 
             # Only catch messages sent by iptables log :
             if log["MESSAGE"].startswith(self.identifier):
+                # Quit if log older than period :
+                if period:
+                    age = datetime.timestamp(now) - datetime.timestamp(log["__REALTIME_TIMESTAMP"])
+                    if age > period:
+                        break
+                if limit:
+                    if i > limit:
+                        break
+                    else:
+                        i += 1
                 message_dict = {}
                 message = log["MESSAGE"].strip(self.identifier + ":").strip()
                 message_dict["DATE"] = log["__REALTIME_TIMESTAMP"]
@@ -103,16 +115,7 @@ class StateFulFireWall(firewall.FireWall):
                         message_dict[item] = ""
                 if "DPT" not in message:
                     continue
-                # Quit if log older than period :
-                if period:
-                    age = datetime.timestamp(now) - datetime.timestamp(log["__REALTIME_TIMESTAMP"])
-                    if age > period:
-                        break
-                if limit:
-                    if i >= limit:
-                        break
-                    else:
-                        i += 1
+
                 yield message_dict
 
 
