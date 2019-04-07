@@ -5,6 +5,7 @@ Uses simple guidelines given in
 and implements them in a FireWall class, using reasonable defaults.
 """
 
+from systemd import journal
 from iptc import Rule
 from servicewall import firewall
 from datetime import datetime

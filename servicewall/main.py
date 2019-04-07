@@ -12,12 +12,9 @@ changes.
 
 from servicewall import network_helpers
 from servicewall import statefulfirewall
-# TODO should be loaded as a global from firewall.py through statefulfirewall.py
-identifier = "ServiceWall"
 #print(globals()["identifier"])
 
 from collections import namedtuple
-from systemd import journal
 
 #from servicewall import service_helpers
 #globals()["PortDef"] = service_helpers.PortDef
@@ -30,12 +27,13 @@ import pickle
 import json
 import copy
 import os
-import arpreq
+#import arpreq
 
 
 class ServiceWall(statefulfirewall.StateFulFireWall):
     """ServiceWall - a FireWall in which you can add services on the fly.
     """
+    # TODO should be loaded as a global from firewall.py through statefulfirewall.py
     identifier = "ServiceWall"
     lib_dir = "/usr/lib/servicewall/"
     service_defs_pickle = "/usr/lib/servicewall/services.p"
