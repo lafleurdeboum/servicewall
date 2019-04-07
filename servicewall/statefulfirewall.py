@@ -70,7 +70,7 @@ class StateFulFireWall(firewall.FireWall):
             self.input_chain.append_rule(conntrack_rule)
 
 
-    def log_yielder(self, limit=None, period=""):
+    def log_yielder(self, limit=None, period=None):
         """get logs we implemented in iptables from journald"""
         # Equivalent to :
         #   journalctl --identifier kernel -p warning | grep ServiceWall
@@ -96,8 +96,8 @@ class StateFulFireWall(firewall.FireWall):
             if log["MESSAGE"].startswith(self.identifier):
                 # Quit if log older than period :
                 if period:
-                    age = datetime.timestamp(now) - datetime.timestamp(log["__REALTIME_TIMESTAMP"])
-                    if age > period:
+                    age = now - log["__REALTIME_TIMESTAMP"]
+                    if int(age.total_seconds()) > period:
                         break
                 if limit:
                     if i > limit:

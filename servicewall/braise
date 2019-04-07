@@ -82,7 +82,7 @@ parser_disable.set_defaults(func=parser_helper("disable"))
 
 parser_show_status = subparser.add_parser(
     "status",
-    help="show iptables rules controlled by this firewall"
+    help="tell if the firewall is enabled and what is the current realm"
 )
 parser_show_status.set_defaults(func=parser_helper("status"))
 
@@ -116,8 +116,8 @@ parser_show_logs_time = show_logs_subparser.add_parser(
 parser_show_logs_time.add_argument("period", type=int)
 parser_show_logs_time.set_defaults(func=parser_helper("show_logs"))
 parser_show_logs_limit = show_logs_subparser.add_parser(
-    "limit",
-    help="limit to last LIMIT logs"
+    "last",
+    help="shorten logs to last [limit] hosts"
 )
 parser_show_logs_limit.add_argument("limit", type=int)
 parser_show_logs_limit.set_defaults(func=parser_helper("show_logs"))

@@ -94,7 +94,7 @@ def disallow_service(args):
 
 def show_logs(args):
     if "period" in args:
-        yielder = firewall.log_yielder(int(args.period))
+        yielder = firewall.log_yielder(period=args.period)
     else:
         yielder = firewall.log_yielder()
     now = datetime.today()
@@ -111,14 +111,24 @@ def show_logs(args):
     # log1: {
     #         "DATE": datetime.timestamp, "SRC": "191.168.1.1", ... }
 
+    if "limit" in args:
+        limit = int(args.limit)
+        i = 0
+    else:
+        limit = None
     log_folder = {}
 
     for log in yielder:
+        if limit:
+            if i >= limit:
+                break
         if log["SRC"] not in log_folder:
             log_folder[log["SRC"]] = {}
         if "DPT" not in log:
             log["DPT"] = "-1"
         if log["DPT"] not in log_folder[log["SRC"]]:
+            if limit:
+                i += 1
             log_folder[log["SRC"]][log["DPT"]] = [ log, ]
         else:
             log_folder[log["SRC"]][log["DPT"]].append(log)
