@@ -135,7 +135,7 @@ class FireWall():
                     rule.in_interface = iface
                 elif chain.name == self.output_chain.name:
                     rule.out_interface = iface
-                if src == dst:
+                if src and src == dst:
                     print("warning, both source and dest are set to %s" % src)
            # Add a signature as a comment.
             comment_match = rule.create_match("comment")
