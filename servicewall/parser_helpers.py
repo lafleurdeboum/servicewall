@@ -87,6 +87,10 @@ def allow_service(args):
     # Make it local by default :
     firewall.add_service_in(service_name, local=True)
 
+def allow_service_globally(args):
+    service_name = args.service_name
+    firewall.add_service_in(service_name, local=False)
+
 def disallow_service(args):
     service_name = args.service_name
     firewall.del_service_in(service_name)

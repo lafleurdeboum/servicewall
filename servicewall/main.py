@@ -171,12 +171,13 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         print("saved realm defs to config")
 
     def add_service_in(self, service_name, local=False):
-        # Create an entry for this realm's essid if there weren't any :
-        if self.realm_id not in self.realm_defs:
-            self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[identifier + ":default"])
         if service_name not in self.service_defs:
             raise KeyError("undefined service : %s." %
                     service_name)
+        # Create an entry for this realm's id if there weren't any :
+        if self.realm_id not in self.realm_defs:
+            self.realm_defs[self.realm_id] = copy.deepcopy(
+                    self.realm_defs[identifier + ":default"])
         if service_name not in self.realm_defs[self.realm_id]:
             self.realm_defs[self.realm_id][service_name] = local
             self.save_rules()
