@@ -84,7 +84,7 @@ class StateFulFireWall(firewall.FireWall):
         reader.seek_tail()
         if limit:
             limit = int(limit)
-            i = 0
+            i = 1
         if period:
             period = int(period)
         while True:
@@ -99,11 +99,6 @@ class StateFulFireWall(firewall.FireWall):
                     age = now - log["__REALTIME_TIMESTAMP"]
                     if int(age.total_seconds()) > period:
                         break
-                if limit:
-                    if i > limit:
-                        break
-                    else:
-                        i += 1
                 message_dict = {}
                 message = log["MESSAGE"].strip(self.identifier + ":").strip()
                 message_dict["DATE"] = log["__REALTIME_TIMESTAMP"]
@@ -113,8 +108,15 @@ class StateFulFireWall(firewall.FireWall):
                         message_dict[key] = value
                     else:
                         message_dict[item] = ""
+                # We count the number of logs with a destination port.
                 if "DPT" not in message:
                     continue
+                # Else raise limit counter :
+                if limit:
+                    if i > limit:
+                        break
+                    else:
+                        i += 1
 
                 yield message_dict
 
