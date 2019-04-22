@@ -8,8 +8,6 @@ from iptc import Rule, Match, Chain, Table
 from iptc.ip4tc import IPTCError
 
 
-identifier = "ServiceWall"
-
 
 class FireWall():
     """A simple firewall class
@@ -23,6 +21,9 @@ class FireWall():
     TODO :
     - ruleset Object.
     """
+
+    identifier = "ServiceWall"
+
     def __init__(self):
         try:
             self._table = Table(Table.FILTER)
@@ -67,13 +68,11 @@ class FireWall():
         """
         found_rules = 0
         for rule in self.input_chain.rules:
-            name = self._get_rule_name(rule)
-            ident = self._get_rule_id(rule)
-            if ident == identifier:
+            if self._get_rule_id(rule) == self.identifier:
                 self.del_rule(self._get_rule_name(rule), self.input_chain)
                 found_rules += 1
         if not found_rules:
-            print("no rule found for id %s." % identifier)
+            print("no rule found for id %s." % self.identifier)
         print("setting input policy to ACCEPT")
         self.input_chain.set_policy("ACCEPT")
         if not self._table.autocommit:
@@ -84,7 +83,7 @@ class FireWall():
         """print the status of the FireWall. Returns either True or False."""
         # Returns True if a single rule has our identifier tag
         for rule in self.input_chain.rules:
-            if identifier == self._get_rule_id(rule):
+            if self._get_rule_id(rule) == self.identifier:
                 return True
         else:
             return False
@@ -115,7 +114,7 @@ class FireWall():
                 limit_match = rule.create_match("limit")
                 limit_match.limit = "1/s"
                 limit_match.limit_burst = "1"
-                rule.target.set_parameter("log-prefix", identifier + ":")
+                rule.target.set_parameter("log-prefix", self.identifier + ":")
             # First we need to know if we go in or out
             # Then some rules need the creation of a match
             if dst:
@@ -139,7 +138,7 @@ class FireWall():
                     print("warning, both source and dest are set to %s" % src)
            # Add a signature as a comment.
             comment_match = rule.create_match("comment")
-            comment_match.comment = identifier + ":" + name
+            comment_match.comment = self.identifier + ":" + name
             # Try to set it into chain.
             rule.final_check()
             if position == "bottom":

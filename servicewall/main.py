@@ -32,8 +32,6 @@ import os
 class ServiceWall(statefulfirewall.StateFulFireWall):
     """ServiceWall - a FireWall in which you can add services on the fly.
     """
-    # TODO should be loaded as a global from firewall.py through statefulfirewall.py
-    #identifier = "ServiceWall"
     lib_dir = "/usr/lib/servicewall/"
     service_defs_pickle = "/usr/lib/servicewall/services.p"
     realm_defs_dict = "/etc/servicewall/realms.json"
@@ -91,9 +89,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
 
     def stop(self):
         if self.config["enabled"]:
-            # DEBUG should only remove rules from ServiceWall
-            for rule in self.input_chain.rules:
-                self.del_rule(super()._get_rule_name(rule), self.input_chain)
+            super().stop()
         else:
             raise SystemExit("not stopping, firewall disabled. Enable it with\n\t# braise enable")
 

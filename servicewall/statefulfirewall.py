@@ -20,13 +20,10 @@ class StateFulFireWall(firewall.FireWall):
     - drop invalid packets
     """
 
-    identifier = "ServiceWall"
-
     def __init__(self):
         super().__init__()
 
     def start(self, **args):
-
         print("adding rule icmp")
         rule = Rule()
         rule.create_target("ACCEPT")
@@ -45,8 +42,8 @@ class StateFulFireWall(firewall.FireWall):
                 "journalctl",
                 self.input_chain,
                 "LOG",
-                position="bottom"
-                )
+                position="bottom",
+        )
  
         # Drop invalid packets - as diagnosed by the conntrack processor.
         self.add_conntrack_rule_in("DROP", "ctstate", "INVALID", position="bottom")
