@@ -32,6 +32,8 @@ import os
 class ServiceWall(statefulfirewall.StateFulFireWall):
     """ServiceWall - a FireWall in which you can add services on the fly.
     """
+    # TODO should be loaded as a global from firewall.py through statefulfirewall.py
+    #identifier = "ServiceWall"
     lib_dir = "/usr/lib/servicewall/"
     service_defs_pickle = "/usr/lib/servicewall/services.p"
     realm_defs_dict = "/etc/servicewall/realms.json"
@@ -76,7 +78,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             if self.online:
                 if self.realm_id not in self.realm_defs:
                     # If we don't have a realm definition, load "ServiceWall:default"
-                    self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[self.identifier + ":default"])
+                    self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[identifier + ":default"])
                 for service_name, local_toggle in self.realm_defs[self.realm_id].items():
                     if local_toggle:
                         self.insert_service_rule(service_name, local=True)
@@ -174,7 +176,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         # Create an entry for this realm's id if there weren't any :
         if self.realm_id not in self.realm_defs:
             self.realm_defs[self.realm_id] = copy.deepcopy(
-                    self.realm_defs[self.identifier + ":default"])
+                    self.realm_defs[identifier + ":default"])
         if service_name not in self.realm_defs[self.realm_id]:
             self.realm_defs[self.realm_id][service_name] = local
             self.save_rules()
@@ -221,7 +223,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     def del_service_in(self, service_name):
         # Create an entry for this realm's essid if there weren't any :
         if self.realm_id not in self.realm_defs:
-            self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[self.identifier + ":default"])
+            self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[identifier + ":default"])
         # Do our own validity testing
         if service_name not in self.service_defs:
             raise KeyError('service "%s" not found.')
