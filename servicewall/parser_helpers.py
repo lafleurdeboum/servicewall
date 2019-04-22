@@ -138,7 +138,6 @@ def show_logs(args):
             log_folder[log["SRC"]][log["DPT"]].append(log)
 
 
-    print("Hosts : %s" % ", ".join(ip for ip in log_folder.keys()))
     for src, ports in log_folder.items():
         print("Host %s" % src)
         for dpt, logs in ports.items():

@@ -9,6 +9,7 @@ from systemd import journal
 from iptc import Rule
 from servicewall import firewall
 from datetime import datetime
+import socket
 
 
 class StateFulFireWall(firewall.FireWall):
@@ -77,7 +78,7 @@ class StateFulFireWall(firewall.FireWall):
         reader = journal.Reader()
         reader.log_level(journal.LOG_WARNING)
         reader.add_match(SYSLOG_IDENTIFIER="kernel")
-        now = datetime.today()
+        now = datetime.now()
         #p = select.poll()
         #p.register(reader, reader.get_events())
         #p.poll()
@@ -101,6 +102,16 @@ class StateFulFireWall(firewall.FireWall):
                         break
                 message_dict = {}
                 message = log["MESSAGE"].strip(self.identifier + ":").strip()
+                # We consider the number of logs with a destination port.
+                if "DPT" not in message:
+                    continue
+
+                if limit:
+                    if i > limit:
+                        break
+                    else:
+                        i += 1
+
                 message_dict["DATE"] = log["__REALTIME_TIMESTAMP"]
                 for item in message.split():
                     if item.count("="):
@@ -108,15 +119,12 @@ class StateFulFireWall(firewall.FireWall):
                         message_dict[key] = value
                     else:
                         message_dict[item] = ""
-                # We count the number of logs with a destination port.
-                if "DPT" not in message:
-                    continue
-                # Else raise limit counter :
-                if limit:
-                    if i > limit:
-                        break
-                    else:
-                        i += 1
+                # Get a readable hostname for the source of the packet :
+                try:
+                    message_dict["SRC"] = socket.gethostbyaddr(message_dict["SRC"])[0]
+                except socket.herror:
+                    #print("unknown host %s" % message_dict["SRC"])
+                    pass
 
                 yield message_dict
 
