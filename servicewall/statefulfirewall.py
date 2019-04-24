@@ -9,7 +9,6 @@ from systemd import journal
 from iptc import Rule
 from servicewall import firewall
 from datetime import datetime
-import socket
 
 
 class StateFulFireWall(firewall.FireWall):
@@ -68,7 +67,7 @@ class StateFulFireWall(firewall.FireWall):
             self.input_chain.append_rule(conntrack_rule)
 
 
-    def log_yielder(self, limit=None, period=None):
+    def yield_logs(self, limit=None, period=None):
         """get logs we implemented in iptables from journald"""
         # Equivalent to :
         #   journalctl --identifier kernel -p warning | grep ServiceWall
@@ -89,7 +88,6 @@ class StateFulFireWall(firewall.FireWall):
             log = reader.get_previous()
             if not "MESSAGE" in log:
                 continue
-
             # Only catch messages sent by iptables log :
             if log["MESSAGE"].startswith(self.identifier):
                 # Quit if log older than period :
@@ -102,7 +100,6 @@ class StateFulFireWall(firewall.FireWall):
                 # We consider the number of logs with a destination port.
                 if "DPT" not in message:
                     continue
-
                 if limit:
                     if i > limit:
                         break
@@ -116,13 +113,33 @@ class StateFulFireWall(firewall.FireWall):
                         message_dict[key] = value
                     else:
                         message_dict[item] = ""
-                # Get a readable hostname for the source of the packet :
-                try:
-                    message_dict["SRC"] = socket.gethostbyaddr(message_dict["SRC"])[0]
-                except socket.herror:
-                    #print("unknown host %s" % message_dict["SRC"])
-                    pass
 
                 yield message_dict
 
+    def filter_logs_by(self, criteria, limit=None, period=None):
+        """output logs sorted by a log variable, like "DPT" or "SRC"
+
+        note that limit applies to the criteria (like sort nth first SRC hosts)
+        """
+        yielder = self.yield_logs(period=period)
+        logs = {}
+        if limit:
+            limit = int(limit)
+            i = 0
+        if period:
+            period = int(period)
+        for log in yielder:
+            if log[criteria] not in logs:
+                logs[log[criteria]] = [log, ]
+                if limit:
+                    if i >= limit:
+                        # Stop at step i+1 and pop last record :
+                        logs.popitem()
+                        break
+                    else:
+                        i += 1
+            else:
+                logs[log[criteria]].append(log)
+
+        return logs
 

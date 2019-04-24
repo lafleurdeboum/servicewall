@@ -13,6 +13,7 @@ import json
 from datetime import datetime
 #import select
 #import putch
+import socket
 import servicewall
 
 
@@ -98,9 +99,9 @@ def disallow_service(args):
 
 def show_logs(args):
     if "period" in args:
-        yielder = firewall.log_yielder(period=args.period)
+        yielder = firewall.yield_logs(period=args.period)
     else:
-        yielder = firewall.log_yielder()
+        yielder = firewall.yield_logs()
     now = datetime.today()
 
     # log_folder is a dict that contains host adresses as keys,
@@ -124,7 +125,8 @@ def show_logs(args):
 
     for log in yielder:
         if limit:
-            if i >= limit:
+            if i > limit:
+                log_folder.popitem()
                 break
         if log["SRC"] not in log_folder:
             log_folder[log["SRC"]] = {}
@@ -139,7 +141,13 @@ def show_logs(args):
 
 
     for src, ports in log_folder.items():
-        print("Host %s" % src)
+        # Get a readable hostname for the source of the packet :
+        try:
+            host = socket.gethostbyaddr(src)[0]
+        except socket.herror:
+            #print("unknown host %s" % message_dict["SRC"])
+            host = src
+        print("Host %s" % host)
         for dpt, logs in ports.items():
             age = str(now - logs[0]["DATE"]).split(".")[0]
             if dpt != "-1":     # Then dpt is a valid port.
