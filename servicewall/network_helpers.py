@@ -22,11 +22,41 @@ import fcntl
 import netifaces
 
 
+def get_all_interfaces():
+    """Return a dict of interface names and their IPs.
+
+    retrieved from http://code.activestate.com/recipes/439093/#c1
+    """
+    max_possible = 128  # arbitrary. raise if needed.
+    byte_number = max_possible * 32
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    names = array.array('B', b'\0' * byte_number)
+    names_address = names.buffer_info()[0]
+    outbytes = struct.unpack('iL', fcntl.ioctl(
+            s.fileno(),
+            0x8912,  # SIOCGIFCONF
+            struct.pack('iL', byte_number, names.buffer_info()[0])
+    ))[0]
+    namestr = names.tobytes()
+    iface_list = []
+    #ifaces = {}
+    for i in range(0, outbytes, 40):
+        name = namestr[i:i+16].split(b'\0', 1)[0]
+        ip   = namestr[i+20:i+24]
+        iface_list.append([ name.decode(), socket.inet_ntoa(ip) ])
+        #ifaces[name.decode()] = socket.inet_ntoa(ip)
+    # We don't care for the loopback interface
+    del iface_list[0]
+    return iface_list
+    #ifaces.pop('lo')
+    #return ifaces
+
 def get_active_interface():
     """Return the name of the interface serving as gateway.
     """
     # AF_INET is a flag for ipv4 addressing
-    return netifaces.gateways()[netifaces.AF_INET][0][1]
+    #return netifaces.gateways()[netifaces.AF_INET][0][1]
+    return get_all_interfaces()[0][0]
 
 def get_essid():
     """Return the ESSID for an interface, or None if we aren't connected.
@@ -150,7 +180,8 @@ def get_essid_alt(ifname):
     return ssid.decode()
 
 def get_gateway_address():
-    """Read the default gateway directly from /proc."""
+    """Read the default gateway directly from /proc.
+    """
     with open("/proc/net/route") as fh:
         for line in fh:
             fields = line.strip().split()
