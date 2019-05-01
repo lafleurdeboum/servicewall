@@ -34,7 +34,7 @@ setuptools.setup(
     version=version,
     author="la Fleur",
     author_email="lafleur@boum.org",
-    description="the desktop firewall that adapts to different network connections",
+    description="The desktop firewall that remembers the different network you connect to.",
     keywords="dynamic adaptable iptables firewall",
     license="GNUv3",
     python_requires=">=3",
