@@ -46,7 +46,9 @@ def get_all_interfaces():
         iface_list.append([ name.decode(), socket.inet_ntoa(ip) ])
         #ifaces[name.decode()] = socket.inet_ntoa(ip)
     # We don't care for the loopback interface
-    del iface_list[0]
+    for index, iface in enumerate(iface_list):
+        if iface[0] == "lo":
+            del iface_list[index]
     return iface_list
     #ifaces.pop('lo')
     #return ifaces
@@ -61,7 +63,11 @@ def get_active_interface():
 def get_essid():
     """Return the ESSID for an interface, or None if we aren't connected.
     """
-    interface = get_active_interface()
+    try:
+        interface = get_active_interface()
+    except IndexError:
+        #print("No active interface")
+        return None
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     # The payload for this call is formatted to 32 double hexadecimal ints.
     essid = array.array("b", b"\x00" * 32)
@@ -72,10 +78,16 @@ def get_essid():
             interface.ljust(16, "\x00").encode()
             + struct.pack("PHH", essidPointer, essidLength, 0)
     )
-    fcntl.ioctl(
-            s.fileno(),
-            0x8b1b,   # SIOCGIWESSID, get essid
-            request)
+    try:
+        fcntl.ioctl(
+                s.fileno(),
+                0x8b1b,   # SIOCGIWESSID, get essid
+                request
+        )
+    except OSError as e:
+        if e.errno == 95:       # Operation not supported
+            #print("not connected")
+            return None
     name = essid.tobytes().strip(b"\x00").decode()
     if name:
         return name
@@ -187,7 +199,10 @@ def get_gateway_address():
             fields = line.strip().split()
             if fields[1] != '00000000' or not int(fields[3], 16) & 2:
                 continue
-            return socket.inet_ntoa(struct.pack("<L", int(fields[2], 16)))
+            address = socket.inet_ntoa(struct.pack("<L", int(fields[2], 16)))
+        else:
+            raise KeyError("No gateway found")
+    return address
 
 def get_gateway_hostname():
     return socket.getfqdn(get_gateway_address())
