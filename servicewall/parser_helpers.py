@@ -4,7 +4,7 @@
 
 """
 
-__all__ = ["no_arg_provided", "enable", "disable", "reload", "show_logs", "show_realms", "show_services", "show_service", "show_status", "allow_service", "disallow_service"]
+__all__ = ["no_arg_provided", "enable", "disable", "reload", "show", "show_logs", "show_realm", "show_realms", "show_services", "show_service", "show_status", "allow_service", "disallow_service"]
 
 
 import os
@@ -60,6 +60,10 @@ def status(args):
 def show_input_chain(args):
     firewall.list_services_in()
 
+def show_realm(args):
+    print('Current realm is "%s". Allowed services (true means locally allowed) :'
+                % firewall.realm_id)
+    prettyprint(firewall.realm_defs[firewall.realm_id])
 def show_realms(args):
     #print_dict(firewall.realm_defs)
     prettyprint(firewall.realm_defs)

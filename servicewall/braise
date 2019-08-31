@@ -101,6 +101,7 @@ parser_show = subparser.add_parser(
     "show",
     help="show different useful things"
 )
+parser_show.set_defaults(func=parser_helper("show"))
 show_subparser = parser_show.add_subparsers()
 
 parser_show_logs = show_subparser.add_parser(
@@ -122,6 +123,11 @@ parser_show_logs_limit = show_logs_subparser.add_parser(
 parser_show_logs_limit.add_argument("limit", type=int)
 parser_show_logs_limit.set_defaults(func=parser_helper("show_logs"))
 
+parser_show_realm = show_subparser.add_parser(
+    "realm",
+    help="show current realm details"
+)
+parser_show_realm.set_defaults(func=parser_helper("show_realm"))
 parser_show_realms = show_subparser.add_parser(
     "realms",
     help="show realm definitions"
