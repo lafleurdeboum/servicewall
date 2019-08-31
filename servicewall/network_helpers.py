@@ -27,7 +27,7 @@ def get_all_interfaces():
 
     retrieved from http://code.activestate.com/recipes/439093/#c1
     """
-    max_possible = 128  # arbitrary. raise if needed.
+    max_possible = 128  # Raise if needed.
     byte_number = max_possible * 32
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     names = array.array('B', b'\0' * byte_number)
@@ -45,7 +45,7 @@ def get_all_interfaces():
         ip   = namestr[i+20:i+24]
         iface_list.append([ name.decode(), socket.inet_ntoa(ip) ])
         #ifaces[name.decode()] = socket.inet_ntoa(ip)
-    # We don't care for the loopback interface
+        # We don't care for the loopback interface :
     for index, iface in enumerate(iface_list):
         if iface[0] == "lo":
             del iface_list[index]
@@ -56,7 +56,7 @@ def get_all_interfaces():
 def get_active_interface():
     """Return the name of the interface serving as gateway.
     """
-    # AF_INET is a flag for ipv4 addressing
+    # AF_INET is a flag for ipv4 addressing.
     #return netifaces.gateways()[netifaces.AF_INET][0][1]
     return get_all_interfaces()[0][0]
 
@@ -98,7 +98,7 @@ def get_realm_id():
     """Return a unique identifier for the Internet Service Provider
     """
     isp_id = get_essid()
-    if not isp_id:
+    if not isp_id:      # Then the network probably isn't wifi. Check ethernet :
         import arpreq
         #isp_id = arpreq.arpreq(get_ip_address(get_active_interface()))
         isp_id = arpreq.arpreq(get_gateway_address())
@@ -167,8 +167,8 @@ def get_mac_address(ip):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     interface = get_active_interface()
     # SIOCGARP is documented in man 7 arp
-    # and struct arpreq in /usr/include/net/if_arp.h
-    # It refers to struct sockaddr, defined in /usr/inlude/sys/socket.h
+    # and struct arpreq in /usr/include/net/if_arp.h .
+    # It refers to struct sockaddr, defined in /usr/inlude/sys/socket.h .
     request = array.array("b")
     request.frombytes(
             interface.ljust(16, "\x00").encode()
@@ -206,6 +206,4 @@ def get_gateway_address():
 
 def get_gateway_hostname():
     return socket.getfqdn(get_gateway_address())
-
-
 

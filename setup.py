@@ -6,28 +6,30 @@
 import setuptools
 from setuptools.command.install import install
 import sys
-from os import path, environ
+from os import path, environ, chmod
+from distutils import log
+import stat
 
 
-class CustomInstallCommand(install):
-    """Not in use anymore - the dispatcher link is made by braise enable.
-    """
+class InstallAndChmod(install):
     def run(self):
-        #print("setup.py - running install with environ :")
-        #for key, item in environ.items():
-        #    print(key, item)
+        mode = stat.S_IWRITE + stat.S_IREAD
         install.run(self)
+        for filepath in self.get_outputs():
+            if "/etc/servicewall" in filepath:
+                log.info("setting %s to mode %s" % (filepath, oct(mode)[2:]))
+                chmod(filepath, mode)
 
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+name = "servicewall"
+version = "0.4.2"
 here = path.abspath(path.dirname(__file__))
+
 for package in setuptools.find_packages():
     print("setuptools : including package %s" % package, file=sys.stderr)
-
-name="servicewall"
-version = "0.4.2"
 
 setuptools.setup(
     name=name,
@@ -61,19 +63,19 @@ setuptools.setup(
         "argument completion as root": "python-argcomplete",
     },
     scripts=[
-                "servicewall/braise",
+        "servicewall/braise",
     ],
     data_files=[
         ("/etc/servicewall", ["etc/realms.json", "etc/config.json"]),
         ("/etc/xdg/autostart", ["lib/servicewall-systray.desktop"]),
         ("lib/servicewall", [
-                "lib/systray.py",
-                "lib/services.p",
-                "lib/toggler",
-                "lib/icon.png",
-                "lib/icon2.png",
+            "lib/systray.py",
+            "lib/services.p",
+            "lib/toggler",
+            "lib/icon.png",
+            "lib/icon2.png",
         ]),
     ],
-    cmdclass={"install": CustomInstallCommand,},
+    cmdclass={"install": InstallAndChmod},
 )
 
