@@ -53,10 +53,10 @@ setuptools.setup(
         "Operating System :: POSIX",   # We need iptables.
     ],
     install_requires=[
+        "argparse",
+        "arpreq",
         "python-iptables",
-        "python-argparse",
         "python-systemd",
-        "python-arpreq",
     ],
     extras_require={
         "argument completion as root": "python-argcomplete",
