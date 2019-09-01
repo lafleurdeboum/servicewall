@@ -19,7 +19,6 @@ import socket
 import struct
 import array
 import fcntl
-import netifaces
 
 
 def get_all_interfaces():

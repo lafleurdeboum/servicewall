@@ -55,7 +55,6 @@ setuptools.setup(
     install_requires=[
         "python-iptables",
         "python-argparse",
-        "python-netifaces",
         "python-systemd",
         "python-arpreq",
     ],
@@ -76,6 +75,6 @@ setuptools.setup(
             "lib/icon2.png",
         ]),
     ],
-    cmdclass={"install": InstallAndChmod},
+    #cmdclass={"install": InstallAndChmod},
 )
 
