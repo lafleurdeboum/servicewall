@@ -57,36 +57,6 @@ def status(args):
     else:
         print("disabled")
 
-def show_input_chain(args):
-    firewall.list_services_in()
-
-def show_realm(args):
-    print('Current realm is "%s". Allowed services (true means locally allowed) :'
-                % firewall.realm_id)
-    prettyprint(firewall.realm_defs[firewall.realm_id])
-def show_realms(args):
-    #print_dict(firewall.realm_defs)
-    prettyprint(firewall.realm_defs)
-def show_services(args):
-    for service in firewall.service_defs:
-        print("%s - %s" % (service, firewall.service_defs[service].description))
-def show_service(args):
-    s = firewall.service_defs[args.service_name]._asdict()
-    #s["ports"] = s["ports"]._asdict()
-    prettyprint(s)
-def show_port(args):
-    port = args.port_name
-    services_list = firewall.list_services_by_port(port)
-    if services_list:
-        if len(services_list) == 1:
-            print("service using port %s : %s" % (port, services_list[0]))
-        else:
-            print('services using port %s :' % port)
-            prettyprint(services_list)
-            #[ print("  - %s" % i) for i in services_list ]
-    else:
-        print("port %s unknown." % port)
-
 def allow_service(args):
     service_name = args.service_name
     # Make it local by default :
@@ -100,6 +70,37 @@ def disallow_service(args):
     service_name = args.service_name
     firewall.del_service_in(service_name)
 
+def show_input_chain(args):
+    firewall.list_services_in()
+
+def show_realm(args):
+    print('Current realm is "%s". Allowed services (true means locally allowed) :'
+                % firewall.realm_id)
+    prettyprint(firewall.realm_defs[firewall.realm_id])
+def show_realms(args):
+    #print_dict(firewall.realm_defs)
+    prettyprint(firewall.realm_defs)
+
+def show_service(args):
+    s = firewall.service_defs[args.service_name]._asdict()
+    #s["ports"] = s["ports"]._asdict()
+    prettyprint(s)
+def show_services(args):
+    for service in firewall.service_defs:
+        print("%s - %s" % (service, firewall.service_defs[service].description))
+
+def show_port(args):
+    port = args.port_name
+    services_list = firewall.list_services_by_port(port)
+    if services_list:
+        if len(services_list) == 1:
+            print("service using port %s : %s" % (port, services_list[0]))
+        else:
+            print('services using port %s :' % port)
+            prettyprint(services_list)
+            #[ print("  - %s" % i) for i in services_list ]
+    else:
+        print("port %s unknown." % port)
 
 def show_logs(args):
     if "period" in args:
@@ -154,9 +155,10 @@ def show_logs(args):
         print("Host %s" % host)
         for dpt, logs in ports.items():
             age = str(now - logs[0]["DATE"]).split(".")[0]
+            protocol = logs[0]["PROTO"]
             if dpt != "-1":     # Then dpt is a valid port.
-                print("  asked %i times for port %s until %s ago" %
-                    (len(logs), dpt, age))
+                print("  asked %i times for port %s/%s until %s ago" %
+                    (len(logs), dpt, protocol.lower(), age))
                 services_list = firewall.list_services_by_port(dpt)
                 if services_list:
                     if len(services_list) == 1:
@@ -185,5 +187,4 @@ def show_logs(args):
                     print("  variations :")
                     for var in variations:
                         print("    " + var)
-
 
