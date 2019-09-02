@@ -19,10 +19,13 @@ class InstallAndChmod(install):
             if "/etc/servicewall" in filepath:
                 log.info("setting %s to mode %s" % (filepath, oct(mode)[2:]))
                 chmod(filepath, mode)
+            if filepath.split("/")[-1] == "ulogd.syslogemu":
+                log.info("setting %s to mode %s" % (filepath, oct(mode)[2:]))
+                chmod(filepath, mode)
 
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+with open("README.md", "r") as fd:
+    long_description = fd.read()
 
 name = "servicewall"
 version = "0.4.2"
@@ -75,6 +78,6 @@ setuptools.setup(
             "lib/icon2.png",
         ]),
     ],
-    #cmdclass={"install": InstallAndChmod},
+    cmdclass={"install": InstallAndChmod},
 )
 
