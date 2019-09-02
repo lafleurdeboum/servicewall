@@ -59,7 +59,7 @@ setuptools.setup(
         "python-systemd",
     ],
     extras_require={
-        "argument completion as root": "python-argcomplete",
+        "argument completion as root": "argcomplete",
     },
     scripts=[
         "servicewall/braise",
