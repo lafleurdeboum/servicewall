@@ -94,7 +94,7 @@ parser_reload.set_defaults(func=parser_helper("reload"))
 
 
 #
-# SUBPARSERS : show { logs | realms | services | service }
+# SUBPARSERS : show { logs | realm | realms | service | services | port }
 #
 
 parser_show = subparser.add_parser(
@@ -134,12 +134,6 @@ parser_show_realms = show_subparser.add_parser(
 )
 parser_show_realms.set_defaults(func=parser_helper("show_realms"))
 
-parser_show_services = show_subparser.add_parser(
-    "services",
-    help="show services list"
-)
-parser_show_services.set_defaults(func=parser_helper("show_services"))
-
 parser_show_input_chain = show_subparser.add_parser(
     "input_chain",
     help="show services allowed in current realm"
@@ -158,6 +152,11 @@ parser_show_service = show_subparser.add_parser(
 )
 parser_show_service.add_argument("service_name", choices=service_defs)
 parser_show_service.set_defaults(func=parser_helper("show_service"))
+parser_show_services = show_subparser.add_parser(
+    "services",
+    help="show services list"
+)
+parser_show_services.set_defaults(func=parser_helper("show_services"))
 
 parser_show_port = show_subparser.add_parser(
     "port",
