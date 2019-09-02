@@ -34,6 +34,7 @@ class FireWall():
         # _table.autocommit is True by default.
         #self._table.autocommit = False
         self.input_chain = Chain(self._table, "INPUT")
+        self.forward_chain = Chain(self._table, "FORWARD")
         self.output_chain = Chain(self._table, "OUTPUT")
         if self.status():
             self.up = True
@@ -48,6 +49,9 @@ class FireWall():
         # Drop all incoming. Basic but functional.
         print("setting input policy to DROP")
         self.input_chain.set_policy("DROP")
+        print("setting forward policy to DROP")
+        self.forward_chain.set_policy("DROP")
+        print("setting output policy to ACCEPT")
         self.output_chain.set_policy("ACCEPT")
         # Accept all on localhost.
         self.add_rule(

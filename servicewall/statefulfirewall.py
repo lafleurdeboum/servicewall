@@ -43,6 +43,12 @@ class StateFulFireWall(firewall.FireWall):
                 "LOG",
                 position="bottom",
         )
+        self.add_rule(
+                "journalctl",
+                self.forward_chain,
+                "LOG",
+                position="bottom",
+        )
  
         # Drop invalid packets - as diagnosed by the conntrack processor.
         self.add_conntrack_rule_in("DROP", "ctstate", "INVALID", position="bottom")
