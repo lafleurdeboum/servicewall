@@ -148,7 +148,7 @@ def show_logs(args):
     for src, ports in log_folder.items():
         # Get a readable hostname for the source of the packet :
         try:
-            host = socket.gethostbyaddr(src)[0]
+            host = src + " " + socket.gethostbyaddr(src)[0]
         except socket.herror:
             #print("unknown host %s" % message_dict["SRC"])
             host = src
