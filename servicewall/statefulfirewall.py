@@ -75,11 +75,12 @@ class StateFulFireWall(firewall.FireWall):
 
     def yield_logs(self, limit=None, period=None):
         """get logs we implemented in iptables from journald"""
-        # Equivalent to :
-        #   journalctl --identifier kernel -p warning | grep ServiceWall
         reader = journal.Reader()
-        reader.log_level(journal.LOG_WARNING)
-        reader.add_match(SYSLOG_IDENTIFIER="kernel")
+        #reader.log_level(journal.LOG_WARNING)
+        # That would be for LOG match :
+        #reader.add_match(SYSLOG_IDENTIFIER="kernel")
+        # That is for ulog systemd service associated to ulog.socket :
+        reader.add_match(_SYSTEMD_UNIT="ulog.service")
         now = datetime.now()
         #p = select.poll()
         #p.register(reader, reader.get_events())
@@ -94,33 +95,31 @@ class StateFulFireWall(firewall.FireWall):
             log = reader.get_previous()
             if not "MESSAGE" in log:
                 continue
-            # Only catch messages sent by iptables log :
-            if log["MESSAGE"].startswith(self.identifier):
-                # Quit if log older than period :
-                if period:
-                    age = now - log["__REALTIME_TIMESTAMP"]
-                    if int(age.total_seconds()) > period:
-                        break
-                message_dict = {}
-                message = log["MESSAGE"].strip(self.identifier + ":").strip()
-                # We consider the number of logs with a destination port.
-                if "DPT" not in message:
-                    continue
-                if limit:
-                    if i > limit:
-                        break
-                    else:
-                        i += 1
+            # Quit if log older than period :
+            if period:
+                age = now - log["__REALTIME_TIMESTAMP"]
+                if int(age.total_seconds()) > period:
+                    break
+            message_dict = {}
+            message = log["MESSAGE"].strip(self.identifier + ":").strip()
+            # We consider the number of logs with a destination port.
+            if "DPT" not in message:
+                continue
+            if limit:
+                if i > limit:
+                    break
+                else:
+                    i += 1
 
-                message_dict["DATE"] = log["__REALTIME_TIMESTAMP"]
-                for item in message.split():
-                    if item.count("="):
-                        key, value = item.split("=")
-                        message_dict[key] = value
-                    else:
-                        message_dict[item] = ""
+            message_dict["DATE"] = log["__REALTIME_TIMESTAMP"]
+            for item in message.split():
+                if item.count("="):
+                    key, value = item.split("=")
+                    message_dict[key] = value
+                else:
+                    message_dict[item] = ""
 
-                yield message_dict
+            yield message_dict
 
     def filter_logs_by(self, criteria, limit=None, period=None):
         """output logs sorted by a log variable, like "DPT" or "SRC"

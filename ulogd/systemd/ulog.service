@@ -1,0 +1,11 @@
+[Unit]
+Description=Netfilter Ulog journal
+Requires=ulogd.service
+
+[Service]
+ExecStart=/bin/cat /dev/ulog
+ExecReload=/usr/bin/kill --signal HUP ${MAINPID}
+
+[Install]
+WantedBy=multi-user.target
+

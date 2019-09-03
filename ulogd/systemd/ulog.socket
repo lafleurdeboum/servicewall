@@ -1,0 +1,10 @@
+[Unit]
+Requires=ulogd.service
+
+[Socket]
+ListenFIFO=/dev/ulog
+#ListenStream=/dev/ulog
+
+[Install]
+WantedBy=sockets.target
+
