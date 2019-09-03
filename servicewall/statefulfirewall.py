@@ -9,6 +9,7 @@ from systemd import journal
 from iptc import Rule
 from servicewall import firewall
 from datetime import datetime
+from socket import gethostname
 
 
 class StateFulFireWall(firewall.FireWall):
@@ -82,6 +83,7 @@ class StateFulFireWall(firewall.FireWall):
         # That is for ulog systemd service associated to ulog.socket :
         reader.add_match(_SYSTEMD_UNIT="ulog.service")
         now = datetime.now()
+        hostname = gethostname()
         #p = select.poll()
         #p.register(reader, reader.get_events())
         #p.poll()
@@ -101,7 +103,18 @@ class StateFulFireWall(firewall.FireWall):
                 if int(age.total_seconds()) > period:
                     break
             message_dict = {}
-            message = log["MESSAGE"].strip(self.identifier + ":").strip()
+            # Get rid of the trailing date and hostname :
+            message = log["MESSAGE"].split(hostname)[1].strip()
+
+            # If message begins with "[DESTROY]", then it s a ??? separated
+            # after the ORIG: and REPLY: tags. We will skip it for the moment.
+            if message.startswith("[DESTROY]"):
+                continue
+                orig, reply = message.split(", REPLY: ")
+                #orig = orig.split("ORIG: ")[1]
+                # Let the reply be treated as a normal package :
+                message = reply
+
             # We consider the number of logs with a destination port.
             if "DPT" not in message:
                 continue
@@ -118,7 +131,6 @@ class StateFulFireWall(firewall.FireWall):
                     message_dict[key] = value
                 else:
                     message_dict[item] = ""
-
             yield message_dict
 
     def filter_logs_by(self, criteria, limit=None, period=None):
@@ -145,6 +157,5 @@ class StateFulFireWall(firewall.FireWall):
                         i += 1
             else:
                 logs[log[criteria]].append(log)
-
         return logs
 
