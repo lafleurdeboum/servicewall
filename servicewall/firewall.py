@@ -71,7 +71,7 @@ class FireWall():
         it recognizes them by the comment that's inside of them.
         """
         found_rules = 0
-        for rule in self.input_chain.rules:
+        for rule in (*self.input_chain.rules, *self.forward_chain.rules):
             if self._get_rule_id(rule) == self.identifier:
                 self.del_rule(self._get_rule_name(rule), self.input_chain)
                 found_rules += 1
@@ -79,6 +79,8 @@ class FireWall():
             print("no rule found for id %s." % self.identifier)
         print("setting input policy to ACCEPT")
         self.input_chain.set_policy("ACCEPT")
+        print("setting forward policy to ACCEPT")
+        self.forward_chain.set_policy("ACCEPT")
         if not self._table.autocommit:
             self._table.commit()
         self.up = False

@@ -38,13 +38,13 @@ class StateFulFireWall(firewall.FireWall):
 
         # Log all that is refused.
         self.add_rule(
-                "syslogemu",
+                "nflog",
                 self.input_chain,
                 "NFLOG",
                 position="bottom",
         )
         self.add_rule(
-                "syslogemu",
+                "nflog",
                 self.forward_chain,
                 "NFLOG",
                 position="bottom",
