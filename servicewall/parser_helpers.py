@@ -97,8 +97,8 @@ def show_port(args):
             print("service using port %s : %s" % (port, services_list[0]))
         else:
             print('services using port %s :' % port)
-            prettyprint(services_list)
             #[ print("  - %s" % i) for i in services_list ]
+            prettyprint(services_list)
     else:
         print("port %s unknown." % port)
 
@@ -107,84 +107,46 @@ def show_logs(args):
         yielder = firewall.yield_logs(period=args.period)
     else:
         yielder = firewall.yield_logs()
-    now = datetime.today()
-
-    # log_folder is a dict that contains host adresses as keys,
-    # and whose items are dicts that contain port numbers as keys,
-    # and whose items are lists of logs, which are dicts.
-    #
-    # log_folder {
-    #             "192.168.1.1": {
-    #                             "22": {
-    #                                    [log1, log2, ... ] }}}
-    #
-    # log1: {
-    #         "DATE": datetime.timestamp, "SRC": "191.168.1.1", ... }
-
+    if "withnames" in args:
+        withnames = True
+    else:
+        withnames = False
     if "limit" in args:
         limit = int(args.limit)
         i = 0
     else:
         limit = None
+
     log_folder = {}
+    now = datetime.today()
+    starred = False
 
     for log in yielder:
         if limit:
+            i += 1
             if i > limit:
-                log_folder.popitem()
                 break
-        if log["SRC"] not in log_folder:
-            log_folder[log["SRC"]] = {}
-        if "DPT" not in log:
-            log["DPT"] = "-1"
-        if log["DPT"] not in log_folder[log["SRC"]]:
-            if limit:
-                i += 1
-            log_folder[log["SRC"]][log["DPT"]] = [ log, ]
-        else:
-            log_folder[log["SRC"]][log["DPT"]].append(log)
-
-
-    for src, ports in log_folder.items():
-        # Get a readable hostname for the source of the packet :
         try:
-            host = src + " " + socket.gethostbyaddr(src)[0]
+            log['SRC'] = log['SRC'] + " " + socket.gethostbyaddr(log['SRC'])[0]
         except socket.herror:
-            #print("unknown host %s" % message_dict["SRC"])
-            host = src
-        print("Host %s" % host)
-        for dpt, logs in ports.items():
-            age = str(now - logs[0]["DATE"]).split(".")[0]
-            protocol = logs[0]["PROTO"]
-            if dpt != "-1":     # Then dpt is a valid port.
-                print("  asked %i times for port %s/%s until %s ago" %
-                    (len(logs), dpt, protocol.lower(), age))
-                services_list = firewall.list_services_by_port(dpt)
+            pass
+
+        if withnames:
+            if log['SPT']:
+                services_list = firewall.list_services_by_port(log['SPT'])
                 if services_list:
                     if len(services_list) == 1:
-                        print('    (should be service %s)' % services_list[0])
+                        log['SPT'] = '%s* (%s)' % (services_list[0], log['SPT'])
+                        starred = services_list[0]
                     else:
-                        print('    (could be any of services %s)' % services_list)
-            elif debug:         # Then dpt is undefined.
-                # These packets don't have any destination port.
-                # We'll print the first, and any variations on it.
-                variations = []
-                for log in logs[1:]:
-                    for key in log:
-                        if key in ("DATE", "ID"):
-                            continue
-                        if log[key] != logs[0][key]:
-                            variations += (key, log[key])
-                # Delete "DPT" key as it's not a relevant value :
-                del logs[0]["DPT"]
-                print("  sent %i unknow packet(s) until %s ago :" %
-                        (len(logs), age))
-                del logs[0]["DATE"]
-                del logs[0]["SRC"]
-                for key, value in logs[0].items():
-                    print("    %s: %s" % (key, value))
-                if variations:
-                    print("  variations :")
-                    for var in variations:
-                        print("    " + var)
+                        log['SPT'] = '%s (%s)' % (services_list[0], log['SPT'])
 
+        print('%-35s %-16s %-4s %-5s %16s' % (
+            log['SRC'][-35:],
+            log['DST'],
+            log['PROTO'],
+            log['SPT'],
+            str(log['LOG_DATE'])[:16],
+        ))
+    if starred:
+        print('* for full list see e.g.\n\t$ braise show service %s' % starred)
