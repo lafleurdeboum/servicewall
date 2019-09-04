@@ -109,13 +109,12 @@ parser_show_logs = show_subparser.add_parser(
     help="show a digest of logs of the firewall"
 )
 parser_show_logs.set_defaults(func=parser_helper("show_logs"))
-show_logs_subparser = parser_show_logs.add_subparsers()
-parser_show_logs_withnames = show_logs_subparser.add_parser(
-    "withnames",
-    help="display names of hosts and services instead of IP and ports",
+parser_show_logs.add_argument(
+    "-w",
+    "--withnames",
     action="store_true"
 )
-parser_show_logs_withnames.set_defaults(func=parser_helper("show_logs"))
+show_logs_subparser = parser_show_logs.add_subparsers()
 
 parser_show_logs_time = show_logs_subparser.add_parser(
     "since",

@@ -107,7 +107,7 @@ def show_logs(args):
         yielder = firewall.yield_logs(period=args.period)
     else:
         yielder = firewall.yield_logs()
-    if "withnames" in args:
+    if args.withnames:
         withnames = True
     else:
         withnames = False
@@ -126,27 +126,41 @@ def show_logs(args):
             i += 1
             if i > limit:
                 break
-        try:
-            log['SRC'] = log['SRC'] + " " + socket.gethostbyaddr(log['SRC'])[0]
-        except socket.herror:
-            pass
 
         if withnames:
-            if log['SPT']:
-                services_list = firewall.list_services_by_port(log['SPT'])
-                if services_list:
-                    if len(services_list) == 1:
-                        log['SPT'] = '%s* (%s)' % (services_list[0], log['SPT'])
-                        starred = services_list[0]
-                    else:
-                        log['SPT'] = '%s (%s)' % (services_list[0], log['SPT'])
+            # If we have a hostname, output it - shortened if longer than 19 :
+            try:
+                hostname = socket.gethostbyaddr(log['SRC'])[0]
+                if len(hostname) > 22:
+                    log['SRC'] = '%s ...%s' % (log['SRC'], hostname[-17:])
+                else:
+                    log['SRC'] = '%s %s' % (log['SRC'], hostname)
+            except socket.herror:
+                pass
 
-        print('%-35s %-16s %-4s %-5s %16s' % (
-            log['SRC'][-35:],
+        # If we have a source port, try to name its service :
+        if log['SPT']:
+            services_list = firewall.list_services_by_port(log['SPT'])
+            if services_list:
+                if len(services_list) > 1:
+                    log['PROTO'] = '%s*' % services_list[0]
+                    starred = log['SPT']
+                else:
+                    log['PROTO'] = '%s' % services_list[0]
+
+        age = now - log['LOG_DATE']
+        if age.days:
+            age = str(age).split(',')[0]
+        else:
+            age = str(age).split('.')[0]
+
+        print('%-37s %-16s %-10s %-5s %8s' % (
+            log['SRC'],
             log['DST'],
             log['PROTO'],
             log['SPT'],
-            str(log['LOG_DATE'])[:16],
+            age
         ))
     if starred:
-        print('* for full list see e.g.\n\t$ braise show service %s' % starred)
+        print('* for full list see e.g. "braise show port %s"' % starred)
+

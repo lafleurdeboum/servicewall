@@ -66,10 +66,10 @@ setuptools.setup(
     ],
     data_files=[
         #("/etc/", ["ulogd/ulogd.conf", ]),
-        #("/etc/systemd/system", [
-        #    "ulogd/systemd/ulog.socket",
-        #    "ulogd/systemd/ulog.service"
-        #]),
+        ("/etc/systemd/system", [
+            "ulogd/systemd/ulog.socket",
+            "ulogd/systemd/ulog.service"
+        ]),
         ("/etc/servicewall/", ["etc/realms.json", "etc/config.json"]),
         ("/etc/xdg/autostart/", ["lib/servicewall-systray.desktop"]),
         ("lib/servicewall/", [
