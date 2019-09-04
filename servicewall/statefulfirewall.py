@@ -9,7 +9,7 @@ from systemd import journal
 from iptc import Rule
 from servicewall import firewall
 from datetime import datetime
-from socket import gethostname
+import socket
 
 
 class StateFulFireWall(firewall.FireWall):
@@ -19,7 +19,10 @@ class StateFulFireWall(firewall.FireWall):
     - log anything that is dropped
     - drop invalid packets
     """
-
+    protobynumber = { num: name[8:].lower()
+                 for name, num in vars(socket).items()
+                 if name.startswith("IPPROTO")
+    }
     def __init__(self):
         super().__init__()
 
@@ -83,7 +86,7 @@ class StateFulFireWall(firewall.FireWall):
         # That is for ulog systemd service associated to ulog.socket :
         reader.add_match(_SYSTEMD_UNIT="ulog.service")
         now = datetime.now()
-        hostname = gethostname()
+        hostname = socket.gethostname()
         #p = select.poll()
         #p.register(reader, reader.get_events())
         #p.poll()
@@ -104,33 +107,64 @@ class StateFulFireWall(firewall.FireWall):
                     break
             message_dict = {}
             # Get rid of the trailing date and hostname :
-            message = log["MESSAGE"].split(hostname)[1].strip()
+            try:
+                message = log["MESSAGE"].split(hostname)[-1].strip()
+            except IndexError:
+                print("!! error :")
+                print(log["MESSAGE"])
 
-            # If message begins with "[DESTROY]", then it s a ??? separated
-            # after the ORIG: and REPLY: tags. We will skip it for the moment.
+            # If message begins with "[NEW] "or "[DESTROY]", then it is a
+            # conntrack info cut after the "ORIG:" and "REPLY:" tags.
+            if message.startswith("[NEW]"):
+                message_dict["conntrack_type"] = "new"
             if message.startswith("[DESTROY]"):
-                continue
-                orig, reply = message.split(", REPLY: ")
-                #orig = orig.split("ORIG: ")[1]
-                # Let the reply be treated as a normal package :
-                message = reply
+                message_dict["conntrack_type"] = "destroy"
 
-            # We consider the number of logs with a destination port.
-            if "DPT" not in message:
-                continue
+            # We may consider the number of logs with a destination port :
+            # "DPT" not in message:
+            #    continue
+
             if limit:
                 if i > limit:
                     break
                 else:
                     i += 1
 
-            message_dict["DATE"] = log["__REALTIME_TIMESTAMP"]
-            for item in message.split():
-                if item.count("="):
-                    key, value = item.split("=")
-                    message_dict[key] = value
-                else:
-                    message_dict[item] = ""
+            message_dict["date"] = log["__REALTIME_TIMESTAMP"]
+
+            if "conntrack_type" in message_dict:
+                orig, reply = message.split(", REPLY: ")
+                orig = orig.split("ORIG: ")[1]
+                message_dict["orig"] = {}
+                message_dict["reply"] = {}
+                for item in orig.split():
+                    if item.count("="):
+                        key, value = item.split("=")
+                        message_dict["orig"][key] = value
+                    else:
+                        message_dict["orig"][key] = ""
+                for item in reply.split():
+                    if item.count("="):
+                        key, value = item.split("=")
+                        message_dict["reply"][key] = value
+                    else:
+                        message_dict["reply"][key] = ""
+                    if "SPT" not in message_dict["orig"]:
+                        message_dict["orig"]["SPT"] = ""
+                    message_dict["id"] = "%s %s %s %s" % (
+                                message_dict["orig"]["SRC"],
+                                message_dict["reply"]["SRC"],
+                                message_dict["orig"]["PROTO"],
+                                message_dict["orig"]["DPT"],
+                    )
+            else:
+                message_dict["message"] = {}
+                for item in message.split():
+                    if item.count("="):
+                        key, value = item.split("=")
+                        message_dict["message"][key] = value
+                    else:
+                        message_dict["message"][item] = ""
             yield message_dict
 
     def filter_logs_by(self, criteria, limit=None, period=None):
