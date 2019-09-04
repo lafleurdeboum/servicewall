@@ -19,9 +19,6 @@ class InstallAndChmod(install):
             if "/etc/servicewall" in filepath:
                 log.info("setting %s to mode %s" % (filepath, oct(mode)[2:]))
                 chmod(filepath, mode)
-            if filepath.split("/")[-1] == "ulogd.syslogemu":
-                log.info("setting %s to mode %s" % (filepath, oct(mode)[2:]))
-                chmod(filepath, mode)
 
 
 with open("README.md", "r") as fd:
@@ -68,9 +65,14 @@ setuptools.setup(
         "servicewall/braise",
     ],
     data_files=[
-        ("/etc/servicewall", ["etc/realms.json", "etc/config.json"]),
-        ("/etc/xdg/autostart", ["lib/servicewall-systray.desktop"]),
-        ("lib/servicewall", [
+        #("/etc/", ["ulogd/ulogd.conf", ]),
+        #("/etc/systemd/system", [
+        #    "ulogd/systemd/ulog.socket",
+        #    "ulogd/systemd/ulog.service"
+        #]),
+        ("/etc/servicewall/", ["etc/realms.json", "etc/config.json"]),
+        ("/etc/xdg/autostart/", ["lib/servicewall-systray.desktop"]),
+        ("lib/servicewall/", [
             "lib/systray.py",
             "lib/services.p",
             "lib/toggler",
