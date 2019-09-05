@@ -31,7 +31,8 @@ invalid packets, and log anything dropped.
 ## What _not_ to expect
 
 This firewall works on incoming traffic ; it won't be very useful on a server 
-needing to forward anything.
+needing to forward anything. So basically, if your device is not a laptop you
+use as a personal device, this software shouldn't be really fitted.
 
 At the moment, you can't expect it to let any traffic come in from out of the 
 local network realm either (excepted ssh, which is is a kind of "special" 
@@ -39,25 +40,22 @@ rule). At the moment, you can't either change the default ruleset on the
 command line ; you would have to manually edit /etc/servicewall/realms.json for 
 that.
 
-So basically, if your device is not a laptop you use as a personal device, this
-software shouldn't be really fitted.
-
 
 ## Installation
 
 ### Dependencies
 
-Required dependencies are `python 3`, `iptables`, `systemd`, and either 
+Required dependencies are `python 3`, `iptables`, `ulogd`, `systemd`, and either
 `NetworkManager` or `systemd-networkd` enabled. If you run a linux on a laptop,
 you should be all set.
 
 There are python packages needed as well, but if you use a decent install 
 method like `pip`, they should be managed all right. Those are :
-- optional : `python-argcomplete`
-- build-time : `python-setuptools`
 - `python-iptables`
 - `python-netifaces`
 - `python-argparse`
+- optional : `python-argcomplete`
+- build-time : `python-setuptools`
 
 You might really wish to have `python-argcomplete` for the command-line 
 completion to work. This can really prove handy when you're looking for a 
@@ -69,8 +67,24 @@ Once you have the required dependencies, install the package with :
 
     # pip install servicewall
 
-For those using Arch linux, there is a PKGBUILD script for this, coming soon 
-into AUR. Give it a try !
+For those using Arch linux, there is a `PKGBUILD` for this into AUR, called
+`servicewall-git`. Give it a try !
+
+Once this is done, you also need to configure and enable ulogd. ServiceWall
+comes with its own `ulogd.conf` that you will need to copy over to `/etc`. One
+can use `cp`'s `-b` option to save a backup with any extension. For example on
+Arch systems :
+
+    # cp -b -S .pacsave /usr/lib/servicewall/ulogd.conf /etc/
+
+Now you can enable ServiceWall's logging journal :
+
+    # systemctl restart ulogd.service
+    # systemctl enable ulog.socket
+
+One can check that its output works fine :
+
+    # journalctl -u ulog.service
 
 
 ## Usage
@@ -87,8 +101,24 @@ To have details on the status, use :
 
     # braise status
 
-ServiceWall works with service definitions provided by [jhansonxi](https://www.blogger.com/profile/02954133518928245196). They link a service to ports it 
-needs. To allow a specific service, do :
+The firewall logs all that it drops. There's a log processor tool included ;
+try it with
+
+    # braise show logs
+
+or
+
+    # braise show logs -w since NUMBER_OF_SECONDS
+
+The `-w|--with-names` option lets it show hostnames. This will let you see what
+services queries were dropped. Now if the service name begins with a `<` it
+means that it is the source that is operating the service, not the destination.
+It might be a packet that iptables failed to recognize as belonging to an
+established connection.
+
+ServiceWall works with service definitions provided by
+[jhansonxi](https://www.blogger.com/profile/02954133518928245196). They link a
+service to ports it needs. To allow a specific service, do :
 
     # braise allow service "Service Name"
 
@@ -97,7 +127,7 @@ internet in another place, the rules for this place will be put aside, and
 brought back when you connect to it again. You can move back with
 `braise disallow service ...`
 
-Don't know what's the exact name of the service you want to allow ? You'll need 
+Don't know what's the exact name of the service you want to allow ? You'll need
 to :
 
     # braise show services
@@ -116,14 +146,7 @@ connected to, in a dictionary called realm_defs. To interrogate it, do :
 
     # braise show realms
 
-And in the end, the firewall logs all that it drops ; there's a log processor
-tool included ; try it with
 
-    # braise show logs
-
-or
-
-    # braise show logs since NUMBER_OF_SECONDS
 
 
 ## Copyright

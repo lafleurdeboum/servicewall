@@ -116,7 +116,7 @@ def show_logs(args):
         yielder = firewall.yield_logs(period=args.period)
     else:
         yielder = firewall.yield_logs()
-    if args.withnames:
+    if args.with_names:
         withnames = True
     else:
         withnames = False

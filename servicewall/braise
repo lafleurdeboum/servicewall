@@ -52,7 +52,9 @@ def parser_helper(function_name):
         eval("parser_helpers." + function_name)(args)
     return wrapper
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(
+    description="ServiceWall CLI frontend"
+)
 
 # parser fails badly when invoked without argument ; let's invoke basic help
 # instead (see def no_arg_provided(args) in parser_helpers.py)
@@ -70,25 +72,29 @@ subparser = parser.add_subparsers()
 
 parser_enable = subparser.add_parser(
     "enable",
-    help="enable the firewall"
+    help="enable the firewall",
+    description="enable the firewall",
 )
 parser_enable.set_defaults(func=parser_helper("enable"))
 
 parser_disable = subparser.add_parser(
     "disable",
-    help="disable the firewall"
+    help="disable the firewall",
+    description="disable the firewall",
 )
 parser_disable.set_defaults(func=parser_helper("disable"))
 
 parser_show_status = subparser.add_parser(
     "status",
-    help="tell if the firewall is enabled and what is the current realm"
+    help="tell if the firewall is enabled and what is the current realm",
+    description="tell if the firewall is enabled and what is the current realm",
 )
 parser_show_status.set_defaults(func=parser_helper("status"))
 
 parser_reload = subparser.add_parser(
     "reload",
-    help="reload rules"
+    help="reload rules",
+    description="reload rules",
 )
 parser_reload.set_defaults(func=parser_helper("reload"))
 
@@ -99,50 +105,56 @@ parser_reload.set_defaults(func=parser_helper("reload"))
 
 parser_show = subparser.add_parser(
     "show",
-    help="show different useful things"
+    help="show different useful things",
+    description="show different useful things",
 )
 parser_show.set_defaults(func=parser_helper("show"))
 show_subparser = parser_show.add_subparsers()
 
 parser_show_logs = show_subparser.add_parser(
     "logs",
-    help="show a digest of logs of the firewall"
+    help="show a digest of logs of the firewall",
+    description="show dropped packets. Columns are : source_ip destination_ip protocol age",
 )
 parser_show_logs.set_defaults(func=parser_helper("show_logs"))
 parser_show_logs.add_argument(
     "-w",
-    "--withnames",
-    action="store_true"
+    "--with-names",
+    action="store_true",
+    help="display hostname along source_ip",
 )
 show_logs_subparser = parser_show_logs.add_subparsers()
 
 parser_show_logs_time = show_logs_subparser.add_parser(
     "since",
-    help="restrict logs to those since [period] seconds"
+    help="restrict logs to those since [period] seconds",
 )
 parser_show_logs_time.add_argument("period", type=int)
 parser_show_logs_time.set_defaults(func=parser_helper("show_logs"))
 parser_show_logs_limit = show_logs_subparser.add_parser(
     "last",
-    help="shorten logs to last [limit] hosts"
+    help="shorten logs to last [limit] hits",
 )
 parser_show_logs_limit.add_argument("limit", type=int)
 parser_show_logs_limit.set_defaults(func=parser_helper("show_logs"))
 
 parser_show_realm = show_subparser.add_parser(
     "realm",
-    help="show current realm details"
+    help="show current realm details",
+    description="show current realm details",
 )
 parser_show_realm.set_defaults(func=parser_helper("show_realm"))
 parser_show_realms = show_subparser.add_parser(
     "realms",
-    help="show realm definitions"
+    help="show realm definitions",
+    description="show realm definitions",
 )
 parser_show_realms.set_defaults(func=parser_helper("show_realms"))
 
 parser_show_input_chain = show_subparser.add_parser(
     "input_chain",
-    help="show services allowed in current realm"
+    help="show services allowed in current realm",
+    description="show services allowed in current realm",
 )
 parser_show_input_chain.set_defaults(func=parser_helper("show_input_chain"))
 
@@ -153,20 +165,23 @@ parser_show_input_chain.set_defaults(func=parser_helper("show_input_chain"))
 # https://docs.python.org/3.2/library/argparse.html#formatter-class
 parser_show_service = show_subparser.add_parser(
     "service",
-    usage="%s %s service_name - prints the service definition" %
-    (parser_show.prog, "service")
+    usage="usage: %s %s service_name" % (parser_show.prog, "service"),
+    help="print service_name's service definition",
+    description="print service_name's service definition",
 )
 parser_show_service.add_argument("service_name", choices=service_defs)
 parser_show_service.set_defaults(func=parser_helper("show_service"))
 parser_show_services = show_subparser.add_parser(
     "services",
-    help="show services list"
+    help="show services list",
+    description="show services list",
 )
 parser_show_services.set_defaults(func=parser_helper("show_services"))
 
 parser_show_port = show_subparser.add_parser(
     "port",
-    help="show services associated to port"
+    help="show services associated to port",
+    description="show services associated to port",
 )
 parser_show_port.add_argument("port_name")
 parser_show_port.set_defaults(func=parser_helper("show_port"))
@@ -180,8 +195,10 @@ parser_allow = subparser.add_parser("allow")
 allow_subparser = parser_allow.add_subparsers()
 parser_allow_service = allow_subparser.add_parser(
     "service",
-    usage="%s service service_name - add a service to authorized list" %
-    parser_allow.prog
+    usage="usage: %s service service_name" % parser_allow.prog,
+    help="add service service_name to authorized list",
+    description="add a service to authorized list",
+    
 )
 parser_allow_service.add_argument("service_name", choices=service_defs)
 gl = parser_allow_service.add_subparsers()
@@ -194,8 +211,9 @@ disallow_subparser = parser_disallow.add_subparsers()
 # We could have used parser_add_service, but the choices aren't the same :
 parser_disallow_service = disallow_subparser.add_parser(
     "service",
-    usage="%s service service_name - remove a service from authorized list" %
-    parser_disallow.prog
+    usage="usage: %s service service_name" % parser_disallow.prog,
+    help="remove service service_name from authorized list",
+    description="remove service service_name from authorized list",
 )
 parser_disallow_service.add_argument("service_name", choices=allowed_services)
 parser_disallow_service.set_defaults(func=parser_helper("disallow_service"))
@@ -205,8 +223,9 @@ argcomplete.autocomplete(parser)
 
 if len(argv) == 1:
     # display help message when no args are passed.
+    print("\n! no argument provided.\n")
     parser.print_help()
-    raise SystemExit()
+    raise SystemExit(1)
 
 # Here, argcomplete stops.
 args = parser.parse_args()

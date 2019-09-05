@@ -65,7 +65,6 @@ setuptools.setup(
         "servicewall/braise",
     ],
     data_files=[
-        #("/etc/", ["ulogd/ulogd.conf", ]),
         ("/etc/systemd/system", [
             "ulogd/systemd/ulog.socket",
             "ulogd/systemd/ulog.service"
@@ -78,6 +77,7 @@ setuptools.setup(
             "lib/toggler",
             "lib/icon.png",
             "lib/icon2.png",
+            "ulogd/ulogd.conf",
         ]),
     ],
     cmdclass={"install": InstallAndChmod},
