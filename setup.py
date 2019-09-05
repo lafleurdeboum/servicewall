@@ -6,7 +6,7 @@
 import setuptools
 from setuptools.command.install import install
 import sys
-from os import path, environ, chmod
+from os import path, environ, chmod, popen
 from distutils import log
 import stat
 
@@ -25,7 +25,8 @@ with open("README.md", "r") as fd:
     long_description = fd.read()
 
 name = "servicewall"
-version = "0.4.2"
+#version = "0.4.3"
+version = popen("git tag | tail -n 1").read().strip()
 here = path.abspath(path.dirname(__file__))
 
 for package in setuptools.find_packages():
