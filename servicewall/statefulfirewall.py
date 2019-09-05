@@ -122,6 +122,7 @@ class StateFulFireWall(firewall.FireWall):
             if message.startswith("[NEW]") or message.startswith("[DESTROY]"):
                 continue
 
+            # Only count the logs that make it here :
             if limit:
                 if i > limit:
                     break
@@ -136,10 +137,14 @@ class StateFulFireWall(firewall.FireWall):
                 else:
                     message_dict[item] = ""
 
+            if 'DPT' not in message_dict:
+                message_dict['DPT'] = ''
             if 'SPT' not in message_dict:
                 message_dict['SPT'] = ''
             if message_dict['PROTO'].isnumeric():
                 message_dict['PROTO'] = self.protobynumber[int(message_dict['PROTO'])]
+            else:
+                message_dict['PROTO'] = message_dict['PROTO'].lower()
 
             yield message_dict
 
