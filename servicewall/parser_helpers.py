@@ -137,11 +137,11 @@ def show_logs(args):
                 break
 
         if withnames:
-            # If we have a hostname, output it - shortened if longer than 19 :
+            # If we have a hostname, output it - shortened if longer than :
             try:
                 hostname = socket.gethostbyaddr(log['SRC'])[0]
-                if len(hostname) > 21:
-                    log['SRC'] = '%s ...%s' % (log['SRC'], hostname[-16:])
+                if len(hostname) > 20:
+                    log['SRC'] = '%s ..%s' % (log['SRC'], hostname[-17:])
                 else:
                     log['SRC'] = '%s %s' % (log['SRC'], hostname)
             except socket.herror:
@@ -151,14 +151,29 @@ def show_logs(args):
         if log['DPT'] or log['SPT']:
             servicename = print_service(log['DPT'])
             if servicename:
-                service = '%s (%s/%s)' % (servicename, log['PROTO'], log['DPT'])
+                service = '> %s (%s/%s)' % (
+                    servicename,
+                    log['PROTO'],
+                    log['DPT']
+                )
             else:
                 servicename = print_service(log['SPT'])
                 if servicename:
-                    service = '<%s (%s/%s)' % (servicename, log['PROTO'], log['SPT'])
+                    service = '>>%s (%s/%s)' % (
+                        servicename,
+                        log['PROTO'],
+                        log['SPT']
+                    )
+                else:
+                    # We have no port, display protocol :
+                    service = '%5s>%5s %-5s' % (
+                        log['SPT'],
+                        log['DPT'],
+                        log['PROTO']
+                    )
         else:
             # We have no port, display protocol :
-            service = '%17s' % log['PROTO']
+            service = 'layer3: %s' % log['PROTO']
 
         age = now - log['LOG_DATE']
         if age.days:
@@ -166,7 +181,7 @@ def show_logs(args):
         else:
             age = str(age).split('.')[0]
 
-        print('%-36s %-16s %17s %8s' % (
+        print('%-36s %-16s %17s %-8s' % (
             log['SRC'],
             log['DST'],
             service,
