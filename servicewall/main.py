@@ -76,7 +76,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             if self.online:
                 if self.realm_id not in self.realm_defs:
                     # If we don't have a realm definition, load "ServiceWall:default"
-                    self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[identifier + ":default"])
+                    self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[self.identifier + ":default"])
                 for service_name, local_toggle in self.realm_defs[self.realm_id].items():
                     if local_toggle:
                         self.insert_service_rule(service_name, local=True)

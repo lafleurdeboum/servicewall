@@ -38,7 +38,7 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         position = (r.top, r.right)
         window = wx.PopupTransientWindow(self.frame, flags=wx.BORDER_NONE)
         fw = servicewall.ServiceWall()
-        yielder = fw.log_yielder(limit=LOG_LIMIT)
+        yielder = fw.yield_logs(limit=LOG_LIMIT)
         panel = wx.Panel(window)
         i = 0
         panel_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -75,7 +75,7 @@ class TaskBarIcon(wx.adv.TaskBarIcon):
         logs_sizer.Add(wx.StaticText(panel, label="hits"), 1, wx.ALIGN_RIGHT, 0)
         logs_sizer.Add(wx.StaticText(panel, label="age"), 1, wx.ALIGN_RIGHT, 0)
         for name, logpile in logs_by_port.items():
-            date = logpile[0]["DATE"]
+            date = logpile[0]["LOG_DATE"]
             delta = date.now() - date
             if delta.seconds <= 60:
                 age = str(delta.seconds) + "'"
