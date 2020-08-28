@@ -172,7 +172,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         # Create an entry for this realm's id if there weren't any :
         if self.realm_id not in self.realm_defs:
             self.realm_defs[self.realm_id] = copy.deepcopy(
-                    self.realm_defs[identifier + ":default"])
+                    self.realm_defs[self.identifier + ":default"])
         if service_name not in self.realm_defs[self.realm_id]:
             self.realm_defs[self.realm_id][service_name] = local
             self.save_rules()
@@ -219,7 +219,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     def del_service_in(self, service_name):
         # Create an entry for this realm's essid if there weren't any :
         if self.realm_id not in self.realm_defs:
-            self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[identifier + ":default"])
+            self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[self.identifier + ":default"])
         # Do our own validity testing
         if service_name not in self.service_defs:
             raise KeyError('service "%s" not found.')
