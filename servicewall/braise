@@ -6,12 +6,16 @@
 """
 
 import argparse
-import argcomplete
 import pickle
 import json
 from sys import argv
 from servicewall import parser_helpers
 from servicewall.network_helpers import get_realm_id
+try:
+    import argcomplete
+    ARGCOMPLETE = True
+except ImportError:
+    ARGCOMPLETE = False
 
 
 conf_dir = "/etc/servicewall/"
@@ -218,8 +222,8 @@ parser_disallow_service = disallow_subparser.add_parser(
 parser_disallow_service.add_argument("service_name", choices=allowed_services)
 parser_disallow_service.set_defaults(func=parser_helper("disallow_service"))
 
-
-argcomplete.autocomplete(parser)
+if ARGCOMPLETE:
+    argcomplete.autocomplete(parser)
 
 if len(argv) == 1:
     # display help message when no args are passed.
