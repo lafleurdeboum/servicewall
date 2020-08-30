@@ -27,6 +27,8 @@ import json
 import copy
 import os
 #import arpreq
+import subprocess
+
 
 
 class ServiceWall(statefulfirewall.StateFulFireWall):
@@ -35,7 +37,6 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     lib_dir = "/usr/lib/servicewall/"
     service_defs_pickle = "/usr/lib/servicewall/services.p"
     realm_defs_dict = "/etc/servicewall/realms.json"
-    config_file = "/etc/servicewall/config.json"
     dispatchers = {
         "Network Manager": "/etc/NetworkManager/dispatcher.d/",
         "systemd-networkd": "/etc/networkd-dispatcher/carrier.d/",
@@ -48,8 +49,6 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         #   - wether the firewall is enabled
         #   - wether we are online and on which network realm
 
-        with open(self.config_file, 'r') as fd:
-            self.config = json.load(fd)
         with open(self.realm_defs_dict, "r") as fd:
             self.realm_defs = json.load(fd)
         with open(self.service_defs_pickle, "rb") as fd:
@@ -72,7 +71,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         are set as True, they are matched with the provided subnetwork,
         else to any source.
         """
-        if self.config["enabled"]:
+        if self.is_enabled():
             if self.online:
                 if self.realm_id not in self.realm_defs:
                     # If we don't have a realm definition, load "ServiceWall:default"
@@ -88,7 +87,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         super().start(**args)
 
     def stop(self):
-        if self.config["enabled"]:
+        if self.is_enabled():
             super().stop()
         else:
             raise SystemExit("not stopping, firewall disabled. Enable it with\n\t# braise enable")
@@ -120,15 +119,12 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                 os.symlink(self.lib_dir + self.dispatcher_toggler, dst_dir + self.dispatcher_toggler)
                 linked = True
         if linked:
-            # Mark as enabled :
-            self.config["enabled"] = True
-            with open(self.config_file, 'w') as fd:
-                 json.dump(self.config, fd)
+            self._enable_in_systemd()
         else:
             raise SystemExit("Could not link to any network event dispatcher. "
                     "You apparently aren't running neither Network Manager nor "
                     "systemd-networkd with networkd-dispatcher. You'll need one "
-                    "of those to run this self as it relies on them to fire the "
+                    "of those to run this as it relies on them to fire the "
                     "network change events.")
         if self.up:
             self.reload()
@@ -151,11 +147,8 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                 if os.path.exists(target):
                     print("%s dispatcher was already disabled" % dispatcher)
         self.stop()
-        if self.config["enabled"]:
-            # Mark as disabled:
-            self.config["enabled"] = False
-            with open(self.config_file, 'w') as fd:
-                json.dump(self.config, fd)
+        if self.is_enabled():
+            self._disable_in_systemd()
             print("%s disabled" % self.identifier)
         else:
             print("%s was already disabled" % self.identifier)
@@ -263,4 +256,24 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                         services_list.append(service_name)
         return services_list
 
+    def is_enabled(self):
+        status = self._systemctl('is-enabled')
+        if status != b'enabled':
+            return False
+        return True
+
+    def _enable_in_systemd(self):
+        return self._systemctl('enable')
+
+    def _disable_in_systemd(self):
+        return self._systemctl('disable')
+
+    def _systemctl(self, arg):
+        try:
+            return subprocess.check_output(['systemctl', arg, 'servicewall.service']).strip()
+        except FileNotFoundError:
+            raise AssertionError("'systemctl' not found in the path, is systemd installed on this machine ?")
+        except subprocess.CalledProcessError:
+            # systemctl returns an 'error' on is-enabled if the answer is False.
+            pass
 

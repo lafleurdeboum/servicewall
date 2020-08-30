@@ -1,9 +1,10 @@
 [Unit]
-Description=Netfilter Ulog journal
-Requires=ulogd.service
+Description=logs for servicewall
 
 [Service]
-ExecStart=/bin/cat /dev/ulog
+#ExecStart=/bin/cat /dev/ulog
+StandardInput=socket
+ExecStart=/bin/cat
 ExecReload=/usr/bin/kill --signal HUP ${MAINPID}
 
 [Install]

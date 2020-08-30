@@ -67,18 +67,24 @@ setuptools.setup(
     ],
     data_files=[
         ("/etc/systemd/system", [
-            "ulogd/systemd/ulog.socket",
-            "ulogd/systemd/ulog.service"
+            "etc/systemd/servicewall-ulogd.service",
+            "etc/systemd/servicewall-logs.service",
+            "etc/systemd/servicewall-logs.socket",
+            "etc/systemd/servicewall.service",
         ]),
-        ("/etc/servicewall/", ["etc/realms.json", "etc/config.json"]),
-        ("/etc/xdg/autostart/", ["lib/servicewall-systray.desktop"]),
+        ("/etc/servicewall/", [
+            "etc/servicewall/realms.json",
+            "etc/servicewall/ulogd.conf",
+        ]),
+        ("/etc/xdg/autostart/", [
+            "lib/servicewall-systray.desktop",
+        ]),
         ("lib/servicewall/", [
             "lib/systray.py",
             "lib/services.p",
             "lib/toggler",
             "lib/icon.png",
             "lib/icon2.png",
-            "ulogd/ulogd.conf",
         ]),
     ],
     cmdclass={"install": InstallAndChmod},

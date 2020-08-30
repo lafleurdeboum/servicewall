@@ -88,7 +88,7 @@ class StateFulFireWall(firewall.FireWall):
         # That would be for LOG match :
         #reader.add_match(SYSLOG_IDENTIFIER="kernel")
         # That is for ulog systemd service associated to ulog.socket :
-        reader.add_match(_SYSTEMD_UNIT="ulog.service")
+        reader.add_match(_SYSTEMD_UNIT="servicewall-logs.service")
         now = datetime.now()
         hostname = socket.gethostname()
         #p = select.poll()

@@ -57,7 +57,7 @@ def reload(args):
     firewall.reload()
 
 def status(args):
-    if firewall.config["enabled"]:
+    if firewall.is_enabled():
         if firewall.realm_id:
             realm_name = firewall.realm_id
         else:

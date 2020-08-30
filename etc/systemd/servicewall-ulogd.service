@@ -1,0 +1,14 @@
+[Unit]
+Description=Ulogd daemon for ServiceWall
+Before=network-pre.target
+Wants=network-pre.target
+Conflicts=ulogd.service
+Requires=servicewall-logs.socket
+After=servicewall-logs.socket
+
+[Service]
+ExecStart=/usr/bin/ulogd --configfile /etc/servicewall/ulogd.conf
+ExecReload=/usr/bin/kill --signal HUP ${MAINPID}
+
+[Install]
+WantedBy=multi-user.target

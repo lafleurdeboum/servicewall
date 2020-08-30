@@ -1,8 +1,6 @@
-[Unit]
-Requires=ulogd.service
-
 [Socket]
 ListenFIFO=/dev/ulog
+SocketMode=0600
 #ListenStream=/dev/ulog
 
 [Install]
