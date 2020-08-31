@@ -89,7 +89,7 @@ One can check that its output works fine :
 
 ## Usage
 
-The firewall is disabled by default. To enable it now _and at boot-time_ :
+The firewall is disabled by default. To enable it :
 
     # braise enable
 
@@ -97,9 +97,21 @@ The firewall is disabled by default. To enable it now _and at boot-time_ :
 behaviour is to drop all that come in, excepted for `ssh` from anywhere and 
 `DHCP` from the local network. All that go out is allowed.
 
+ServiceWall is in fact now a systemd service ; `braise enable` mostly does
+
+    # systemctl enable servicewall
+
 To have details on the status, use :
 
     # braise status
+
+Particuliar attention was taken to logs. Logs are stored in systemd's
+`servicewall-logs.service`. Journald takes care it can't fill the hard drive,
+and that it's readable only to staff. Firewall logs are critical information,
+and with this setup you can choose who has access. In Arch it's controlled with
+an access list, you can view it with :
+
+    # getfacl /var/log/journal
 
 The firewall logs all that it drops. There's a log processor tool included ;
 try it with
@@ -146,6 +158,9 @@ connected to, in a dictionary called realm_defs. To interrogate it, do :
 
     # braise show realms
 
+Finally, you can check the resulting table with
+
+    # braise show table
 
 
 
