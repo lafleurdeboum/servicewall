@@ -130,36 +130,6 @@ connected to, in a dictionary called realm_defs. To interrogate it, do :
 
     # braise show realms
 
-servicewall works with service definitions provided by
-[jhansonxi](https://www.blogger.com/profile/02954133518928245196). they link a
-service to ports it needs. to allow a specific service, do :
-
-    # braise allow service "service name"
-
-which will add this service to this realm's definition. if you connect to
-internet in another place, the rules for this place will be put aside, and 
-brought back when you connect to it again. you can move back with
-`braise disallow service ...`
-
-don't know what's the exact name of the service you want to allow ? you'll need
-to :
-
-    # braise show services
-
-the list is quite long. once you want exhaustive informations on a single 
-service, do
-
-    # braise show service "service name"
-
-and if you wonder which services use to use port 80, do
-
-    # braise show port 80
-
-these rules are stored together with a string identifying the network you're
-connected to, in a dictionary called realm_defs. to interrogate it, do :
-
-    # braise show realms
-
 Particuliar attention was taken to logs. Logs are stored in systemd's
 `servicewall-logs.service`. Journald takes care it can't fill the hard drive,
 and that it's readable only to staff. Firewall logs are critical information,
