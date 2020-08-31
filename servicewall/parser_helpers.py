@@ -103,9 +103,8 @@ def show_table(args):
           firewall.output_chain.get_policy().name)
 
 def show_realm(args):
-    print('Current realm is "%s". Allowed services (true means locally allowed) :'
-                % firewall.realm_id)
-    prettyprint(firewall.realm_defs[firewall.realm_id])
+    print('Current realm is "%s".' % firewall.realm_id)
+    #prettyprint(firewall.realm_defs[firewall.realm_id])
 def show_realms(args):
     #print_dict(firewall.realm_defs)
     prettyprint(firewall.realm_defs)
