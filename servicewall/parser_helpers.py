@@ -90,7 +90,8 @@ def disallow_service(args):
     firewall.del_service_in(service_name)
 
 def show_table(args):
-    print('You are connected to realm  : ' + firewall.realm_id)
+    print('You are using realm profile : %s' %
+          (firewall.realm_id or "ServiceWall:default"))
     print('=> Input rules <=           : policy %6s' % 
           firewall.input_chain.get_policy().name)
     for rule in firewall.list_rules(firewall.input_chain):
@@ -103,7 +104,10 @@ def show_table(args):
           firewall.output_chain.get_policy().name)
 
 def show_realm(args):
-    print('Current realm is "%s".' % firewall.realm_id)
+    if firewall.realm_id:
+        print('This machine is connected to ESSID "%s".' % firewall.realm_id)
+    else:
+        print('This machine is not connected.')
     #prettyprint(firewall.realm_defs[firewall.realm_id])
 def show_realms(args):
     #print_dict(firewall.realm_defs)
