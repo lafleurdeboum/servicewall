@@ -4,7 +4,7 @@
 
 """
 
-__all__ = ["no_arg_provided", "enable", "disable", "reload", "show", "show_logs", "show_realm", "show_realms", "show_services", "show_service", "show_status", "allow_service", "disallow_service"]
+__all__ = ["no_arg_provided", "enable", "disable", "start", "stop", "reload", "show", "show_logs", "show_realm", "show_realms", "show_services", "show_service", "show_status", "allow_service", "disallow_service"]
 
 
 import os
@@ -52,6 +52,12 @@ def enable(args):
 
 def disable(args):
     firewall.disable()
+
+def start(args):
+    firewall.start()
+
+def stop(args):
+    firewall.stop()
 
 def reload(args):
     firewall.reload()

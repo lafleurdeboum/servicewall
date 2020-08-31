@@ -6,10 +6,10 @@ Requires=servicewall-ulogd.service
 
 [Service]
 # This service does nothing, braise will check it to see if it's enabled
-ExecStart=/bin/echo "ServiceWall enabled, triggered by network dispatcher"
+ExecStart=/usr/bin/braise start
 RemainAfterExit=yes
 ExecReload=/usr/bin/braise reload
-ExecStop=/bin/echo "ServiceWall disabled"
+ExecStop=/usr/bin/braise stop
 
 [Install]
 WantedBy=multi-user.target

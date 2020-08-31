@@ -87,6 +87,19 @@ parser_disable = subparser.add_parser(
     description="disable the firewall",
 )
 parser_disable.set_defaults(func=parser_helper("disable"))
+parser_enable = subparser.add_parser(
+    "start",
+    help="start the firewall",
+    description="start the firewall",
+)
+parser_enable.set_defaults(func=parser_helper("start"))
+
+parser_disable = subparser.add_parser(
+    "stop",
+    help="stop the firewall",
+    description="stop the firewall",
+)
+parser_disable.set_defaults(func=parser_helper("stop"))
 
 parser_show_status = subparser.add_parser(
     "status",
