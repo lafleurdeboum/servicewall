@@ -79,11 +79,11 @@ def status(args):
 def allow_service(args):
     service_name = args.service_name
     # Make it local by default :
-    firewall.add_service_in(service_name, local=True)
+    firewall.add_service_in(service_name, scope="local")
 
 def allow_service_globally(args):
     service_name = args.service_name
-    firewall.add_service_in(service_name, local=False)
+    firewall.add_service_in(service_name, scope="global")
 
 def disallow_service(args):
     service_name = args.service_name

@@ -67,39 +67,34 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
 
 
     def start(self, **args):
-        """Will load a set of rules from self.realm_defs . If these rules
-        are set as True, they are matched with the provided subnetwork,
-        else to any source.
+        """Will load a set of rules from self.realm_defs .
         """
-        if self.is_enabled():
-            if self.online:
-                if self.realm_id not in self.realm_defs:
-                    # If we don't have a realm definition, load "ServiceWall:default"
-                    self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[self.identifier + ":default"])
-                for service_name, local_toggle in self.realm_defs[self.realm_id].items():
-                    if local_toggle:
-                        self.insert_service_rule(service_name, local=True)
-                    else:
-                        self.insert_service_rule(service_name, local=False)
-        else:
-            raise SystemExit("not starting, firewall disabled. Enable it with\n\t# braise enable")
+        self._enable_hook()
+        if self.realm_id not in self.realm_defs:
+            # If we don't have a realm definition, load "ServiceWall:default"
+            self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[self.identifier + ":default"])
+        for service_name, scope in self.realm_defs[self.realm_id].items():
+            self.insert_service_rule(service_name, scope=scope)
         # Commits the table if relevant, and brings other rules in :
         super().start(**args)
 
     def stop(self):
-        if self.is_enabled():
-            super().stop()
-        else:
-            raise SystemExit("not stopping, firewall disabled. Enable it with\n\t# braise enable")
+        self._disable_hook()
+        super().stop()
 
     def reload(self):
         self.stop()
         self.start()
         print("%s reloaded" % self.identifier)
-
+    
     def enable(self):
-        """Create a link in the network dispatcher pointing to the event triggerer,
-        and start the firewall.
+        self._enable_in_systemd()
+
+    def disable(self):
+        self._disable_in_systemd()
+
+    def _enable_hook(self):
+        """Create a link in the network dispatcher pointing to the event triggerer.
         """
         if not os.path.exists(self.lib_dir):    # Should be installed by setup.py .
             raise SystemExit("Could not find %s in %s. Check your installation !" %
@@ -111,52 +106,43 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                 # Keep going with the next dispatcher.
                 continue
             if os.path.exists(dst_dir + self.dispatcher_toggler):
-                print("  %s dispatcher was already enabled" % dispatcher)
+                print("%s dispatcher was already enabled" % dispatcher)
                 linked = True
             else:
-                print("  enabling %s dispatcher" % dispatcher)
+                print("Enabling %s dispatcher" % dispatcher)
                 # symlink pointing to src in dst_dir
                 os.symlink(self.lib_dir + self.dispatcher_toggler, dst_dir + self.dispatcher_toggler)
                 linked = True
         if linked:
-            self._enable_in_systemd()
+            if self.up:
+                self.reload()
+                print("%s was already up, reloaded" % self.identifier)
         else:
             raise SystemExit("Could not link to any network event dispatcher. "
                     "You apparently aren't running neither Network Manager nor "
                     "systemd-networkd with networkd-dispatcher. You'll need one "
                     "of those to run this as it relies on them to fire the "
                     "network change events.")
-        if self.up:
-            self.reload()
-            print("%s was already up, reloaded" % self.identifier)
-        else:
-            print("%s enabled" % self.identifier)
 
-    def disable(self):
-        """Destroy the link in the network dispatcher pointing to the event triggerer,
-        and stop the firewall.
+    def _disable_hook(self):
+        """Destroy the link in the network dispatcher pointing to the event triggerer.
         """
         for dispatcher, target in self.dispatchers.items():
             # DEBUG This test would fail on a broken link :
             if os.path.exists(target + self.dispatcher_toggler):
                 os.remove(target + self.dispatcher_toggler)
-                print("Network dispatcher %s disabled" % dispatcher)
+                print("%s dispatcher link destroyed" % dispatcher)
             else:
                 # Report missing link only if dir is present
                 if os.path.exists(target):
-                    print("%s dispatcher was already disabled" % dispatcher)
-        if self.is_enabled():
-            self._disable_in_systemd()
-            print("%s disabled" % self.identifier)
-        else:
-            print("%s was already disabled" % self.identifier)
+                    print("there was no %s dispatcher link" % dispatcher)
 
     def save_rules(self):
         with open(self.realm_defs_dict, "w") as fd:
             json.dump(self.realm_defs, fd)
         print("saved realm defs to config")
 
-    def add_service_in(self, service_name, local=False):
+    def add_service_in(self, service_name, scope="local"):
         if service_name not in self.service_defs:
             raise KeyError("undefined service : %s." %
                     service_name)
@@ -165,19 +151,19 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             self.realm_defs[self.realm_id] = copy.deepcopy(
                     self.realm_defs[self.identifier + ":default"])
         if service_name not in self.realm_defs[self.realm_id]:
-            self.realm_defs[self.realm_id][service_name] = local
+            self.realm_defs[self.realm_id][service_name] = scope
             self.save_rules()
             print("added %s to realm def %s" %
                   (service_name, self.realm_id))
             self.reload()
 
-    def insert_service_rule(self, service_name, local=False):
+    def insert_service_rule(self, service_name, scope="local"):
         """Open ports for a service hosted on this machine.
 
         service_name should be one of self.service_defs' keys.
         if src is "local", use self.subnetwork instead.
         """
-        if local:
+        if scope == "local":
             src = self.subnetwork
         else:
             src = ""
@@ -188,7 +174,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
 
         s = self.service_defs[service_name]
         print("allowing service %s from %s" %
-              (service_name, local and src or "any"))
+              (service_name, src or "anywhere"))
         for port in s.ports.tcp:
             self.add_rule(service_name,
                          self.input_chain,

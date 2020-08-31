@@ -1,1 +1,1 @@
-{"ServiceWall:default": {"DHCP": true, "ssh": false}}
+{"ServiceWall:default": {"DHCP": "local", "ssh": "global"}}
