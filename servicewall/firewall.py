@@ -70,10 +70,15 @@ class FireWall():
         This function removes all rules created by this firewall's instances ;
         it recognizes them by the comment that's inside of them.
         """
+        print("flushing rules")
         found_rules = 0
-        for rule in (*self.input_chain.rules, *self.forward_chain.rules):
+        for rule in self.input_chain.rules:
             if self._get_rule_id(rule) == self.identifier:
                 self.del_rule(self._get_rule_name(rule), self.input_chain)
+                found_rules += 1
+        for rule in self.forward_chain.rules:
+            if self._get_rule_id(rule) == self.identifier:
+                self.del_rule(self._get_rule_name(rule), self.forward_chain)
                 found_rules += 1
         if not found_rules:
             print("no rule found for id %s." % self.identifier)
