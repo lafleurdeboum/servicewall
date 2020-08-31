@@ -106,18 +106,14 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                 # Keep going with the next dispatcher.
                 continue
             if os.path.exists(dst_dir + self.dispatcher_toggler):
-                print("%s dispatcher was already enabled" % dispatcher)
+                print("%s dispatcher was already linked" % dispatcher)
                 linked = True
             else:
-                print("Enabling %s dispatcher" % dispatcher)
+                print("%s dispatcher link created" % dispatcher)
                 # symlink pointing to src in dst_dir
                 os.symlink(self.lib_dir + self.dispatcher_toggler, dst_dir + self.dispatcher_toggler)
                 linked = True
-        if linked:
-            if self.up:
-                self.reload()
-                print("%s was already up, reloaded" % self.identifier)
-        else:
+        if not linked:
             raise SystemExit("Could not link to any network event dispatcher. "
                     "You apparently aren't running neither Network Manager nor "
                     "systemd-networkd with networkd-dispatcher. You'll need one "
