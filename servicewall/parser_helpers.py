@@ -64,13 +64,17 @@ def reload(args):
 
 def status(args):
     if firewall.is_enabled():
+        print("ServiceWall is enabled")
+    else:
+        print("ServiceWall is disabled")
+    if firewall.up:
         if firewall.realm_id:
             realm_name = firewall.realm_id
         else:
             realm_name = "no network"
-        print("enabled - using profile for realm %s" % realm_name)
+        print("and started - using profile for realm %s" % realm_name)
     else:
-        print("disabled")
+        print("and stopped")
 
 def allow_service(args):
     service_name = args.service_name
