@@ -87,42 +87,18 @@ You can suspend it with `systemctl stop servicewall` or
     # braise stop
 
 (you indeed get the corresponding `disable` and `start` and `stop` options).
-Once started, the default behaviour is to drop all that come in, excepted for
-`ssh` from anywhere and `DHCP` from the local network. All that go out is
-allowed.
-
 Note that ServiceWall starts before the nework target. At that point the
 interfaces are not connected at all. It's acutally reloaded when the connection
 is established to a realm. To have details on the status, use :
 
     # braise status
 
-And you can check the table of rules applied for the realm we're connected to :
+Once started, the default behaviour is to drop all that come in, excepted for
+`ssh` from anywhere and `DHCP` from the local network. All that go out is
+allowed. You can check the table of rules applied for the realm we're connected
+to :
 
     # braise show table
-
-Particuliar attention was taken to logs. Logs are stored in systemd's
-`servicewall-logs.service`. Journald takes care it can't fill the hard drive,
-and that it's readable only to staff. Firewall logs are critical information,
-and with this setup you can choose who has access. In Arch it's controlled with
-an access list, you can view it with :
-
-    # getfacl /var/log/journal
-
-The firewall logs all that it drops. There's a log processor tool included ;
-try it with
-
-    # braise show logs
-
-or
-
-    # braise show logs -w since NUMBER_OF_SECONDS
-
-The `-w|--with-names` option lets it show hostnames. This will let you see what
-services queries were dropped. Now if the service name begins with a `<` it
-means that it is the source that is operating the service, not the destination.
-It might be a packet that iptables failed to recognize as belonging to an
-established connection.
 
 ServiceWall works with service definitions provided by
 [jhansonxi](https://www.blogger.com/profile/02954133518928245196). They link a
@@ -149,10 +125,63 @@ And if you wonder which services use to use port 80, do
 
     # braise show port 80
 
-These rules are stored together with a string identifying the network you're
+These rules are stored together with a string identifying the realm you're
 connected to, in a dictionary called realm_defs. To interrogate it, do :
 
     # braise show realms
+
+servicewall works with service definitions provided by
+[jhansonxi](https://www.blogger.com/profile/02954133518928245196). they link a
+service to ports it needs. to allow a specific service, do :
+
+    # braise allow service "service name"
+
+which will add this service to this realm's definition. if you connect to
+internet in another place, the rules for this place will be put aside, and 
+brought back when you connect to it again. you can move back with
+`braise disallow service ...`
+
+don't know what's the exact name of the service you want to allow ? you'll need
+to :
+
+    # braise show services
+
+the list is quite long. once you want exhaustive informations on a single 
+service, do
+
+    # braise show service "service name"
+
+and if you wonder which services use to use port 80, do
+
+    # braise show port 80
+
+these rules are stored together with a string identifying the network you're
+connected to, in a dictionary called realm_defs. to interrogate it, do :
+
+    # braise show realms
+
+Particuliar attention was taken to logs. Logs are stored in systemd's
+`servicewall-logs.service`. Journald takes care it can't fill the hard drive,
+and that it's readable only to staff. Firewall logs are critical information,
+and with this setup you can choose who has access. In Arch it's controlled with
+an access list, you can view it with :
+
+    # getfacl /var/log/journal
+
+The firewall logs all that it drops. There's a log processor tool included ;
+try it with
+
+    # braise show logs
+
+or
+
+    # braise show logs -w since NUMBER_OF_SECONDS
+
+The `-w|--with-names` option lets it show hostnames. This will let you see what
+services queries were dropped. Now if the service name begins with a `<` it
+means that it is the source that is operating the service, not the destination.
+It might be a packet that iptables failed to recognize as belonging to an
+established connection.
 
 ## Copyright
 
