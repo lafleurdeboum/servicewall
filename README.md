@@ -70,40 +70,36 @@ Once you have the required dependencies, install the package with :
 For those using Arch linux, there is a `PKGBUILD` for this into AUR, called
 `servicewall-git`. Give it a try !
 
-Once this is done, you also need to configure and enable ulogd. ServiceWall
-comes with its own `ulogd.conf` that you will need to copy over to `/etc`. One
-can use `cp`'s `-b` option to save a backup with any extension. For example on
-Arch systems :
-
-    # cp -b -S .pacsave /usr/lib/servicewall/ulogd.conf /etc/
-
-Now you can enable ServiceWall's logging journal :
-
-    # systemctl restart ulogd.service
-    # systemctl enable ulog.socket
-
-One can check that its output works fine :
-
-    # journalctl -u ulog.service
-
+ServiceWall uses [ulogd](http://netfilter.org/projects/ulogd/index.html) to
+dispatch the logs. It has its own dependent `servicewall-ulogd.service` that
+gets pulled in automatically, don't try to run `ulogd.service` as it could cause
+race problems between them.
 
 ## Usage
 
-The firewall is disabled by default. To enable it :
+The firewall is disabled by default. To enable it, as root do `braise enable`,
+or :
 
-    # braise enable
+    # systemctl enable --now servicewall
 
-(you indeed get the corresponding `disable`). Once started, the default 
-behaviour is to drop all that come in, excepted for `ssh` from anywhere and 
-`DHCP` from the local network. All that go out is allowed.
+You can suspend it with `systemctl stop servicewall` or
 
-ServiceWall is in fact now a systemd service ; `braise enable` mostly does
+    # braise stop
 
-    # systemctl enable servicewall
+(you indeed get the corresponding `disable` and `start` and `stop` options).
+Once started, the default behaviour is to drop all that come in, excepted for
+`ssh` from anywhere and `DHCP` from the local network. All that go out is
+allowed.
 
-To have details on the status, use :
+Note that ServiceWall starts before the nework target. At that point the
+interfaces are not connected at all. It's acutally reloaded when the connection
+is established to a realm. To have details on the status, use :
 
     # braise status
+
+And you can check the table of rules applied for the realm we're connected to :
+
+    # braise show table
 
 Particuliar attention was taken to logs. Logs are stored in systemd's
 `servicewall-logs.service`. Journald takes care it can't fill the hard drive,
@@ -157,12 +153,6 @@ These rules are stored together with a string identifying the network you're
 connected to, in a dictionary called realm_defs. To interrogate it, do :
 
     # braise show realms
-
-Finally, you can check the resulting table with
-
-    # braise show table
-
-
 
 ## Copyright
 
