@@ -1,7 +1,7 @@
 [Unit]
 Description=ServiceWall firewall
-Before=network-pre.target
 Wants=network-pre.target
+Before=network-pre.target
 Requires=servicewall-ulogd.service
 
 [Service]

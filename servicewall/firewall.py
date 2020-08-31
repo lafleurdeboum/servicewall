@@ -180,22 +180,22 @@ class FireWall():
     def list_rules(self, chain):
         for rule in chain.rules:
             # First find out dport - it gets set by self.add_service_in as a match.
-            dport = "any"
-            proto = "any"
+            dport = "any port"
+            proto = "tcp/udp"
             for match in rule.matches:
                 try:
-                    dport = match.parameters["dport"]
+                    dport = "port " + match.parameters["dport"]
                     proto = match.name
                 except (KeyError, IndexError):
                     pass
             # Then find out source.
             if rule.src == "0.0.0.0/0.0.0.0":
-                src = "any"
+                src = "any source"
             else:
                 src = rule.src
-            print("%s %s\t\t: %s port %s from %s" %
-                    (rule.target.name, self._get_rule_name(rule),
-                        proto, dport, src))
+            yield "%6s %-20s : %7s %-8s from %-23s" % (
+                rule.target.name, self._get_rule_name(rule), proto, dport, src
+            )
 
     def _get_rule_name(self, rule):
         for match in rule.matches:

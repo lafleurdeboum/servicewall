@@ -168,12 +168,12 @@ parser_show_realms = show_subparser.add_parser(
 )
 parser_show_realms.set_defaults(func=parser_helper("show_realms"))
 
-parser_show_input_chain = show_subparser.add_parser(
-    "input_chain",
+parser_show_table = show_subparser.add_parser(
+    "table",
     help="show services allowed in current realm",
     description="show services allowed in current realm",
 )
-parser_show_input_chain.set_defaults(func=parser_helper("show_input_chain"))
+parser_show_table.set_defaults(func=parser_helper("show_table"))
 
 # For "show service", don't define help ; instead overwrite usage because it
 # prints the possible arguments twice, which is way too long.

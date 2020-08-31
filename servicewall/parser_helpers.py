@@ -89,8 +89,18 @@ def disallow_service(args):
     service_name = args.service_name
     firewall.del_service_in(service_name)
 
-def show_input_chain(args):
-    firewall.list_services_in()
+def show_table(args):
+    print('You are connected to realm  : ' + firewall.realm_id)
+    print('=> Input rules <=           : policy %6s' % 
+          firewall.input_chain.get_policy().name)
+    for rule in firewall.list_rules(firewall.input_chain):
+        print(rule)
+    print('=> Forward rules <=         : policy %6s' %
+          firewall.forward_chain.get_policy().name)
+    for rule in firewall.list_rules(firewall.forward_chain):
+        print(rule)
+    print("=> Output rules <=          : policy %6s" %
+          firewall.output_chain.get_policy().name)
 
 def show_realm(args):
     print('Current realm is "%s". Allowed services (true means locally allowed) :'
