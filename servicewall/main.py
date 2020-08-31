@@ -130,7 +130,6 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             self.reload()
             print("%s was already up, reloaded" % self.identifier)
         else:
-            self.start()
             print("%s enabled" % self.identifier)
 
     def disable(self):
@@ -146,7 +145,6 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                 # Report missing link only if dir is present
                 if os.path.exists(target):
                     print("%s dispatcher was already disabled" % dispatcher)
-        self.stop()
         if self.is_enabled():
             self._disable_in_systemd()
             print("%s disabled" % self.identifier)
