@@ -263,9 +263,11 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         return True
 
     def _enable_in_systemd(self):
+        self._systemctl('start')
         return self._systemctl('enable')
 
     def _disable_in_systemd(self):
+        self._systemctl('stop')
         return self._systemctl('disable')
 
     def _systemctl(self, arg):
