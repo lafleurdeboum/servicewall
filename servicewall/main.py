@@ -66,10 +66,11 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             self.subnetwork = False
 
 
-    def start(self, **args):
+    def start(self, check_hook=True, **args):
         """Will load a set of rules from self.realm_defs .
         """
-        self._enable_hook()
+        if check_hook:
+            self._enable_hook()
         if self.realm_id not in self.realm_defs:
             # If we don't have a realm definition, load "ServiceWall:default"
             self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[self.identifier + ":default"])
@@ -78,13 +79,14 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         # Commits the table if relevant, and brings other rules in :
         super().start(**args)
 
-    def stop(self):
-        self._disable_hook()
+    def stop(self, check_hook=True):
+        if check_hook:
+            self._disable_hook()
         super().stop()
 
     def reload(self):
-        self.stop()
-        self.start()
+        self.stop(check_hook=False)
+        self.start(check_hook=False)
         print("%s reloaded" % self.identifier)
     
     def enable(self):
