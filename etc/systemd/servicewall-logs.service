@@ -2,9 +2,7 @@
 Description=logs for servicewall
 
 [Service]
-#ExecStart=/bin/cat /dev/ulog
-StandardInput=socket
-ExecStart=/bin/cat
+ExecStart=/bin/cat /dev/ulog
 ExecReload=/usr/bin/kill --signal HUP ${MAINPID}
 
 [Install]
