@@ -6,15 +6,14 @@
 ServiceWall is a firewall intended for laptops and all devices that connect to
 several different networks. It will drop incoming requests, excepted for those
 that you allow. Each service you allow in will be remembered either :
-- for the network you're connected to (the realm's ruleset), or
-- for unregistered networks (the default ruleset)
+- for the network realm you're connected to (the realm's ruleset), or
+- for unregistered network realms (the `ServiceWall:default` ruleset)
 
 At the moment the default ruleset is : accept `ssh` and `DHCP` incoming 
 connections. `ssh` connections are accepted from anywhere, whereas `DHCP` ones
-are only accepted on the local network (connected to the same gateway as you).
-All new rules will be limited to this local network.
+are only accepted from the local network (connected to the same gateway as you).
 
-It won't remember the network you're connected to until you change the default
+It won't remember the realm you're connected to until you change the default
 ruleset. Once you do, it writes down an identifier for the network realm, 
 together with the default ruleset plus the rule you added. Now when you connect 
 to another network, it will put this identified ruleset aside, and try to find 
@@ -28,26 +27,12 @@ accept all from the localhost loop, accept already established connections, drop
 invalid packets, and log anything dropped.
 
 
-## What _not_ to expect
-
-This firewall works on incoming traffic ; it won't be very useful on a server 
-needing to forward anything. So basically, if your device is not a laptop you
-use as a personal device, this software shouldn't be really fitted.
-
-At the moment, you can't expect it to let any traffic come in from out of the 
-local network realm either (excepted ssh, which is is a kind of "special" 
-rule). At the moment, you can't either change the default ruleset on the 
-command line ; you would have to manually edit /etc/servicewall/realms.json for 
-that.
-
-
 ## Installation
 
 ### Dependencies
 
 Required dependencies are `python 3`, `iptables`, `ulogd`, `systemd`, and either
-`NetworkManager` or `systemd-networkd` enabled. If you run a linux on a laptop,
-you should be all set.
+`NetworkManager` or `systemd-networkd`, with its dispatcher enabled. If you run a linux on a laptop, you should be all set.
 
 There are python packages needed as well, but if you use a decent install 
 method like `pip`, they should be managed all right. Those are :
@@ -87,9 +72,9 @@ You can suspend it with `systemctl stop servicewall` or
     # braise stop
 
 (you indeed get the corresponding `disable` and `start` and `stop` options).
-Note that ServiceWall starts before the nework target. At that point the
-interfaces are not connected at all. It's actually reloaded when the connection
-is established to a realm. To have details on the status, use :
+Note that at bootup ServiceWall starts before the nework target. At that point
+the interfaces are not connected at all. It's actually reloaded when the
+connection is established to a realm. To have details on the status, use :
 
     # braise status
 
@@ -151,13 +136,11 @@ an access list, you can view it with :
 The firewall logs all that it drops. There's a log processor tool included ;
 try it with
 
-    # braise show logs
+    # braise show logs -w
+    # braise show logs since NUMBER_OF_SECONDS
+    # braise show logs -w last NUMBER_OF_LATEST_HITS
 
-or
-
-    # braise show logs --with-hostnames --since NUMBER_OF_SECONDS
-
-The `-w|--with-names` option lets it show hostnames. This will let you see what
+The `-w|--with-hostnames` option lets it show hostnames. This will let you see what
 services queries were dropped. Now if the service name begins with a `<` it
 means that it is the source that is operating the service, not the destination.
 It might be a packet that iptables failed to recognize as belonging to an

@@ -145,16 +145,16 @@ parser_show_logs.add_argument(
 show_logs_subparser = parser_show_logs.add_subparsers()
 
 parser_show_logs_time = show_logs_subparser.add_parser(
-    "--since",
+    "since",
     help="restrict logs to those since [period] seconds",
 )
-parser_show_logs_time.add_argument("period", type=int)
+parser_show_logs_time.add_argument("period", type=int, help="age in seconds")
 parser_show_logs_time.set_defaults(func=parser_helper("show_logs"))
 parser_show_logs_limit = show_logs_subparser.add_parser(
-    "--number",
-    help="shorten logs to last [number] hits",
+    "last",
+    help="shorten logs to latest [number] hits",
 )
-parser_show_logs_limit.add_argument("number", type=int)
+parser_show_logs_limit.add_argument("number", type=int, help="of latest hits to show")
 parser_show_logs_limit.set_defaults(func=parser_helper("show_logs"))
 
 parser_show_realm = show_subparser.add_parser(

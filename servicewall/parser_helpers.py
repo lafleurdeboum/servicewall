@@ -143,11 +143,11 @@ def show_port(args):
         print("port %s unknown." % port)
 
 def show_logs(args):
-    if args.period:
+    if "period" in args:
         yielder = firewall.yield_logs(period=args.period)
     else:
         yielder = firewall.yield_logs()
-    if args.number:
+    if "number" in args:
         limit = int(args.number)
         i = 0
     else:
@@ -163,7 +163,7 @@ def show_logs(args):
             if i > limit:
                 break
 
-        if args.with_hostnames:
+        if "with_hostnames" in args:
             # If we have a hostname, output it - shortened if longer than :
             try:
                 hostname = socket.gethostbyaddr(log['SRC'])[0]
