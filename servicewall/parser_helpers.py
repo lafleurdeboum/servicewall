@@ -78,16 +78,24 @@ def status(args):
 
 def allow_service(args):
     service_name = args.service_name
+    if args.globally:
+        scope="global"
+    else:
+        scope="local"
+    if args.in_default_profile:
+        realm = "ServiceWall:default"
+    else:
+        realm = None
     # Make it local by default :
-    firewall.add_service_in(service_name, scope="local")
-
-def allow_service_globally(args):
-    service_name = args.service_name
-    firewall.add_service_in(service_name, scope="global")
+    firewall.allow_service(args.service_name, scope=scope, realm=realm)
 
 def disallow_service(args):
     service_name = args.service_name
-    firewall.del_service_in(service_name)
+    if args.in_default_profile:
+        realm = "ServiceWall:default"
+    else:
+        realm = None
+    firewall.disallow_service(service_name, realm=realm)
 
 def show_table(args):
     print('You are using realm profile : %s' %
@@ -135,16 +143,12 @@ def show_port(args):
         print("port %s unknown." % port)
 
 def show_logs(args):
-    if "period" in args:
+    if args.period:
         yielder = firewall.yield_logs(period=args.period)
     else:
         yielder = firewall.yield_logs()
-    if args.with_names:
-        withnames = True
-    else:
-        withnames = False
-    if "limit" in args:
-        limit = int(args.limit)
+    if args.number:
+        limit = int(args.number)
         i = 0
     else:
         limit = None
@@ -159,7 +163,7 @@ def show_logs(args):
             if i > limit:
                 break
 
-        if withnames:
+        if args.with_hostnames:
             # If we have a hostname, output it - shortened if longer than :
             try:
                 hostname = socket.gethostbyaddr(log['SRC'])[0]

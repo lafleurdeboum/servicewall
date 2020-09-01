@@ -88,7 +88,7 @@ You can suspend it with `systemctl stop servicewall` or
 
 (you indeed get the corresponding `disable` and `start` and `stop` options).
 Note that ServiceWall starts before the nework target. At that point the
-interfaces are not connected at all. It's acutally reloaded when the connection
+interfaces are not connected at all. It's actually reloaded when the connection
 is established to a realm. To have details on the status, use :
 
     # braise status
@@ -106,10 +106,20 @@ service to ports it needs. To allow a specific service, do :
 
     # braise allow service "Service Name"
 
-which will add this service to this realm's definition. If you connect to
-internet in another place, the rules for this place will be put aside, and 
+which will add this service in this realm's ruleset. If you connect to
+internet in another place, the ruleset for this place will be put aside, and 
 brought back when you connect to it again. You can move back with
-`braise disallow service ...`
+`braise disallow service ...` when you are connected to this realm only.
+Otherwise you would have to manually edit `/etc/servicewall/realms.json`.
+
+You might want to modify the default ruleset. There's the `--in-default-profile`
+option just for this. It will modify the ruleset named `ServiceWall:default`
+inside `realms.json`.
+
+The service will be limited to machines on the same realm as you (connected to
+the same ESSID). If you want to make it available from anywhere, do a
+
+    # braise allow service "Service Name" --globally
 
 Don't know what's the exact name of the service you want to allow ? You'll need
 to :
@@ -145,7 +155,7 @@ try it with
 
 or
 
-    # braise show logs -w since NUMBER_OF_SECONDS
+    # braise show logs --with-hostnames --since NUMBER_OF_SECONDS
 
 The `-w|--with-names` option lets it show hostnames. This will let you see what
 services queries were dropped. Now if the service name begins with a `<` it

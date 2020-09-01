@@ -39,13 +39,15 @@ except KeyError:
     # No network (but servicewall might still be enabled).
     realm_id = None
     online = False
-if online:
-    try:
-        allowed_services = [ service_def for service_def in realm_defs[realm_id].keys() ]
-    except KeyError:
-        allowed_services = []
-else:
+try:
+    allowed_services = [ service_def for service_def in realm_defs[realm_id].keys() ]
+except KeyError:
     allowed_services = []
+try:
+    default_allowed_services = [ service_def for service_def in realm_defs["ServiceWall:default"].keys() ]
+except KeyError:
+    default_allowed_services = []
+all_allowed_services = *allowed_services, *default_allowed_services
 
 def parser_helper(function_name):
     """This function will return a pointer to a function named "function_name"
@@ -131,28 +133,28 @@ show_subparser = parser_show.add_subparsers()
 parser_show_logs = show_subparser.add_parser(
     "logs",
     help="show a digest of logs of the firewall",
-    description="show dropped packets. Columns are : source_ip destination_ip protocol age",
+    description="show dropped packets. Columns are : source_ip destination_ip service age",
 )
 parser_show_logs.set_defaults(func=parser_helper("show_logs"))
 parser_show_logs.add_argument(
     "-w",
-    "--with-names",
+    "--with-hostnames",
     action="store_true",
     help="display hostname along source_ip",
 )
 show_logs_subparser = parser_show_logs.add_subparsers()
 
 parser_show_logs_time = show_logs_subparser.add_parser(
-    "since",
+    "--since",
     help="restrict logs to those since [period] seconds",
 )
 parser_show_logs_time.add_argument("period", type=int)
 parser_show_logs_time.set_defaults(func=parser_helper("show_logs"))
 parser_show_logs_limit = show_logs_subparser.add_parser(
-    "last",
-    help="shorten logs to last [limit] hits",
+    "--number",
+    help="shorten logs to last [number] hits",
 )
-parser_show_logs_limit.add_argument("limit", type=int)
+parser_show_logs_limit.add_argument("number", type=int)
 parser_show_logs_limit.set_defaults(func=parser_helper("show_logs"))
 
 parser_show_realm = show_subparser.add_parser(
@@ -182,7 +184,7 @@ parser_show_table.set_defaults(func=parser_helper("show_table"))
 # https://docs.python.org/3.2/library/argparse.html#formatter-class
 parser_show_service = show_subparser.add_parser(
     "service",
-    usage="usage: %s %s service_name" % (parser_show.prog, "service"),
+    usage="%s %s service_name" % (parser_show.prog, "service"),
     help="print service_name's service definition",
     description="print service_name's service definition",
 )
@@ -212,15 +214,23 @@ parser_allow = subparser.add_parser("allow")
 allow_subparser = parser_allow.add_subparsers()
 parser_allow_service = allow_subparser.add_parser(
     "service",
-    usage="usage: %s service service_name" % parser_allow.prog,
+    usage="%s service service_name" % parser_allow.prog,
     help="add service service_name to authorized list",
     description="add a service to authorized list",
-    
+)
+parser_allow_service.add_argument(
+    "-g",
+    "--globally",
+    action="store_true",
+    help="enable the service to any client",
+)
+parser_allow_service.add_argument(
+    "-d",
+    "--in-default-profile",
+    action="store_true",
+    help="enable in ServiceWall:default profile instead of current",
 )
 parser_allow_service.add_argument("service_name", choices=service_defs)
-gl = parser_allow_service.add_subparsers()
-glp = gl.add_parser("globally")
-glp.set_defaults(func=parser_helper("allow_service_globally"))
 parser_allow_service.set_defaults(func=parser_helper("allow_service"))
 
 parser_disallow = subparser.add_parser("disallow")
@@ -228,11 +238,17 @@ disallow_subparser = parser_disallow.add_subparsers()
 # We could have used parser_add_service, but the choices aren't the same :
 parser_disallow_service = disallow_subparser.add_parser(
     "service",
-    usage="usage: %s service service_name" % parser_disallow.prog,
+    usage="%s service service_name" % parser_disallow.prog,
     help="remove service service_name from authorized list",
     description="remove service service_name from authorized list",
 )
-parser_disallow_service.add_argument("service_name", choices=allowed_services)
+parser_disallow_service.add_argument(
+    "-d",
+    "--in-default-profile",
+    action="store_true",
+    help="enable in ServiceWall:default profile instead of current",
+)
+parser_disallow_service.add_argument("service_name", choices=all_allowed_services)
 parser_disallow_service.set_defaults(func=parser_helper("disallow_service"))
 
 if ARGCOMPLETE:

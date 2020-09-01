@@ -140,20 +140,24 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             json.dump(self.realm_defs, fd)
         print("saved realm defs to config")
 
-    def add_service_in(self, service_name, scope="local"):
+    def allow_service(self, service_name, scope="local", realm=None):
         if service_name not in self.service_defs:
             raise KeyError("undefined service : %s." %
                     service_name)
+        if realm == None:
+            realm = self.realm_id
         # Create an entry for this realm's id if there weren't any :
-        if self.realm_id not in self.realm_defs:
-            self.realm_defs[self.realm_id] = copy.deepcopy(
+        if realm not in self.realm_defs:
+            self.realm_defs[realm] = copy.deepcopy(
                     self.realm_defs[self.identifier + ":default"])
-        if service_name not in self.realm_defs[self.realm_id]:
-            self.realm_defs[self.realm_id][service_name] = scope
+        if service_name not in self.realm_defs[realm]:
+            self.realm_defs[realm][service_name] = scope
             self.save_rules()
             print("added %s to realm def %s" %
-                  (service_name, self.realm_id))
-            self.reload()
+                  (service_name, realm))
+            # We cannot hot-load it, there's an order on rules, best is to reload :
+            if realm == self.realm_id:
+                self.reload()
 
     def insert_service_rule(self, service_name, scope="local"):
         """Open ports for a service hosted on this machine.
@@ -191,22 +195,25 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             )
 
 
-    def del_service_in(self, service_name):
+    def disallow_service(self, service_name, realm=None):
+        if realm == None:
+            realm = self.realm_id
         # Create an entry for this realm's essid if there weren't any :
-        if self.realm_id not in self.realm_defs:
-            self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[self.identifier + ":default"])
+        if realm not in self.realm_defs:
+            self.realm_defs[realm] = copy.deepcopy(self.realm_defs[self.identifier + ":default"])
         # Do our own validity testing
         if service_name not in self.service_defs:
             raise KeyError('service "%s" not found.')
-        if service_name in self.realm_defs[self.realm_id]:
-            del self.realm_defs[self.realm_id][service_name]
+        if service_name in self.realm_defs[realm]:
+            del self.realm_defs[realm][service_name]
             self.save_rules()
             print("removed service %s from realm %s" %
-                    (service_name, self.realm_id))
+                    (service_name, realm))
         else:
             raise KeyError('service "%s" was not allowed in realm %s anyway.'
-                    % (service_name, self.realm_id))
-        self.remove_service_rule(service_name)
+                    % (service_name, realm))
+        if realm == self.realm_id:
+            self.remove_service_rule(service_name)
 
     def remove_service_rule(self, service_name):
         """Closes ports for service service_name if they were opened.
