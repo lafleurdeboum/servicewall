@@ -69,7 +69,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             self.service_defs = pickle.load(fd)
         for service_file in os.listdir(self.service_defs_dir):
             try:
-                with open(self.service_defs_dir + os.path.sep + service_file) as fd:
+                with open(self.service_defs_dir + service_file) as fd:
                     service_def = json.load(fd)
                     service_def["ports"] = PortDef(**service_def["ports"])
                     sdef = ServiceDef(**service_def)

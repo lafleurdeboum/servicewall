@@ -3,6 +3,7 @@ from collections import namedtuple
 
 PortDef = namedtuple("PortDef", "udp tcp")
 ServiceDef = namedtuple("ServiceDef", "title description ports categories reference")
+definitions_dir = "/etc/gufw/app_profiles"
 
 def split_port_def(port_def):
     ports_dict = {"udp": [], "tcp": []}

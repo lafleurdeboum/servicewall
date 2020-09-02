@@ -8,9 +8,11 @@
 import argparse
 import pickle
 import json
+from os import listdir
 from sys import argv
 from servicewall import parser_helpers
 from servicewall.network_helpers import get_realm_id
+from servicewall.service_helpers import ServiceDef, PortDef
 try:
     import argcomplete
     ARGCOMPLETE = True
@@ -22,13 +24,21 @@ conf_dir = "/etc/servicewall/"
 lib_dir = "/usr/lib/servicewall/"
 realm_defs_dict = conf_dir + "realms.json"
 service_defs_pickle = lib_dir + "services.p"
-definitions_dir = "/etc/gufw/app_profiles"
+service_defs_dir = "/etc/servicewall/services/"
 
 with open(realm_defs_dict, "rb") as fd:
     realm_defs = json.load(fd)
 with open(service_defs_pickle, "rb") as fd:
     service_defs = pickle.load(fd)
-
+for service_file in listdir(service_defs_dir):
+    try:
+        with open(service_defs_dir + service_file) as fd:
+            service_def = json.load(fd)
+            service_def["ports"] = PortDef(**service_def["ports"])
+            sdef = ServiceDef(**service_def)
+            service_defs[sdef.title] = sdef
+    except TypeError as error:
+        pass
 
 # Find allowed services to help autocompletion know what to delete. - TODO doesn't
 # work when the realm is unknown
