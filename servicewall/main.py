@@ -33,26 +33,50 @@ import subprocess
 
 class ServiceWall(statefulfirewall.StateFulFireWall):
     """ServiceWall - a FireWall in which you can add services on the fly.
+
+    This class supersedes StateFulFireWall and adds services and realms.
+    self.service_defs is a dict containing service definitions stored in
+    self.service_defs_pickle, additioned with defs in self.service_defs_dir
+    A service def file should be a json definition that is a valid ServiceDef.
+    You can get a valid sample with eg
+        
+        braise show service http
+
+    You can try yours with
+
+        import json
+        from servicewall.service_helpers import ServiceDef
+        with open(your_file, "rb") as fd:
+            service_dict = json.load(fd)
+            print(ServiceDef(service_dict))
     """
+    config_file = "/etc/servicewall/config.cfg"
     lib_dir = "/usr/lib/servicewall/"
-    service_defs_pickle = "/usr/lib/servicewall/services.p"
     realm_defs_dict = "/etc/servicewall/realms.json"
+    service_defs_pickle = "/usr/lib/servicewall/services.p"
+    service_defs_dir = "/etc/servicewall/services/"
+    dispatcher_toggler = "toggler"
     dispatchers = {
         "Network Manager": "/etc/NetworkManager/dispatcher.d/",
         "systemd-networkd": "/etc/networkd-dispatcher/carrier.d/",
     }
-    dispatcher_toggler = "toggler"
 
     def __init__(self):
         super().__init__()
-        # We need to know 2 things :
-        #   - wether the firewall is enabled
-        #   - wether we are online and on which network realm
-
         with open(self.realm_defs_dict, "r") as fd:
             self.realm_defs = json.load(fd)
         with open(self.service_defs_pickle, "rb") as fd:
             self.service_defs = pickle.load(fd)
+        for service_file in os.listdir(self.service_defs_dir):
+            try:
+                with open(self.service_defs_dir + os.path.sep + service_file) as fd:
+                    service_def = json.load(fd)
+                    service_def["ports"] = PortDef(**service_def["ports"])
+                    sdef = ServiceDef(**service_def)
+                    self.service_defs[sdef.title] = sdef
+            except TypeError as error:
+                print("Warning : ServiceDef." + str(error),
+                      "in " + self.service_defs_dir + service_file)
         try:
             self.realm_id = network_helpers.get_realm_id()
             self.online = True

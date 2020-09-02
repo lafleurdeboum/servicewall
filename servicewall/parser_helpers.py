@@ -123,7 +123,7 @@ def show_realms(args):
 
 def show_service(args):
     s = firewall.service_defs[args.service_name]._asdict()
-    #s["ports"] = s["ports"]._asdict()
+    s["ports"] = s["ports"]._asdict()
     prettyprint(s)
 def show_services(args):
     for service in firewall.service_defs:

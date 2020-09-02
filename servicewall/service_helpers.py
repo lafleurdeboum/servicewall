@@ -19,8 +19,8 @@ def split_port_def(port_def):
         try:
             port_subdef, proto_def = proto_subdef.split("/")
             if proto_def == "tcp6":
-                protos = ("tcp", )
                 print("  WARNING : using tcp for tcp6")
+                protos = ("tcp", )
             else:
                 protos = (proto_def, )
         except ValueError:
@@ -39,7 +39,7 @@ def split_port_def(port_def):
             for port in port_list:
                 ports_dict[proto].append(port)
 
-    return PortDef(ports_dict["udp"], ports_dict["tcp"])
+    return PortDef(**ports_dict)
 
 
 def scan_service_definitions(definitions_dir):
@@ -84,13 +84,7 @@ def scan_service_definitions(definitions_dir):
                 if not "reference" in service_def:
                     service_def["reference"] = ""
                 service_def["ports"] = split_port_def(service_def["ports"])
-                s = ServiceDef(
-                        service_def["title"],
-                        service_def["description"],
-                        service_def["ports"],
-                        service_def["categories"],
-                        service_def["reference"],
-                )
+                s = ServiceDef(**service_def)
                 services[service_name] = s
 
     return services
