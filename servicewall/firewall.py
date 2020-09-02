@@ -54,12 +54,12 @@ class FireWall():
         print("setting output policy to ACCEPT")
         self.output_chain.set_policy("ACCEPT")
         # Accept all on localhost.
-        self.add_rule(
+        accept_localhost_rule = self.create_rule(
                 "localhost",
-                self.input_chain,
                 "ACCEPT",
                 iface="lo"
                 )
+        self.input_chain.insert_rule(accept_localhost_rule)
         if not self._table.autocommit:
             self._table.commit()
         self.up = True
@@ -99,10 +99,9 @@ class FireWall():
         else:
             return False
 
-    def add_rule(self, name, chain, target, dst="", dport="", src="", sport="", proto="", iface="", position="top"):
-        """Add a rule to a chain and return it (or them).
+    def create_rule(self, name, target, dst="", dport="", src="", sport="", proto="", iface=""):
+        """create and return a rule (or two if no proto given).
 
-        chain should be either self.input_chain or self.output_chain.
         name can be any string
         target is a string saying what to do, like
                 "ACCEPT", "DENY", "DROP", "LOG"
@@ -116,8 +115,7 @@ class FireWall():
         """
         #print("adding rule %s" % name)
         if (dport or sport) and not proto:
-            return [ self.add_rule(name,
-                                   chain,
+            return [ self.create_rule(name,
                                    target,
                                    dst,
                                    dport,
@@ -125,44 +123,28 @@ class FireWall():
                                    sport,
                                    proto,
                                    iface) for proto in ("tcp", "udp") ]
-        else:
-            rule = Rule()
-            rule.create_target(target)
-            # First we need to know if we go in or out
-            # Then some rules need the creation of a match
-            if dst:
-                rule.dst = dst
-            if dport:
-                proto_match = rule.create_match(proto)
-                proto_match.dport = str(dport)
-                rule.protocol = proto
-            if src:
-                rule.src = src
-            if sport:
-                proto_match = rule.create_match(proto)
-                proto_match.sport = str(sport)
-                rule.protocol = proto
-            if iface:
-                if chain.name == self.input_chain.name:
-                    rule.in_interface = iface
-                elif chain.name == self.output_chain.name:
-                    rule.out_interface = iface
-                if src and src == dst:
-                    print("warning, both source and dest are set to %s" % src)
-           # Add a signature as a comment.
-            comment_match = rule.create_match("comment")
-            comment_match.comment = self.identifier + ":" + name
-            # Try to set it into chain.
-            rule.final_check()
-            if position == "bottom":
-                chain.append_rule(rule)
-            elif position == "top":
-                chain.insert_rule(rule)
-            else:
-                raise SystemError("position should be top or bottom")
-            if not rule in chain.rules:
-                print("Need to check %s rule." % name)
-            return rule
+        rule = Rule()
+        rule.create_target(target)
+        # First we need to know if we go in or out
+        # Then some rules need the creation of a match
+        if dst:
+            rule.dst = dst
+        if dport:
+            proto_match = rule.create_match(proto)
+            proto_match.dport = str(dport)
+            rule.protocol = proto
+        if src:
+            rule.src = src
+        if sport:
+            proto_match = rule.create_match(proto)
+            proto_match.sport = str(sport)
+            rule.protocol = proto
+       # Add a signature as a comment.
+        comment_match = rule.create_match("comment")
+        comment_match.comment = self.identifier + ":" + name
+        # Try to set it into chain.
+        rule.final_check()
+        return rule
 
     def del_rule(self, name, chain):
         """Remove rule.

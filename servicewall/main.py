@@ -176,22 +176,21 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         print("allowing service %s from %s" %
               (service_name, src or "anywhere"))
         for port in s.ports.tcp:
-            self.add_rule(service_name,
-                         self.input_chain,
+            rule = self.create_rule(service_name,
                          "ACCEPT",
                          src=src,
                          dport=port,
                          proto="tcp"
             )
+            self.input_chain.insert_rule(rule)
         for port in s.ports.udp:
-            self.add_rule(service_name,
-                         self.input_chain,
+            rule = self.create_rule(service_name,
                          "ACCEPT",
                          src=src,
                          dport=port,
                          proto="udp"
             )
-
+            self.input_chain.insert_rule(rule)
 
     def disallow_service(self, service_name, realm=None):
         if realm == None:
