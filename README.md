@@ -85,6 +85,8 @@ to :
 
     # braise show table
 
+### Services
+
 ServiceWall works with service definitions provided by
 [jhansonxi](https://www.blogger.com/profile/02954133518928245196). They link a
 service to ports it needs. To allow a specific service, do :
@@ -97,10 +99,6 @@ brought back when you connect to it again. You can move back with
 `braise disallow service ...` when you are connected to this realm only.
 Otherwise you would have to manually edit `/etc/servicewall/realms.json`.
 
-You might want to modify the default ruleset. There's the `--in-default-profile`
-option just for this. It will modify the ruleset named `ServiceWall:default`
-inside `realms.json`.
-
 The service will be limited to machines on the same realm as you (connected to
 the same ESSID). If you want to make it available from anywhere, do a
 
@@ -111,21 +109,31 @@ to :
 
     # braise show services
 
-The list is quite long. Once you want exhaustive informations on a single 
-service, do
-
-    # braise show service "Service Name"
-
 And if you wonder which services use to use port 80, do
 
     # braise show port 80
 
-These rules are stored together with a string identifying the realm you're
-connected to, in a dictionary called realm_defs. To interrogate it, do :
+Sometimes the service you want to use doesn't exist in the service definitions.
+In this case you can drop a service def inside `/etc/servicewall/services`. The
+syntax is the same as the one you get with
+
+    # braise show service "Service Name"
+
+### Realms
+
+When you allow a service the relevant rules are associated with the realm
+you're connected to, in a dictionary inside `/etc/servicewall/realms.json`.
+To interrogate it, do :
 
     # braise show realms
 
-Particuliar attention was taken to logs. Logs are stored in systemd's
+When allowing a service you might want to modify the default ruleset. There's
+the `--in-default-profile` option to `allow` just for this. It will modify the
+ruleset named `ServiceWall:default` inside `realms.json`.
+
+### Logs
+
+Particular attention was taken to logs. Logs are stored in systemd's
 `servicewall-logs.service`. Journald takes care it can't fill the hard drive,
 and that it's readable only to staff. Firewall logs are critical information,
 and with this setup you can choose who has access. In Arch it's controlled with
