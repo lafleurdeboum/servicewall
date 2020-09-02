@@ -100,7 +100,7 @@ class FireWall():
             return False
 
     def add_rule(self, name, chain, target, dst="", dport="", src="", sport="", proto="", iface="", position="top"):
-        """Add a rule to the input chain self.input_chain.
+        """Add a rule to a chain and return it (or them).
 
         chain should be either self.input_chain or self.output_chain.
         name can be any string
@@ -116,16 +116,18 @@ class FireWall():
         """
         #print("adding rule %s" % name)
         if (dport or sport) and not proto:
-            for proto in "tcp", "udp":
-                self.add_rule(name, chain, target, dst, dport, src, sport, proto, iface)
+            return [ self.add_rule(name,
+                                   chain,
+                                   target,
+                                   dst,
+                                   dport,
+                                   src,
+                                   sport,
+                                   proto,
+                                   iface) for proto in ("tcp", "udp") ]
         else:
             rule = Rule()
             rule.create_target(target)
-            if target == "LOG":
-                limit_match = rule.create_match("limit")
-                limit_match.limit = "1/s"
-                limit_match.limit_burst = "1"
-                rule.target.set_parameter("log-prefix", self.identifier + ":")
             # First we need to know if we go in or out
             # Then some rules need the creation of a match
             if dst:
@@ -160,6 +162,7 @@ class FireWall():
                 raise SystemError("position should be top or bottom")
             if not rule in chain.rules:
                 print("Need to check %s rule." % name)
+            return rule
 
     def del_rule(self, name, chain):
         """Remove rule.
