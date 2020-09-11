@@ -5,6 +5,7 @@ Before=network-pre.target
 Requires=servicewall-ulogd.service
 
 [Service]
+EnvironmentFile=/etc/environment
 # This service does nothing, braise will check it to see if it's enabled
 ExecStart=/usr/bin/braise start
 RemainAfterExit=yes
