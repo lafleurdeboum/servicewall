@@ -1,37 +1,26 @@
+- secure service_defs.p pickle with signature
 - manage unrecognized realms / have a "ServiceWall:unknown" profile
 - improve logging : + a private log collecting process sorting by date and port
                     + this collector resolve hostnames
                     + access control limited to group network
 
-- FireWall logs : tell the essid the drop happened in
+- FireWall logs : tell the essid the drop happened in OR tell the current realm
 - braise show logs : then, print the current realm as default in logs
 - braise show logs : variations : improve pattern matching with each found item
-- braise show logs : propose to see hostnames as braise show logs with hostnames
 
-- show default rule with input_chain
-
-- braise add default service
-- braise add port
 - perhaps braise add match MATCH toRule RULE
 - let autocompletion check for iptables modules (in python-iptables ?)
 - let this be done in a separate script to compartiment autocompletion
 - perhaps braise add rule RULE toChain { input | output }
-- Just a bright idea, have braise add rule RULE and braise commit - useless though
 
 - XTABLES_LIBDIR doesn't get set to /usr/lib/iptables in raspberry Arch as it
   should, don't know why
-- Need a working "python-iptables" PKGBUILD in AUR
 
 - have decent argparse help pages
 - don't propose "-h" in completion
 
 - on add service, DEBUG output
 - on service start, print service only once
-
-- check nomenclatura : should we rather
-        braise enable
-        braise add service SERVICE _or_ braise allow service SERVICE
-        braise add service SERVICE toRealm ESSID
 
 - be more verbose on composition of the table
 
@@ -41,8 +30,9 @@
 
 ### DONE
 
+- support for additional service defs
+- braise add service --in-default-profile
+- braise show logs : propose to see hostnames as braise show logs --with-hostnames
 - have port ranges in services.p->service->ports because some have thousands, making the pickle huge.
 - use realms.p [and services.p ?] as a template, instanciate in /etc/servicewall
-- then, we _should_ have custom rules separated from services, and run basic
-  rules when all declared interfaces are down ?
 
