@@ -1,0 +1,5 @@
+AUR
+__pycache__
+build
+dist
+servicewall.egg-info
