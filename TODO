@@ -13,26 +13,15 @@
 - let this be done in a separate script to compartiment autocompletion
 - perhaps braise add rule RULE toChain { input | output }
 
-- XTABLES_LIBDIR doesn't get set to /usr/lib/iptables in raspberry Arch as it
-  should, don't know why
-
 - have decent argparse help pages
 - don't propose "-h" in completion
 
 - on add service, DEBUG output
-- on service start, print service only once
+- on service start, print service only once ?
 
 - be more verbose on composition of the table
 
 - explain stateful rules - why do we accept ICMP, reject INVALID
 
 - NetworkService and NetworkRule classes
-
-### DONE
-
-- support for additional service defs
-- braise add service --in-default-profile
-- braise show logs : propose to see hostnames as braise show logs --with-hostnames
-- have port ranges in services.p->service->ports because some have thousands, making the pickle huge.
-- use realms.p [and services.p ?] as a template, instanciate in /etc/servicewall
 
