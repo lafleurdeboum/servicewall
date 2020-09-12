@@ -41,7 +41,8 @@ class StateFulFireWall(firewall.FireWall):
         self.add_conntrack_rule_in("ACCEPT", "ctstate", "RELATED,ESTABLISHED")
 
         # Log all that is refused in INPUT chain.
-        self.add_log_rule(self.input_chain, "not in allowed services", group=1)
+        log_rule = self.create_log_rule("not in allowed services", group="1")
+        self.input_chain.append_rule(log_rule)
  
         # Drop invalid packets - as diagnosed by the conntrack processor.
         self.add_conntrack_rule_in("DROP", "ctstate", "INVALID", position="bottom")
@@ -65,9 +66,10 @@ class StateFulFireWall(firewall.FireWall):
         elif position == "bottom":
             self.input_chain.append_rule(conntrack_rule)
 
-    def add_log_rule(self, chain, comment, group, dst="", dport="", src="", sport="", proto="", iface=""):
+    def create_log_rule(self, comment, group="", dst="", dport="", src="", sport="", proto="", iface=""):
         """Adds a log rule
 
+        All arguments should be strings !
         The comment size is limited to 64 characters as a whole.
         The nflog_group is the one you will have to select in ulogd.
         """
@@ -75,9 +77,11 @@ class StateFulFireWall(firewall.FireWall):
         limit_match = log_rule.create_match("limit")
         limit_match.limit = "1/s"
         limit_match.limit_burst = "1"
-        log_rule.target.set_parameter("nflog-prefix", self.identifier + ":" + comment)
-        log_rule.target.set_parameter("nflog-group", str(group))
-        self.input_chain.append_rule(log_rule)
+        if comment:
+            log_rule.target.set_parameter("nflog-prefix", comment)
+        if group:
+            log_rule.target.set_parameter("nflog-group", str(group))
+        return log_rule
 
     def yield_logs(self, limit=None, period=None):
         """get logs we implemented in iptables from journald
