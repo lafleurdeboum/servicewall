@@ -3,17 +3,18 @@
 """
 
 
+import sys
+import stat
+from os import path, chmod, popen
+from distutils import log
 import setuptools
 from setuptools.command.install import install
-import sys
-from os import path, environ, chmod, popen
-from distutils import log
-import stat
 
 
-class InstallAndChmod(install):
+class CustomInstall(install):
+    """Only let user write and group read files in /etc/servicewall"""
     def run(self):
-        mode = stat.S_IWRITE + stat.S_IREAD
+        mode = stat.S_IWRITE + stat.S_IREAD + stat.S_IRGRP
         install.run(self)
         for filepath in self.get_outputs():
             if "/etc/servicewall" in filepath:
@@ -24,7 +25,7 @@ class InstallAndChmod(install):
 with open("README.md", "r") as fd:
     long_description = fd.read()
 
-name = "servicewall"
+NAME = "servicewall"
 #version = "0.4.3"
 version = popen("git tag | tail -n 1").read().strip()
 here = path.abspath(path.dirname(__file__))
@@ -33,7 +34,7 @@ for package in setuptools.find_packages():
     print("setuptools : including package %s" % package, file=sys.stderr)
 
 setuptools.setup(
-    name=name,
+    name=NAME,
     version=version,
     author="la Fleur",
     author_email="lafleur@boum.org",
@@ -87,6 +88,6 @@ setuptools.setup(
             "lib/icon2.png",
         ]),
     ],
-    cmdclass={"install": InstallAndChmod},
+    cmdclass={"install": CustomInstall},
 )
 
