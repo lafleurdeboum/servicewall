@@ -38,21 +38,23 @@ class StateFulFireWall(firewall.FireWall):
         self.input_chain.append_rule(rule)
 
         # Top rule should be to allow related, established connections.
-        self.add_conntrack_rule_in("ACCEPT", "ctstate", "RELATED,ESTABLISHED")
+        related_rule = self.create_conntrack_rule("ACCEPT", "ctstate", "RELATED,ESTABLISHED")
+        self.input_chain.insert_rule(related_rule)
 
         # Log all that is refused in INPUT chain.
         log_rule = self.create_log_rule("not in allowed services", group="1")
-        self.input_chain.append_rule(log_rule)
- 
+        self.input_chain.insert_rule(log_rule)
+
         # Drop invalid packets - as diagnosed by the conntrack processor.
-        self.add_conntrack_rule_in("DROP", "ctstate", "INVALID", position="bottom")
+        invalid_rule = self.create_conntrack_rule("DROP", "ctstate", "INVALID")
+        self.input_chain.append_rule(invalid_rule)
 
         super().start(**args)   # commits the table if relevant
 
-    def add_conntrack_rule_in(self, target, param_key, param_value, position="top"):
-        """Adds a rule to input chain, for example :
+    def create_conntrack_rule(self, target, param_key, param_value):
+        """creates a connection tracking rule, for example :
 
-        StateFulFireWall.add_conntrack_rule_in("ACCEPT", "ctstate", "RELATED")
+        StateFulFireWall.create_conntrack_rule("ACCEPT", "ctstate", "RELATED")
         """
         print("adding rule %s" % param_value)
         conntrack_rule = Rule()
@@ -61,12 +63,9 @@ class StateFulFireWall(firewall.FireWall):
         conntrack_match.set_parameter(param_key, param_value)
         comment_match = conntrack_rule.create_match("comment")
         comment_match.comment = self.identifier + ":" + param_value
-        if position == "top":
-            self.input_chain.insert_rule(conntrack_rule)
-        elif position == "bottom":
-            self.input_chain.append_rule(conntrack_rule)
+        return conntrack_rule
 
-    def create_log_rule(self, comment, group="", dst="", dport="", src="", sport="", proto="", iface=""):
+    def create_log_rule(self, comment="", group="", dst="", dport="", src="", sport="", proto="", iface=""):
         """Adds a log rule
 
         All arguments should be strings !
@@ -130,10 +129,10 @@ class StateFulFireWall(firewall.FireWall):
 
             # Only count the logs that make it here :
             if limit:
-                if i > limit:
-                    break
-                else:
+                if i < limit:
                     i += 1
+                else:
+                    break
 
             message_dict["LOG_DATE"] = log["__REALTIME_TIMESTAMP"]
             for item in message.split():
@@ -170,12 +169,12 @@ class StateFulFireWall(firewall.FireWall):
             if log[criteria] not in logs:
                 logs[log[criteria]] = [log, ]
                 if limit:
-                    if i >= limit:
+                    if i < limit:
+                        i += 1
+                    else:
                         # Stop at step i+1 and pop last record :
                         logs.popitem()
                         break
-                    else:
-                        i += 1
             else:
                 logs[log[criteria]].append(log)
         return logs
