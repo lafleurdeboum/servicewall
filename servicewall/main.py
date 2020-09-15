@@ -68,6 +68,9 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         with open(self.service_defs_pickle, "rb") as fd:
             self.service_defs = pickle.load(fd)
         for service_file in os.listdir(self.service_defs_dir):
+            if service_file.find('.') == 0:
+                # It's a dotfile, keep going
+                continue
             try:
                 with open(self.service_defs_dir + service_file) as fd:
                     service_def = json.load(fd)

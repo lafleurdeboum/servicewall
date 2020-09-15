@@ -31,6 +31,9 @@ with open(realm_defs_dict, "rb") as fd:
 with open(service_defs_pickle, "rb") as fd:
     service_defs = pickle.load(fd)
 for service_file in listdir(service_defs_dir):
+    if service_file.find('.') == 0:
+        # It's a dotfile, keep going
+        continue
     try:
         with open(service_defs_dir + service_file) as fd:
             service_def = json.load(fd)

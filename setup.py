@@ -15,11 +15,14 @@ class CustomInstall(install):
     """Only let user write and group read files in /etc/servicewall"""
     def run(self):
         mode = stat.S_IWRITE + stat.S_IREAD + stat.S_IRGRP
+        dirmode = stat.S_IWRITE + stat.S_IREAD + stat.S_IXUSR + stat.S_IRGRP + stat.S_IXGRP
         install.run(self)
         for filepath in self.get_outputs():
             if "/etc/servicewall" in filepath:
                 log.info("setting %s to mode %s" % (filepath, oct(mode)[2:]))
+                dirpath = path.split(filepath)[0]
                 chmod(filepath, mode)
+                chmod(dirpath, dirmode)
 
 
 with open("README.md", "r") as fd:
