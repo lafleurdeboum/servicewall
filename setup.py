@@ -77,6 +77,9 @@ setuptools.setup(
             "etc/servicewall/realms.json",
             "etc/servicewall/ulogd.conf",
         ]),
+        ("/etc/servicewall/services", [
+            "etc/servicewall/services/.keepme",
+        ]),
         ("/etc/xdg/autostart/", [
             "lib/servicewall-systray.desktop",
         ]),
