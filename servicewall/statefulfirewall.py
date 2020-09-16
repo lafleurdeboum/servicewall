@@ -36,7 +36,9 @@ class StateFulFireWall(firewall.FireWall):
         self.input_chain.append_rule(rule)
 
         # Top rule should be to allow related, established connections.
-        related_rule = self.create_conntrack_rule("ACCEPT", "ctstate", "RELATED,ESTABLISHED")
+        related_rule = self.create_conntrack_rule("ACCEPT",
+                                                  "ctstate",
+                                                  "RELATED,ESTABLISHED")
         self.input_chain.insert_rule(related_rule)
 
         # Log all that is refused in INPUT chain.
@@ -63,14 +65,17 @@ class StateFulFireWall(firewall.FireWall):
         comment_match.comment = self.identifier + ":" + param_value
         return conntrack_rule
 
-    def create_log_rule(self, comment="", group="", dst="", dport="", src="", sport="", proto="", iface=""):
+
+    def create_log_rule(self, comment="", group="", dst="", dport="", src="",
+                        sport="", proto="", iface=""):
         """Adds a log rule
 
         All arguments should be strings !
         The comment size is limited to 64 characters as a whole.
         The nflog_group is the one you will have to select in ulogd.
         """
-        log_rule = self.create_rule("log", "NFLOG", dst, dport, src, sport, proto, iface)
+        log_rule = self.create_rule("log", "NFLOG", dst, dport, src, sport,
+                                    proto, iface)
         limit_match = log_rule.create_match("limit")
         limit_match.limit = "1/s"
         limit_match.limit_burst = "1"
@@ -79,6 +84,7 @@ class StateFulFireWall(firewall.FireWall):
         if group:
             log_rule.target.set_parameter("nflog-group", str(group))
         return log_rule
+
 
     def yield_logs(self, limit=None, period=None):
         """get logs we implemented in iptables from journald
@@ -105,7 +111,7 @@ class StateFulFireWall(firewall.FireWall):
             period = int(period)
         while True:
             log = reader.get_previous()
-            if not "MESSAGE" in log:
+            if "MESSAGE" not in log:
                 continue
             # Quit if log older than period :
             if period:
@@ -145,7 +151,8 @@ class StateFulFireWall(firewall.FireWall):
             if 'SPT' not in message_dict:
                 message_dict['SPT'] = ''
             if message_dict['PROTO'].isnumeric():
-                message_dict['PROTO'] = self.protobynumber[int(message_dict['PROTO'])]
+                message_dict['PROTO'] = self.protobynumber[
+                        int(message_dict['PROTO'])]
             else:
                 message_dict['PROTO'] = message_dict['PROTO'].lower()
 

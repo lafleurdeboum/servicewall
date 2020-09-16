@@ -14,24 +14,26 @@ import pickle
 import json
 import copy
 import os
-#import arpreq
 import subprocess
 from collections import namedtuple
 
 from servicewall import network_helpers
 from servicewall import statefulfirewall
 
-#from servicewall import service_helpers
-#globals()["PortDef"] = service_helpers.PortDef
-#globals()["ServiceDef"] = service_helpers.ServiceDef
+# from servicewall import service_helpers
+# globals()["PortDef"] = service_helpers.PortDef
+# globals()["ServiceDef"] = service_helpers.ServiceDef
 
 from servicewall.service_helpers import PortDef, ServiceDef
 globals()["PortDef"] = PortDef
 globals()["ServiceDef"] = ServiceDef
 
+
 def _systemctl(arg):
     try:
-        retval = subprocess.check_output(['systemctl', arg, 'servicewall.service'])
+        retval = subprocess.check_output(['systemctl',
+                                          arg,
+                                          'servicewall.service'])
         return retval.decode().strip()
     except FileNotFoundError:
         raise AssertionError("'systemctl' not found in the path, is systemd"
@@ -39,6 +41,14 @@ def _systemctl(arg):
     except subprocess.CalledProcessError:
         # systemctl returns an 'error' on is-enabled if the answer is False.
         pass
+
+
+def _enable_in_systemd():
+    return _systemctl('enable')
+
+
+def _disable_in_systemd():
+    return _systemctl('disable')
 
 
 class ServiceWall(statefulfirewall.StateFulFireWall):
@@ -129,14 +139,14 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
 
     def enable(self):
         try:
-            self._enable_in_systemd()
+            _enable_in_systemd()
         except AssertionError:
             with open(self.config_file, 'w+') as fd:
                 fd.write('{ "state": "enabled" }')
 
     def disable(self):
         try:
-            self._disable_in_systemd()
+            _disable_in_systemd()
         except AssertionError:
             with open(self.config_file, 'w+') as fd:
                 fd.write('{ "state": "disabled" }')
@@ -249,8 +259,8 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         services_list = []
         for service_name, s_tuple in self.service_defs.items():
             for service_port_range in (*s_tuple.ports.tcp, *s_tuple.ports.udp):
-                # service_port_range is a string containing either a number or a
-                # range, as in "80:88", "120"
+                # service_port_range is a string containing either a number or
+                # a range, as in "80:88", "120"
                 if service_port_range.isalnum():
                     if port == service_port_range:
                         services_list.append(service_name)
@@ -263,9 +273,10 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     def _enable_hook(self):
         """Create a link in the network dispatcher pointing to the event triggerer.
         """
-        if not os.path.exists(self.lib_dir):    # Should be installed by setup.py .
-            raise SystemExit("Could not find %s in %s. Check your installation !" %
-                             (self.dispatcher_toggler, self.lib_dir))
+        if not os.path.exists(self.lib_dir):
+            # Should be installed by setup.py .
+            raise SystemExit("Could not find %s in %s. Check your installation"
+                             % (self.dispatcher_toggler, self.lib_dir))
         # We will only mark as enabled if we can link to a network dispatcher :
         linked = False
         for dispatcher, dst_dir in self.dispatchers.items():
@@ -285,9 +296,9 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             raise SystemExit("Could not link to any network event dispatcher. "
                              "You apparently aren't running neither Network "
                              "Manager nor systemd-networkd with "
-                             "networkd-dispatcher. You'll need one of those to "
-                             "run this as it relies on them to fire the network "
-                             "change events.")
+                             "networkd-dispatcher. You'll need one of those to"
+                             " run this as it relies on them to fire the"
+                             "network change events.")
 
     def _disable_hook(self):
         """Destroy the link in the network dispatcher pointing to the event triggerer.
@@ -301,10 +312,4 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                 # Report missing link only if dir is present
                 if os.path.exists(target):
                     print("there was no %s dispatcher link" % dispatcher)
-
-    def _enable_in_systemd(self):
-        return _systemctl('enable')
-
-    def _disable_in_systemd(self):
-        return _systemctl('disable')
 

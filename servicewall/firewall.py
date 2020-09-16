@@ -108,8 +108,8 @@ class FireWall():
         sport is source port. Currently ignored
         dst is a realm in the same form as src
         dport is destination port
-        iface is the interface, will be in_interface if chain is the input chain.
-                                       out_interface if chain is the output chain.
+        iface is the interface, will be in_iface if chain is the input chain.
+                                       out_iface if chain is the output chain.
         """
         #print("adding rule %s" % name)
         if (dport or sport) and not proto:
@@ -137,7 +137,7 @@ class FireWall():
             proto_match = rule.create_match(proto)
             proto_match.sport = str(sport)
             rule.protocol = proto
-       # Add a signature as a comment.
+        # Add a signature as a comment.
         comment_match = rule.create_match("comment")
         comment_match.comment = self.identifier + ":" + name
         # Try to set it into chain.
@@ -162,7 +162,7 @@ class FireWall():
 
     def list_rules(self, chain):
         for rule in chain.rules:
-            # First find out dport - it gets set by self.add_service_in as a match.
+            # Find out dport - it's set by self.add_service_in as a match.
             dport = "any port"
             proto = "tcp/udp"
             for match in rule.matches:

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 #PYTHON_ARGCOMPLETE_OK
 """braise - a dynamic firewall
-
 """
 
 import argparse
@@ -40,11 +39,11 @@ for service_file in listdir(SERVICE_DEFS_DIR):
             service_def["ports"] = PortDef(**service_def["ports"])
             sdef = ServiceDef(**service_def)
             service_defs[sdef.title] = sdef
-    except TypeError as error:
+    except TypeError:
         pass
 
-# Find allowed services to help autocompletion know what to delete. - TODO doesn't
-# work when the realm is unknown
+# Find allowed services to help autocompletion know what to delete - TODO
+# doesn't work when the realm is unknown.
 try:
     REALM_ID = get_realm_id()
     IS_ONLINE = True
@@ -62,6 +61,7 @@ except KeyError:
     default_allowed_services = []
 all_allowed_services = *allowed_services, *default_allowed_services
 
+
 def parser_helper(function_name):
     """This function will return a pointer to a function named "function_name"
     in parser_helpers. This pointer will only be evaluated when it is called,
@@ -70,6 +70,7 @@ def parser_helper(function_name):
     def wrapper(arguments):
         eval("parser_helpers." + function_name)(arguments)
     return wrapper
+
 
 parser = argparse.ArgumentParser(
     description="ServiceWall CLI frontend"
@@ -119,7 +120,7 @@ parser_disable.set_defaults(func=parser_helper("stop"))
 parser_show_status = subparser.add_parser(
     "status",
     help="tell if the firewall is enabled and what is the current realm",
-    description="tell if the firewall is enabled and what is the current realm",
+    description="tell if the firewall is enabled and what is the current realm"
 )
 parser_show_status.set_defaults(func=parser_helper("status"))
 
@@ -146,7 +147,8 @@ show_subparser = parser_show.add_subparsers()
 parser_show_logs = show_subparser.add_parser(
     "logs",
     help="show a digest of logs of the firewall",
-    description="show dropped packets. Columns are : source_ip destination_ip service age",
+    description="show dropped packets. Columns are : source_ip " +
+    "destination_ip service age"
 )
 parser_show_logs.set_defaults(func=parser_helper("show_logs"))
 parser_show_logs.add_argument(
@@ -167,7 +169,9 @@ parser_show_logs_limit = show_logs_subparser.add_parser(
     "last",
     help="shorten logs to latest [number] hits",
 )
-parser_show_logs_limit.add_argument("number", type=int, help="of latest hits to show")
+parser_show_logs_limit.add_argument("number",
+                                    type=int,
+                                    help="of latest hits to show")
 parser_show_logs_limit.set_defaults(func=parser_helper("show_logs"))
 
 parser_show_realm = show_subparser.add_parser(
@@ -261,7 +265,8 @@ parser_disallow_service.add_argument(
     action="store_true",
     help="enable in ServiceWall:default profile instead of current",
 )
-parser_disallow_service.add_argument("service_name", choices=all_allowed_services)
+parser_disallow_service.add_argument("service_name",
+                                     choices=all_allowed_services)
 parser_disallow_service.set_defaults(func=parser_helper("disallow_service"))
 
 if ARGCOMPLETE:

@@ -1,17 +1,16 @@
 """Useful system calls to ask different things to the wireless controler.
+
+Most of them use fnctl.ioctl to pack and unpack a request.
+
+some insights on packing an address :
+https://pymotw.com/2/socket/addressing.html
+
+For those taking an interface name iface as argument, see struct ifreq in
+    /usr/include/net/if.h
+we'll mimic ifreq with struct.pack("256s", bytes(ifname[:15], "utf-8"))
+details on constructing a C struct in python :
+https://docs.python.org/2/library/ctypes.html#arrays
 """
-
-# Most of them use fnctl.ioctl to pack and unpack a request.
-
-# some insights on packing an address :
-# https://pymotw.com/2/socket/addressing.html
-
-# For those taking an interface name iface as argument, see struct ifreq in
-#     /usr/include/net/if.h
-# we'll mimic ifreq with struct.pack("256s", bytes(ifname[:15], "utf-8"))
-# details on constructing a C struct in python :
-# https://docs.python.org/2/library/ctypes.html#arrays
-
 
 
 import socket
@@ -51,12 +50,14 @@ def get_all_interfaces():
     #ifaces.pop('lo')
     #return ifaces
 
+
 def get_active_interface():
     """Return the name of the interface serving as gateway.
     """
     # AF_INET is a flag for ipv4 addressing.
     #return netifaces.gateways()[netifaces.AF_INET][0][1]
     return get_all_interfaces()[0][0]
+
 
 def get_essid():
     """Return the ESSID for an interface, or None if we aren't connected.
@@ -91,15 +92,18 @@ def get_essid():
         return None
     return name
 
+
 def get_realm_id():
     """Return a unique identifier for the Internet Service Provider
     """
     isp_id = get_essid()
-    if not isp_id:      # Then the network probably isn't wifi. Check ethernet :
+    if not isp_id:
+        # Then the network probably isn't wifi. Check ethernet :
         import arpreq
         #isp_id = arpreq.arpreq(get_ip_address(get_active_interface()))
         isp_id = arpreq.arpreq(get_gateway_address())
     return isp_id
+
 
 def get_ip_address(ifname):
     datagram_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -109,20 +113,23 @@ def get_ip_address(ifname):
         struct.pack("256s", bytes(ifname[:15], "utf-8"))
     )[20:24])
 
+
 def get_outside_ip_address(ifname):
-    """DOESN'T WORK and I don't know what is this IP it's outputting"""
+    """DOESN'T WORK and I don't know what is this IP it's outputting
+    """
     datagram_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     return socket.inet_ntoa(fcntl.ioctl(
         datagram_socket.fileno(),
-        0x8927, # SIOCGIFHWADDR
+        0x8927,  # SIOCGIFHWADDR
         struct.pack("256s", bytes(ifname[:15], "utf-8"))
     )[20:24])
+
 
 def get_netmask(ifname):
     datagram_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     return socket.inet_ntoa(fcntl.ioctl(
         datagram_socket.fileno(),
-        0x891b, # SIOCGIFNETMASK
+        0x891b,  # SIOCGIFNETMASK
         struct.pack("256s", bytes(ifname[:15], "utf-8"))
     )[20:24])
 
@@ -139,6 +146,7 @@ def get_subnetwork():
                    for address_block, netmask_block in zip(address, netmask) ]
     return "/".join((".".join(subnetwork), ".".join(netmask)))
 
+
 def get_essid_mac_address(ifname):
     """Return the ssid's MAC address as declared by the network controller.
     DEBUG Doesn't work with ethernet network providers though.
@@ -146,7 +154,7 @@ def get_essid_mac_address(ifname):
     datagram_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     payload = fcntl.ioctl(
         datagram_socket.fileno(),
-        0x8b15, # SIOCGIWAP , mac address
+        0x8b15,  # SIOCGIWAP , mac address
         struct.pack("265s", bytes(ifname[:15], "utf-8"))
     )
     # From internet talk : SSID is encoded after a \x01\x00 keycode.
@@ -154,6 +162,7 @@ def get_essid_mac_address(ifname):
     # From convention : MAC addressing is 6 hexadecimal double ints.
     address = payload[index:index+6].hex()
     return ":".join([ address[i:i+2] for i in range(0, 12, 2) ])
+
 
 def get_mac_address(ip):
     """NOT WORKING - need to find how to mimic arpreq struct - clues in
@@ -172,10 +181,11 @@ def get_mac_address(ip):
     )
     return socket.inet_ntoa(fcntl.ioctl(
         datagram_socket.fileno(),
-        0x8951, # SIOCGARP , mac address, according to man ioctl_list
+        0x8951,  # SIOCGARP , mac address, according to man ioctl_list
         #0x8954, # SIOCGARP , mac address
         request
     )[20:24])
+
 
 def get_essid_alt(ifname):
     from subprocess import Popen, PIPE
@@ -187,6 +197,7 @@ def get_essid_alt(ifname):
         raise SystemExit("Interface %s not found" % ifname)
     ssid = endstring.split(b"\n")[0]
     return ssid.decode()
+
 
 def get_gateway_address():
     """Read the default gateway directly from /proc.
@@ -201,6 +212,7 @@ def get_gateway_address():
         if not address:
             raise KeyError("No gateway found")
     return address
+
 
 def get_gateway_hostname():
     return socket.getfqdn(get_gateway_address())

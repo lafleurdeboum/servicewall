@@ -4,8 +4,8 @@
 """
 
 __all__ = [ "no_arg_provided", "enable", "disable", "start", "stop", "reload",
-            "show", "show_logs", "show_realm", "show_realms", "show_services",
-            "show_service", "show_status", "allow_service", "disallow_service" ]
+            "show_logs", "show_realm", "show_realms", "show_services",
+            "show_service", "status", "allow_service", "disallow_service" ]
 
 
 import json
@@ -23,6 +23,7 @@ firewall = servicewall.ServiceWall()
 def prettyprint(obj):
     print(json.dumps(obj, indent=2))
 
+
 def print_dict(dictionary, depth=1):
     prefix = "  " * depth
     for key, value in dictionary.items():
@@ -31,6 +32,7 @@ def print_dict(dictionary, depth=1):
             print_dict(value, depth+1)
         else:
             print("%s%s : %s" % (prefix, key, value))
+
 
 def print_service(port):
     services_list = firewall.list_services_by_port(port)
@@ -45,20 +47,26 @@ def no_arg_provided(args):
     parser.print_help()
     #raise SystemExit("\n  argument needed !")
 
+
 def enable(args):
     firewall.enable()
+
 
 def disable(args):
     firewall.disable()
 
+
 def start(args):
     firewall.start()
+
 
 def stop(args):
     firewall.stop()
 
+
 def reload(args):
     firewall.reload()
+
 
 def status(args):
     if firewall.is_enabled():
@@ -74,6 +82,7 @@ def status(args):
     else:
         print("and stopped")
 
+
 def allow_service(args):
     if args.globally:
         scope = "global"
@@ -86,6 +95,7 @@ def allow_service(args):
     # Make it local by default :
     firewall.allow_service(args.service_name, scope=scope, realm=realm)
 
+
 def disallow_service(args):
     service_name = args.service_name
     if args.in_default_profile:
@@ -93,6 +103,7 @@ def disallow_service(args):
     else:
         realm = None
     firewall.disallow_service(service_name, realm=realm)
+
 
 def show_table(args):
     print('You are using realm profile : %s' %
@@ -108,23 +119,31 @@ def show_table(args):
     print("=> Output rules <=          : policy %6s" %
           firewall.output_chain.get_policy().name)
 
+
 def show_realm(args):
     if firewall.realm_id:
         print('This machine is connected to ESSID "%s".' % firewall.realm_id)
     else:
         print('This machine is not connected.')
     #prettyprint(firewall.realm_defs[firewall.realm_id])
+
+
 def show_realms(args):
     #print_dict(firewall.realm_defs)
     prettyprint(firewall.realm_defs)
+
 
 def show_service(args):
     s = firewall.service_defs[args.service_name]._asdict()
     s["ports"] = s["ports"]._asdict()
     prettyprint(s)
+
+
 def show_services(args):
     for service in firewall.service_defs:
-        print("%s - %s" % (service, firewall.service_defs[service].description))
+        print("%s - %s"
+              % (service, firewall.service_defs[service].description))
+
 
 def show_port(args):
     port = args.port_name
@@ -138,6 +157,7 @@ def show_port(args):
             prettyprint(services_list)
     else:
         print("port %s unknown." % port)
+
 
 def show_logs(args):
     if "period" in args:

@@ -4,14 +4,17 @@ from os import scandir
 from collections import namedtuple
 
 PortDef = namedtuple("PortDef", "udp tcp")
-ServiceDef = namedtuple("ServiceDef", "title description ports categories reference")
+ServiceDef = namedtuple("ServiceDef",
+                        "title description ports categories reference")
 DEFINITIONS_DIR = "/etc/gufw/app_profiles"
+
 
 def split_port_def(port_def):
     ports_dict = {"udp": [], "tcp": []}
 
     # In the worst case, port_def is "13:15,124/udp|120:122"
-    # Which should mean 13 to 15 and 124, all udp, and 120 to 122 both udp and tcp
+    # Which should mean 13 to 15 and 124, all udp, and 120 to 122 both udp and
+    # tcp
     try:
         proto_subdefs = port_def.split("|")
     except ValueError:
@@ -84,7 +87,7 @@ def scan_service_definitions(definitions_dir):
                     key: value for (key, value) in
                         ( item.split("=", 1) for item in iter(service_desc[1:]) )
                 }
-                if not "reference" in service_def:
+                if "reference" not in service_def:
                     service_def["reference"] = ""
                 service_def["ports"] = split_port_def(service_def["ports"])
                 service = ServiceDef(**service_def)
