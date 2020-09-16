@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""braise - a dynamic firewall
-
+"""Helper functions for ServiceWall cmdline agent.
 """
 
-__all__ = ["no_arg_provided", "enable", "disable", "start", "stop", "reload", "show", "show_logs", "show_realm", "show_realms", "show_services", "show_service", "show_status", "allow_service", "disallow_service"]
+__all__ = [ "no_arg_provided", "enable", "disable", "start", "stop", "reload",
+            "show", "show_logs", "show_realm", "show_realms", "show_services",
+            "show_service", "show_status", "allow_service", "disallow_service" ]
 
 
-import os
-import pickle
 import json
 from datetime import datetime
 #import select
@@ -17,7 +16,7 @@ import socket
 import servicewall
 
 
-debug = False
+DEBUG = False
 firewall = servicewall.ServiceWall()
 
 
@@ -39,8 +38,7 @@ def print_service(port):
         return '%s*' % services_list[0]
     elif len(services_list) == 1:
         return '%s' % services_list[0]
-    else:
-        return None
+    return None
 
 
 def no_arg_provided(args):
@@ -77,11 +75,10 @@ def status(args):
         print("and stopped")
 
 def allow_service(args):
-    service_name = args.service_name
     if args.globally:
-        scope="global"
+        scope = "global"
     else:
-        scope="local"
+        scope = "local"
     if args.in_default_profile:
         realm = "ServiceWall:default"
     else:
@@ -100,7 +97,7 @@ def disallow_service(args):
 def show_table(args):
     print('You are using realm profile : %s' %
           (firewall.realm_id or "ServiceWall:default"))
-    print('=> Input rules <=           : policy %6s' % 
+    print('=> Input rules <=           : policy %6s' %
           firewall.input_chain.get_policy().name)
     for rule in firewall.list_rules(firewall.input_chain):
         print(rule)
@@ -153,9 +150,7 @@ def show_logs(args):
     else:
         limit = None
 
-    log_folder = {}
     now = datetime.today()
-    starred = False
 
     for log in yielder:
         if limit:

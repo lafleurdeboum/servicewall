@@ -1,9 +1,11 @@
+"""Helper functions to convert from ufw/gufw service defs to ServiceWall's
+"""
 from os import scandir
 from collections import namedtuple
 
 PortDef = namedtuple("PortDef", "udp tcp")
 ServiceDef = namedtuple("ServiceDef", "title description ports categories reference")
-definitions_dir = "/etc/gufw/app_profiles"
+DEFINITIONS_DIR = "/etc/gufw/app_profiles"
 
 def split_port_def(port_def):
     ports_dict = {"udp": [], "tcp": []}
@@ -67,14 +69,14 @@ def scan_service_definitions(definitions_dir):
             service_list = fd.read().split("\n\n")
             for service in service_list:
                 # _Some_ service descriptions finish in "\n\n"
-                if service == "" or service == "\n":
+                if service in ("", "\n"):
                     continue
                 service_desc = service.split("\n")
                 service_name = service_desc[0].strip("[]")
                 print("  -> %s" % service_name)
 
                 # get rid of empty strings :
-                for i in range(service_desc.count("")):
+                for _ in range(service_desc.count("")):
                     service_desc.remove("")
 
                 # services['NAME_ONE'] will return a dict with its parameters :
@@ -85,8 +87,8 @@ def scan_service_definitions(definitions_dir):
                 if not "reference" in service_def:
                     service_def["reference"] = ""
                 service_def["ports"] = split_port_def(service_def["ports"])
-                s = ServiceDef(**service_def)
-                services[service_name] = s
+                service = ServiceDef(**service_def)
+                services[service_name] = service
 
     return services
 

@@ -5,34 +5,32 @@ Uses simple guidelines given in
 and implements them in a FireWall class, using reasonable defaults.
 """
 
+from datetime import datetime
+import socket
 from systemd import journal
 from iptc import Rule
 from servicewall import firewall
-from datetime import datetime
-import socket
 
 
 class StateFulFireWall(firewall.FireWall):
     """Implement some useful stateful rules :
-    
+
     - accept related/established packets
     - log anything that is dropped
     - drop invalid packets
     """
     protobynumber = { num: name[8:].lower()
-                 for name, num in vars(socket).items()
-                 if name.startswith("IPPROTO")
-    }
-    def __init__(self):
-        super().__init__()
+                      for name, num in vars(socket).items()
+                      if name.startswith("IPPROTO")
+                      }
 
     def start(self, **args):
         print("adding rule icmp")
         rule = Rule()
         rule.create_target("ACCEPT")
         rule.protocol = "icmp"
-        m = rule.create_match("icmp")
-        m.set_parameter("icmp-type", "8")
+        icmp_match = rule.create_match("icmp")
+        icmp_match.set_parameter("icmp-type", "8")
         comment_match = rule.create_match("comment")
         comment_match.comment = self.identifier + ":icmp"
         self.input_chain.append_rule(rule)

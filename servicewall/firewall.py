@@ -3,10 +3,8 @@
 implements a firewall using python-iptables
 """
 
-from os import environ
-from iptc import Rule, Match, Chain, Table
+from iptc import Rule, Chain, Table
 from iptc.ip4tc import IPTCError
-
 
 
 class FireWall():
@@ -55,10 +53,10 @@ class FireWall():
         self.output_chain.set_policy("ACCEPT")
         # Accept all on localhost.
         accept_localhost_rule = self.create_rule(
-                "localhost",
-                "ACCEPT",
-                iface="lo"
-                )
+            "localhost",
+            "ACCEPT",
+            iface="lo"
+            )
         self.input_chain.insert_rule(accept_localhost_rule)
         if not self._table.autocommit:
             self._table.commit()
@@ -93,11 +91,11 @@ class FireWall():
     def status(self):
         """print the status of the FireWall. Returns either True or False."""
         # Returns True if a single rule has our identifier tag
+        is_up = False
         for rule in self.input_chain.rules:
             if self._get_rule_id(rule) == self.identifier:
-                return True
-        else:
-            return False
+                is_up = True
+        return is_up
 
     def create_rule(self, name, target, dst="", dport="", src="", sport="", proto="", iface=""):
         """create and return a rule (or two if no proto given).
@@ -116,13 +114,13 @@ class FireWall():
         #print("adding rule %s" % name)
         if (dport or sport) and not proto:
             return [ self.create_rule(name,
-                                   target,
-                                   dst,
-                                   dport,
-                                   src,
-                                   sport,
-                                   proto,
-                                   iface) for proto in ("tcp", "udp") ]
+                                      target,
+                                      dst,
+                                      dport,
+                                      src,
+                                      sport,
+                                      proto,
+                                      iface) for proto in ("tcp", "udp") ]
         rule = Rule()
         rule.create_target(target)
         # First we need to know if we go in or out
@@ -186,7 +184,7 @@ class FireWall():
         for match in rule.matches:
             if match.comment:
                 try:
-                    rule_identifier, rule_name = match.comment.split(":")
+                    _, rule_name = match.comment.split(":")
                 except IndexError:
                     # No semicolon in comment
                     continue
@@ -196,7 +194,7 @@ class FireWall():
         for match in rule.matches:
             if match.comment:
                 try:
-                    rule_identifier, rule_name = match.comment.split(":")
+                    rule_identifier, _ = match.comment.split(":")
                 except IndexError:
                     # No semicolon in comment
                     continue

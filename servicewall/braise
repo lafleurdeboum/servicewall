@@ -20,22 +20,22 @@ except ImportError:
     ARGCOMPLETE = False
 
 
-conf_dir = "/etc/servicewall/"
-lib_dir = "/usr/lib/servicewall/"
-realm_defs_dict = conf_dir + "realms.json"
-service_defs_pickle = lib_dir + "services.p"
-service_defs_dir = "/etc/servicewall/services/"
+CONF_DIR = "/etc/servicewall/"
+LIB_DIR = "/usr/lib/servicewall/"
+REALM_DEFS_DICT = CONF_DIR + "realms.json"
+SERVICE_DEFS_PICKLE = LIB_DIR + "services.p"
+SERVICE_DEFS_DIR = "/etc/servicewall/services/"
 
-with open(realm_defs_dict, "rb") as fd:
+with open(REALM_DEFS_DICT, "rb") as fd:
     realm_defs = json.load(fd)
-with open(service_defs_pickle, "rb") as fd:
+with open(SERVICE_DEFS_PICKLE, "rb") as fd:
     service_defs = pickle.load(fd)
-for service_file in listdir(service_defs_dir):
+for service_file in listdir(SERVICE_DEFS_DIR):
     if service_file.find('.') == 0:
         # It's a dotfile, keep going
         continue
     try:
-        with open(service_defs_dir + service_file) as fd:
+        with open(SERVICE_DEFS_DIR + service_file) as fd:
             service_def = json.load(fd)
             service_def["ports"] = PortDef(**service_def["ports"])
             sdef = ServiceDef(**service_def)
@@ -46,18 +46,18 @@ for service_file in listdir(service_defs_dir):
 # Find allowed services to help autocompletion know what to delete. - TODO doesn't
 # work when the realm is unknown
 try:
-    realm_id = get_realm_id()
-    online = True
+    REALM_ID = get_realm_id()
+    IS_ONLINE = True
 except KeyError:
     # No network (but servicewall might still be enabled).
-    realm_id = None
-    online = False
+    REALM_ID = None
+    IS_ONLINE = False
 try:
-    allowed_services = [ service_def for service_def in realm_defs[realm_id].keys() ]
+    allowed_services = realm_defs[REALM_ID].keys()
 except KeyError:
     allowed_services = []
 try:
-    default_allowed_services = [ service_def for service_def in realm_defs["ServiceWall:default"].keys() ]
+    default_allowed_services = realm_defs["ServiceWall:default"].keys()
 except KeyError:
     default_allowed_services = []
 all_allowed_services = *allowed_services, *default_allowed_services
@@ -67,8 +67,8 @@ def parser_helper(function_name):
     in parser_helpers. This pointer will only be evaluated when it is called,
     ie after parser is done.
     """
-    def wrapper(args):
-        eval("parser_helpers." + function_name)(args)
+    def wrapper(arguments):
+        eval("parser_helpers." + function_name)(arguments)
     return wrapper
 
 parser = argparse.ArgumentParser(

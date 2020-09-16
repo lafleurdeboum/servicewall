@@ -10,10 +10,16 @@ changes.
 
 """
 
+import pickle
+import json
+import copy
+import os
+#import arpreq
+import subprocess
+from collections import namedtuple
+
 from servicewall import network_helpers
 from servicewall import statefulfirewall
-
-from collections import namedtuple
 
 #from servicewall import service_helpers
 #globals()["PortDef"] = service_helpers.PortDef
@@ -22,13 +28,17 @@ from collections import namedtuple
 from servicewall.service_helpers import PortDef, ServiceDef
 globals()["PortDef"] = PortDef
 globals()["ServiceDef"] = ServiceDef
-import pickle
-import json
-import copy
-import os
-#import arpreq
-import subprocess
 
+def _systemctl(arg):
+    try:
+        retval = subprocess.check_output(['systemctl', arg, 'servicewall.service'])
+        return retval.decode().strip()
+    except FileNotFoundError:
+        raise AssertionError("'systemctl' not found in the path, is systemd"
+                             " installed on this machine ?")
+    except subprocess.CalledProcessError:
+        # systemctl returns an 'error' on is-enabled if the answer is False.
+        pass
 
 
 class ServiceWall(statefulfirewall.StateFulFireWall):
@@ -39,7 +49,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     self.service_defs_pickle, additioned with defs in self.service_defs_dir
     A service def file should be a json definition that is a valid ServiceDef.
     You can get a valid sample with eg
-        
+
         braise show service http
 
     You can try yours with
@@ -100,7 +110,8 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             self._enable_hook()
         if self.realm_id not in self.realm_defs:
             # If we don't have a realm definition, load "ServiceWall:default"
-            self.realm_defs[self.realm_id] = copy.deepcopy(self.realm_defs[self.identifier + ":default"])
+            self.realm_defs[self.realm_id] = copy.deepcopy(
+                self.realm_defs[self.identifier + ":default"])
         for service_name, scope in self.realm_defs[self.realm_id].items():
             self.insert_service_rule(service_name, scope=scope)
         # Commits the table if relevant, and brings other rules in :
@@ -115,7 +126,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         self.stop(should_check_hook=False)
         self.start(should_check_hook=False)
         print("%s reloaded" % self.identifier)
-    
+
     def enable(self):
         try:
             self._enable_in_systemd()
@@ -132,7 +143,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
 
     def is_enabled(self):
         try:
-            status = self._systemctl('is-enabled')
+            status = _systemctl('is-enabled')
         except AssertionError:
             with open(self.config_file, 'r') as fd:
                 config = json.load(fd)
@@ -144,13 +155,13 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
     def allow_service(self, service_name, scope="local", realm=None):
         if service_name not in self.service_defs:
             raise KeyError("undefined service : %s." %
-                    service_name)
-        if realm == None:
+                           service_name)
+        if realm is None:
             realm = self.realm_id
         # Create an entry for this realm's id if there weren't any :
         if realm not in self.realm_defs:
             self.realm_defs[realm] = copy.deepcopy(
-                    self.realm_defs[self.identifier + ":default"])
+                self.realm_defs[self.identifier + ":default"])
         if service_name not in self.realm_defs[realm]:
             self.realm_defs[realm][service_name] = scope
             self.save_rules()
@@ -175,28 +186,28 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             if super()._get_rule_name(rule) == service_name:
                 raise KeyError("rule already in input chain")
 
-        s = self.service_defs[service_name]
+        service = self.service_defs[service_name]
         print("allowing service %s from %s" %
               (service_name, src or "anywhere"))
-        for port in s.ports.tcp:
+        for port in service.ports.tcp:
             rule = self.create_rule(service_name,
-                         "ACCEPT",
-                         src=src,
-                         dport=port,
-                         proto="tcp"
-            )
+                                    "ACCEPT",
+                                    src=src,
+                                    dport=port,
+                                    proto="tcp"
+                                    )
             self.input_chain.insert_rule(rule)
-        for port in s.ports.udp:
+        for port in service.ports.udp:
             rule = self.create_rule(service_name,
-                         "ACCEPT",
-                         src=src,
-                         dport=port,
-                         proto="udp"
-            )
+                                    "ACCEPT",
+                                    src=src,
+                                    dport=port,
+                                    proto="udp"
+                                    )
             self.input_chain.insert_rule(rule)
 
     def disallow_service(self, service_name, realm=None):
-        if realm == None:
+        if realm is None:
             realm = self.realm_id
         # Create an entry for this realm's essid if there weren't any :
         if realm not in self.realm_defs:
@@ -208,10 +219,10 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             del self.realm_defs[realm][service_name]
             self.save_rules()
             print("removed service %s from realm %s" %
-                    (service_name, realm))
+                  (service_name, realm))
         else:
             raise KeyError('service "%s" was not allowed in realm %s anyway.'
-                    % (service_name, realm))
+                           % (service_name, realm))
         if realm == self.realm_id:
             self.remove_service_rule(service_name)
 
@@ -254,7 +265,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         """
         if not os.path.exists(self.lib_dir):    # Should be installed by setup.py .
             raise SystemExit("Could not find %s in %s. Check your installation !" %
-                    (dispatcher_toggler, self.lib_dir))
+                             (self.dispatcher_toggler, self.lib_dir))
         # We will only mark as enabled if we can link to a network dispatcher :
         linked = False
         for dispatcher, dst_dir in self.dispatchers.items():
@@ -267,14 +278,16 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
             else:
                 print("%s dispatcher link created" % dispatcher)
                 # symlink pointing to src in dst_dir
-                os.symlink(self.lib_dir + self.dispatcher_toggler, dst_dir + self.dispatcher_toggler)
+                os.symlink(self.lib_dir + self.dispatcher_toggler,
+                           dst_dir + self.dispatcher_toggler)
                 linked = True
         if not linked:
             raise SystemExit("Could not link to any network event dispatcher. "
-                    "You apparently aren't running neither Network Manager nor "
-                    "systemd-networkd with networkd-dispatcher. You'll need one "
-                    "of those to run this as it relies on them to fire the "
-                    "network change events.")
+                             "You apparently aren't running neither Network "
+                             "Manager nor systemd-networkd with "
+                             "networkd-dispatcher. You'll need one of those to "
+                             "run this as it relies on them to fire the network "
+                             "change events.")
 
     def _disable_hook(self):
         """Destroy the link in the network dispatcher pointing to the event triggerer.
@@ -290,17 +303,8 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
                     print("there was no %s dispatcher link" % dispatcher)
 
     def _enable_in_systemd(self):
-        return self._systemctl('enable')
+        return _systemctl('enable')
 
     def _disable_in_systemd(self):
-        return self._systemctl('disable')
-
-    def _systemctl(self, arg):
-        try:
-            return subprocess.check_output(['systemctl', arg, 'servicewall.service']).decode().strip()
-        except FileNotFoundError:
-            raise AssertionError("'systemctl' not found in the path, is systemd installed on this machine ?")
-        except subprocess.CalledProcessError:
-            # systemctl returns an 'error' on is-enabled if the answer is False.
-            pass
+        return _systemctl('disable')
 

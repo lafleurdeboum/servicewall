@@ -1,5 +1,4 @@
 """Useful system calls to ask different things to the wireless controler.
-
 """
 
 # Most of them use fnctl.ioctl to pack and unpack a request.
@@ -28,22 +27,22 @@ def get_all_interfaces():
     """
     max_possible = 128  # Raise if needed.
     byte_number = max_possible * 32
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    datagram_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     names = array.array('B', b'\0' * byte_number)
-    names_address = names.buffer_info()[0]
+    #names_address = names.buffer_info()[0]
     outbytes = struct.unpack('iL', fcntl.ioctl(
-            s.fileno(),
-            0x8912,  # SIOCGIFCONF
-            struct.pack('iL', byte_number, names.buffer_info()[0])
+        datagram_socket.fileno(),
+        0x8912,  # SIOCGIFCONF
+        struct.pack('iL', byte_number, names.buffer_info()[0])
     ))[0]
     namestr = names.tobytes()
     iface_list = []
     #ifaces = {}
     for i in range(0, outbytes, 40):
-        name = namestr[i:i+16].split(b'\0', 1)[0]
-        ip   = namestr[i+20:i+24]
-        iface_list.append([ name.decode(), socket.inet_ntoa(ip) ])
-        #ifaces[name.decode()] = socket.inet_ntoa(ip)
+        iface_name = namestr[i:i+16].split(b'\0', 1)[0]
+        iface_ip = namestr[i+20:i+24]
+        iface_list.append([ iface_name.decode(), socket.inet_ntoa(iface_ip) ])
+        #ifaces[iface_name.decode()] = socket.inet_ntoa(iface_ip)
         # We don't care for the loopback interface :
     for index, iface in enumerate(iface_list):
         if iface[0] == "lo":
@@ -67,31 +66,30 @@ def get_essid():
     except IndexError:
         #print("No active interface")
         return None
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    datagram_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     # The payload for this call is formatted to 32 double hexadecimal ints.
     essid = array.array("b", b"\x00" * 32)
-    essidPointer, essidLength = essid.buffer_info()
+    essid_pointer, essid_length = essid.buffer_info()
     request = array.array("b")
     request.frombytes(
-            # The interface name is formatted to 16 double hexadecimal ints.
-            interface.ljust(16, "\x00").encode()
-            + struct.pack("PHH", essidPointer, essidLength, 0)
-    )
+        # The interface name is formatted to 16 double hexadecimal ints.
+        interface.ljust(16, "\x00").encode() +
+        struct.pack("PHH", essid_pointer, essid_length, 0)
+        )
     try:
         fcntl.ioctl(
-                s.fileno(),
-                0x8b1b,   # SIOCGIWESSID, get essid
-                request
-        )
-    except OSError as e:
-        if e.errno == 95:       # Operation not supported
+            datagram_socket.fileno(),
+            0x8b1b,   # SIOCGIWESSID, get essid
+            request
+            )
+    except OSError as error:
+        if error.errno == 95:       # Operation not supported
             #print("not connected")
             return None
     name = essid.tobytes().strip(b"\x00").decode()
-    if name:
-        return name
-    else:
+    if not name:
         return None
+    return name
 
 def get_realm_id():
     """Return a unique identifier for the Internet Service Provider
@@ -104,28 +102,28 @@ def get_realm_id():
     return isp_id
 
 def get_ip_address(ifname):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    datagram_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     return socket.inet_ntoa(fcntl.ioctl(
-            s.fileno(),
-            0x8915,  # SIOCGIFADDR
-            struct.pack("256s", bytes(ifname[:15], "utf-8"))
+        datagram_socket.fileno(),
+        0x8915,  # SIOCGIFADDR
+        struct.pack("256s", bytes(ifname[:15], "utf-8"))
     )[20:24])
 
 def get_outside_ip_address(ifname):
     """DOESN'T WORK and I don't know what is this IP it's outputting"""
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    datagram_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     return socket.inet_ntoa(fcntl.ioctl(
-            s.fileno(),
-            0x8927, # SIOCGIFHWADDR
+        datagram_socket.fileno(),
+        0x8927, # SIOCGIFHWADDR
         struct.pack("256s", bytes(ifname[:15], "utf-8"))
     )[20:24])
 
 def get_netmask(ifname):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    datagram_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     return socket.inet_ntoa(fcntl.ioctl(
-            s.fileno(),
-            0x891b, # SIOCGIFNETMASK
-            struct.pack("256s", bytes(ifname[:15], "utf-8"))
+        datagram_socket.fileno(),
+        0x891b, # SIOCGIFNETMASK
+        struct.pack("256s", bytes(ifname[:15], "utf-8"))
     )[20:24])
 
 
@@ -138,18 +136,18 @@ def get_subnetwork():
     address = get_ip_address(interface).split(".")
     netmask = get_netmask(interface).split(".")
     subnetwork = [ str(int(int(address_block) * int(netmask_block) / 255))
-            for address_block, netmask_block in zip(address, netmask) ]
-    return "/".join((".".join(subnetwork), ".".join(netmask) ))
+                   for address_block, netmask_block in zip(address, netmask) ]
+    return "/".join((".".join(subnetwork), ".".join(netmask)))
 
 def get_essid_mac_address(ifname):
     """Return the ssid's MAC address as declared by the network controller.
     DEBUG Doesn't work with ethernet network providers though.
     """
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    datagram_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     payload = fcntl.ioctl(
-            s.fileno(),
-            0x8b15, # SIOCGIWAP , mac address
-            struct.pack("265s", bytes(ifname[:15], "utf-8"))
+        datagram_socket.fileno(),
+        0x8b15, # SIOCGIWAP , mac address
+        struct.pack("265s", bytes(ifname[:15], "utf-8"))
     )
     # From internet talk : SSID is encoded after a \x01\x00 keycode.
     index = payload.index(b"\x01\x00") + 2
@@ -163,26 +161,26 @@ def get_mac_address(ip):
     example of what's expected, written in C :
     https://stackoverflow.com/questions/11929556/how-to-get-the-mac-address-of-client-using-ioctl-function
     """
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    datagram_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     interface = get_active_interface()
     # SIOCGARP is documented in man 7 arp
     # and struct arpreq in /usr/include/net/if_arp.h .
     # It refers to struct sockaddr, defined in /usr/inlude/sys/socket.h .
     request = array.array("b")
     request.frombytes(
-            interface.ljust(16, "\x00").encode()
+        interface.ljust(16, "\x00").encode()
     )
     return socket.inet_ntoa(fcntl.ioctl(
-            s.fileno(),
-            0x8951, # SIOCGARP , mac address, according to man ioctl_list
-            #0x8954, # SIOCGARP , mac address
-            request
+        datagram_socket.fileno(),
+        0x8951, # SIOCGARP , mac address, according to man ioctl_list
+        #0x8954, # SIOCGARP , mac address
+        request
     )[20:24])
 
 def get_essid_alt(ifname):
     from subprocess import Popen, PIPE
     process = Popen(["iw", ifname, "info"], stdout=PIPE)
-    stdout, stderr = process.communicate()
+    stdout, _ = process.communicate()
     try:
         endstring = stdout[stdout.index(b"ssid ") + 5:]
     except ValueError:
@@ -194,12 +192,13 @@ def get_gateway_address():
     """Read the default gateway directly from /proc.
     """
     with open("/proc/net/route") as fh:
+        address = None
         for line in fh:
             fields = line.strip().split()
             if fields[1] != '00000000' or not int(fields[3], 16) & 2:
                 continue
             address = socket.inet_ntoa(struct.pack("<L", int(fields[2], 16)))
-        else:
+        if not address:
             raise KeyError("No gateway found")
     return address
 
