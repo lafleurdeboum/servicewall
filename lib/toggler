@@ -14,7 +14,6 @@ import time
 if not "XTABLES_LIBDIR" in environ:
     environ["XTABLES_LIBDIR"] = "/usr/lib/xtables"
 import servicewall
-#from servicewall import network_helpers
 
 
 LOGGING = False
@@ -27,6 +26,10 @@ if __name__ == "__main__":
             logfile.write(" ")
             json.dump(argv, logfile)
             logfile.write("\n")
+
+    firewall = servicewall.ServiceWall()
+    if not firewall.is_enabled():
+        raise SystemError("cannot (re)load ServiceWall, it's disabled - see systemctl")
 
     # We expect arguments to be :
     #       toggler iface_name new_state
@@ -41,34 +44,11 @@ if __name__ == "__main__":
     if len(argv) != 3:
         print(__doc__)
         raise SystemError("wrong number of arguments : %s" % " ".join(argv))
-    device = argv[1]
+
+    iface = argv[1]
+    # action should be either "up", "down" or "connectivity-change" :
     action = argv[2]
-    firewall = servicewall.ServiceWall()
+    print("interface %s is going %s, reloading" % (iface, action))
 
-    if action == "up":
-        if firewall.is_enabled():
-            firewall.reload()
-        else:
-            raise SystemError("cannot bring firewall up, it's disabled")
-
-    elif action == "down":
-        if firewall.is_enabled():
-            firewall.reload()
-        else:
-            raise SystemError("cannot bring firewall down, it's disabled")
-
-    elif action == "connectivity-change":
-        if firewall.is_enabled():
-            firewall.reload()
-        else:
-            raise SystemError("cannot update firewall, it's disabled")
-
-    elif action == "status":
-        if firewall.is_enabled():
-            print("enabled")
-        else:
-            print("disabled")
-
-    else:
-        raise SystemError("wrong usage : %s" % " ".join(argv))
+    firewall.reload()
 
