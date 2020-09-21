@@ -11,6 +11,10 @@ from sys import argv
 from os import environ
 import json
 import time
+if not "XTABLES_LIBDIR" in environ:
+    environ["XTABLES_LIBDIR"] = "/usr/lib/xtables"
+import servicewall
+#from servicewall import network_helpers
 
 
 LOGGING = False
