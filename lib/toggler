@@ -7,18 +7,16 @@ This script starts or stops a firewall as defined in servicewall.py
 """
 
 #from statefulfirewall import StateFulFireWall
-import servicewall
-from servicewall import network_helpers
 from sys import argv
 from os import environ
 import json
 import time
 
 
-logging = False
+LOGGING = False
 
 if __name__ == "__main__":
-    if logging:
+    if LOGGING:
         with open("/tmp/toggler-logfile", "a") as logfile:
             now = time.ctime()
             logfile.write(now)
@@ -30,10 +28,10 @@ if __name__ == "__main__":
     #       toggler iface_name new_state
     # Normalize networkd-dispatcher's arguments :
     try:
-        state_flag = environ["STATE"]
+        STATE_FLAG = environ["STATE"]
     except KeyError:
-        state_flag = None
-    if state_flag == "routable":
+        STATE_FLAG = None
+    if STATE_FLAG == "routable":
         argv = [argv[0], environ["IFACE"], "up"]
 
     if len(argv) != 3:
