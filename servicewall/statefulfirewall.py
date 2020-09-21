@@ -43,7 +43,7 @@ class StateFulFireWall(firewall.FireWall):
 
         # Log all that is refused in INPUT chain.
         log_rule = self.create_log_rule("not in allowed services", group="1")
-        self.input_chain.insert_rule(log_rule)
+        self.input_chain.append_rule(log_rule)
 
         # Drop invalid packets - as diagnosed by the conntrack processor.
         invalid_rule = self.create_conntrack_rule("DROP", "ctstate", "INVALID")
