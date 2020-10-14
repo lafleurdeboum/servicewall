@@ -44,18 +44,18 @@ class FireWall():
 
         Drops all incoming, accepts only localhost.
         """
-        # Drop all incoming. Basic but functional.
+        # Drop all incoming, allow outgoing requests.
         print("setting input policy to DROP")
         self.input_chain.set_policy("DROP")
         print("setting forward policy to DROP")
         self.forward_chain.set_policy("DROP")
         print("setting output policy to ACCEPT")
         self.output_chain.set_policy("ACCEPT")
-        # Accept all on localhost.
+        # Accept all destined to localhost.
         accept_localhost_rule = self.create_rule(
             "localhost",
             "ACCEPT",
-            iface="lo"
+            diface="lo"
             )
         self.input_chain.insert_rule(accept_localhost_rule)
         if not self._table.autocommit:
@@ -97,7 +97,7 @@ class FireWall():
                 is_up = True
         return is_up
 
-    def create_rule(self, name, target, dst="", dport="", src="", sport="", proto="", iface=""):
+    def create_rule(self, name, target, dst="", dport="", src="", sport="", proto="", siface="", diface=""):
         """create and return a rule (or two if no proto given).
 
         name can be any string
@@ -108,7 +108,8 @@ class FireWall():
         sport is source port. Currently ignored
         dst is a realm in the same form as src
         dport is destination port
-        iface is the interface (both in and out)
+        siface is the source interface
+        diface is the destination interface
         """
         #print("adding rule %s" % name)
         if (dport or sport) and not proto:
@@ -122,27 +123,25 @@ class FireWall():
                                       iface) for proto in ("tcp", "udp") ]
         rule = Rule()
         rule.create_target(target)
-        # First we need to know if we go in or out
-        # Then some rules need the creation of a match
         if dst:
             rule.dst = dst
         if dport:
             proto_match = rule.create_match(proto)
             proto_match.dport = str(dport)
             rule.protocol = proto
+        if diface:
+            rule.in_interface = diface
         if src:
             rule.src = src
         if sport:
             proto_match = rule.create_match(proto)
             proto_match.sport = str(sport)
             rule.protocol = proto
-        if iface:
-            rule.in_interface = iface
-            rule.out_interface = iface
+        if siface:
+            rule.out_interface = siface
         # Add a signature as a comment.
         comment_match = rule.create_match("comment")
         comment_match.comment = self.identifier + ":" + name
-        # Try to set it into chain.
         rule.final_check()
         return rule
 
