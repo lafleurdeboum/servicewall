@@ -108,8 +108,7 @@ class FireWall():
         sport is source port. Currently ignored
         dst is a realm in the same form as src
         dport is destination port
-        iface is the interface, will be in_iface if chain is the input chain.
-                                       out_iface if chain is the output chain.
+        iface is the interface (both in and out)
         """
         #print("adding rule %s" % name)
         if (dport or sport) and not proto:
@@ -137,6 +136,9 @@ class FireWall():
             proto_match = rule.create_match(proto)
             proto_match.sport = str(sport)
             rule.protocol = proto
+        if iface:
+            rule.in_interface = iface
+            rule.out_interface = iface
         # Add a signature as a comment.
         comment_match = rule.create_match("comment")
         comment_match.comment = self.identifier + ":" + name
