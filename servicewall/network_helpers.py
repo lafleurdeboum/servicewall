@@ -13,6 +13,7 @@ https://docs.python.org/2/library/ctypes.html#arrays
 """
 
 
+import sys
 import socket
 import struct
 import array
@@ -22,33 +23,37 @@ import fcntl
 def get_all_interfaces():
     """Return a dict of interface names and their IPs.
 
-    retrieved from http://code.activestate.com/recipes/439093/#c1
+    retrieved from http://code.activestate.com/recipes/439093/#c8
     """
-    max_possible = 128  # Raise if needed.
-    byte_number = max_possible * 32
+    is_64bits = sys.maxsize > 2**32
+    struct_size = 40 if is_64bits else 32
     datagram_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    names = array.array('B', b'\0' * byte_number)
-    #names_address = names.buffer_info()[0]
-    outbytes = struct.unpack('iL', fcntl.ioctl(
-        datagram_socket.fileno(),
-        0x8912,  # SIOCGIFCONF
-        struct.pack('iL', byte_number, names.buffer_info()[0])
-    ))[0]
+    max_possible = 8 # initial value
+    while True:
+        _bytes = max_possible * struct_size
+        names = array.array('B')
+        for i in range(0, _bytes):
+            names.append(0)
+        outbytes = struct.unpack('iL', fcntl.ioctl(
+            datagram_socket.fileno(),
+            0x8912,  # SIOCGIFCONF
+            struct.pack('iL', _bytes, names.buffer_info()[0])
+        ))[0]
+        if outbytes == _bytes:
+            max_possible *= 2
+        else:
+            break
     namestr = names.tobytes()
-    iface_list = []
-    #ifaces = {}
-    for i in range(0, outbytes, 40):
-        iface_name = namestr[i:i+16].split(b'\0', 1)[0]
-        iface_ip = namestr[i+20:i+24]
-        iface_list.append([ iface_name.decode(), socket.inet_ntoa(iface_ip) ])
-        #ifaces[iface_name.decode()] = socket.inet_ntoa(iface_ip)
-        # We don't care for the loopback interface :
-    for index, iface in enumerate(iface_list):
+    ifaces = []
+    for i in range(0, outbytes, struct_size):
+        iface_name = bytes.decode(namestr[i:i+16]).split('\0', 1)[0]
+        iface_addr = socket.inet_ntoa(namestr[i+20:i+24])
+        ifaces.append((iface_name, iface_addr))
+    # We don't care for the loopback interface :
+    for index, iface in enumerate(ifaces):
         if iface[0] == "lo":
-            del iface_list[index]
-    return iface_list
-    #ifaces.pop('lo')
-    #return ifaces
+            del ifaces[index]
+    return ifaces
 
 
 def get_active_interface():
