@@ -51,11 +51,13 @@ class FireWall():
         self.forward_chain.set_policy("DROP")
         print("setting output policy to ACCEPT")
         self.output_chain.set_policy("ACCEPT")
-        # Accept all destined to localhost.
+        # Accept all from _and_ to localhost.
         accept_localhost_rule = self.create_rule(
             "localhost",
             "ACCEPT",
-            diface="lo"
+            #siface="lo"
+            src="127.0.0.1",
+            dst="127.0.0.1"
             )
         self.input_chain.insert_rule(accept_localhost_rule)
         if not self._table.autocommit:
