@@ -120,7 +120,8 @@ class FireWall():
                                       src,
                                       sport,
                                       proto,
-                                      iface) for proto in ("tcp", "udp") ]
+                                      siface,
+                                      diface) for proto in ("tcp", "udp") ]
         rule = Rule()
         rule.create_target(target)
         if dst:
