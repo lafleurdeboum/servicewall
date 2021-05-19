@@ -136,6 +136,9 @@ ruleset named `ServiceWall:default` inside `realms.json`.
 
 ### Logs
 
+WARNING : ServiceWall will not log igmp traffic. All igmp packets are silently
+dropped. You may allow those, in which case they will be silently accepted.
+
 Particular attention was taken to logs. Logs are stored in systemd's
 `servicewall-logs.service`. Journald takes care it can't fill the hard drive,
 and that it's readable only to staff. Firewall logs are critical information,
@@ -144,15 +147,15 @@ an access list, you can view it with :
 
     # getfacl /var/log/journal
 
-The firewall logs all that it drops. There's a log processor tool included ;
-try it with
+The firewall logs all that it drops, excepted for igmp packets, as they bloat
+logs. There's a log processor tool included ; try it with
 
     # braise show logs -w
     # braise show logs since NUMBER_OF_SECONDS
     # braise show logs -w last NUMBER_OF_LATEST_HITS
 
 The `-w|--with-hostnames` option lets it show hostnames. This will let you see what
-services queries were dropped. Now if the service name begins with a `<` it
+service queries were dropped. Now if the service name begins with a `<` it
 means that it is the source that is operating the service, not the destination.
 It might be a packet that iptables failed to recognize as belonging to an
 established connection.

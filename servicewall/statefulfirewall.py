@@ -41,6 +41,10 @@ class StateFulFireWall(firewall.FireWall):
                                                   "RELATED,ESTABLISHED")
         self.input_chain.insert_rule(related_rule)
 
+        # Drop igmp packets before logging.
+        drop_igmp_rule = self.create_rule("igmp_drop", "DROP")
+        drop_igmp_rule.protocol = "igmp"
+        self.input_chain.append_rule(drop_igmp_rule)
         # Log all that is refused in INPUT chain.
         log_rule = self.create_log_rule("not in allowed services", group="1")
         self.input_chain.append_rule(log_rule)
