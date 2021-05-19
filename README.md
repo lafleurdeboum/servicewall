@@ -9,12 +9,8 @@ that you allow. Each service you allow in will be remembered either :
 - for the network realm you're connected to (the realm's ruleset), or
 - for unregistered network realms (the `ServiceWall:default` ruleset)
 
-WARNING : ServiceWall only supports IPv4 networks. This means that all IPv6
-traffic will be ignored. You will _really_ need to disable IPv6, since most
-network managers will let interfaces get a fallback IPv6 address (IPv6 doesn't
-even need DHCP to get an address). This would make the firewall useless ! This
-usually can be achieved by adding a `ipv6.disable=1` argument to the kernel
-cmdline.
+WARNING : ServiceWall only supports IPv4 networks ; as of today, it will drop
+any packet on the IPv6 stack without logging it.
 
 At the moment the default ruleset is : accept `ssh` and `DHCP` incoming 
 connections. `ssh` connections are accepted from anywhere, whereas `DHCP` ones

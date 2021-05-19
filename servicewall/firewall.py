@@ -3,7 +3,7 @@
 implements a firewall using python-iptables
 """
 
-from iptc import Rule, Chain, Table
+from iptc import Rule, Rule6, Chain, Table, Table6
 from iptc.ip4tc import IPTCError
 
 
@@ -25,6 +25,7 @@ class FireWall():
     def __init__(self):
         try:
             self._table = Table(Table.FILTER)
+            self._table6 = Table6(Table6.FILTER)
         except IPTCError:
             # user is not root - return silently ; all writing ops will fail
             return
@@ -34,6 +35,9 @@ class FireWall():
         self.input_chain = Chain(self._table, "INPUT")
         self.forward_chain = Chain(self._table, "FORWARD")
         self.output_chain = Chain(self._table, "OUTPUT")
+        self.input_chain6 = Chain(self._table6, "INPUT")
+        self.forward_chain6 = Chain(self._table6, "FORWARD")
+        self.output_chain6 = Chain(self._table6, "OUTPUT")
         if self.status():
             self.up = True
         else:
@@ -51,6 +55,10 @@ class FireWall():
         self.forward_chain.set_policy("DROP")
         print("setting output policy to ACCEPT")
         self.output_chain.set_policy("ACCEPT")
+        print("disabling ipv6 stack")
+        self.input_chain6.set_policy("DROP")
+        self.forward_chain6.set_policy("DROP")
+        self.output_chain6.set_policy("DROP")
         # Accept all from _and_ to localhost.
         accept_localhost_rule = self.create_rule(
             "localhost",
