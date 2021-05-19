@@ -42,7 +42,8 @@ class StateFulFireWall(firewall.FireWall):
         self.input_chain.insert_rule(related_rule)
 
         # Drop igmp packets before logging.
-        drop_igmp_rule = self.create_rule("igmp_drop", "DROP")
+        drop_igmp_rule = Rule()
+        drop_igmp_rule.create_target("DROP")
         drop_igmp_rule.protocol = "igmp"
         self.input_chain.append_rule(drop_igmp_rule)
         # Log all that is refused in INPUT chain.
@@ -50,6 +51,7 @@ class StateFulFireWall(firewall.FireWall):
         self.input_chain.append_rule(log_rule)
 
         # Drop invalid packets - as diagnosed by the conntrack processor.
+        # Note that this rule is useless because packets would be dropped anyway.
         invalid_rule = self.create_conntrack_rule("DROP", "ctstate", "INVALID")
         self.input_chain.append_rule(invalid_rule)
 
