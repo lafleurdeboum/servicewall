@@ -86,6 +86,8 @@ def status(args):
 def allow_service(args):
     if args.globally:
         scope = "global"
+    elif args.docker:
+        scope = "docker"
     else:
         scope = "local"
     if args.in_default_profile:

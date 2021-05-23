@@ -242,6 +242,12 @@ parser_allow_service.add_argument(
     help="enable the service to any client",
 )
 parser_allow_service.add_argument(
+    "-D",
+    "--docker",
+    action="store_true",
+    help="enable the service to docker containers",
+)
+parser_allow_service.add_argument(
     "-d",
     "--in-default-profile",
     action="store_true",

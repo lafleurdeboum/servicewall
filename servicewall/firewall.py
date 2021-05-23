@@ -143,7 +143,12 @@ class FireWall():
         if diface:
             rule.in_interface = diface
         if src:
-            rule.src = src
+            if src.count("-"):
+                iprange_match = rule.create_match("iprange")
+                iprange_match.src_range = src
+                rule.add_match(iprange_match)
+            else:
+                rule.src = src
         if sport:
             proto_match = rule.create_match(proto)
             proto_match.sport = str(sport)

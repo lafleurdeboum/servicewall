@@ -189,6 +189,8 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
         """
         if scope == "local":
             src = self.subnetwork
+        elif scope == "docker":
+            src = "172.16.0.0-172.31.255.255"
         else:
             src = ""
 
