@@ -249,7 +249,7 @@ class ServiceWall(statefulfirewall.StateFulFireWall):
 
     def save_rules(self):
         with open(self.realm_defs_dict, "w") as fd:
-            json.dump(self.realm_defs, fd)
+            json.dump(self.realm_defs, fd, indent=2)
         print("saved realm defs to config")
 
     def list_services_in(self):
